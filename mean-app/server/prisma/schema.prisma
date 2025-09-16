@@ -1,0 +1,40 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String        @id @default(uuid())
+  name          String
+  email         String        @unique
+  password      String
+  country       String?
+  incomeBracket String?
+  createdAt     DateTime      @default(now())
+  refreshTokens RefreshToken[]
+  transactions  Transaction[]
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  tokenHash  String   // store hashed refresh token
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+}
+
+model Transaction {
+  id        String   @id @default(uuid())
+  type      String   // "income" | "expense"
+  amount    Float
+  category  String?
+  date      DateTime
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}
