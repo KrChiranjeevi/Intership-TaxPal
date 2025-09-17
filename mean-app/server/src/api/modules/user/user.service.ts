@@ -1,6 +1,7 @@
 import { prisma } from '../../../config/prisma.client.js';
 import bcrypt from 'bcrypt';
 import type {RegisterDto } from './user.model.js';
+import type {LoginDto } from './user.model.js';
 
 export async function createUser(data: RegisterDto) {
   const hashed = await bcrypt.hash(data.password, Number(process.env.BCRYPT_SALT_ROUNDS || 10));
@@ -21,4 +22,14 @@ export async function createUser(data: RegisterDto) {
 
 export async function findUserByEmail(email: string) {
   return prisma.user.findUnique({ where: { email } });
+}
+
+export async function validateUser(data: LoginDto) {
+  const user = await prisma.user.findUnique({ where: { email: data.email } });
+  if (!user) return null;
+
+  const isMatch = await bcrypt.compare(data.password, user.password);
+  if (!isMatch) return null;
+
+  return user;
 }
