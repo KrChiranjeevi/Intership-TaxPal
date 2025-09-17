@@ -1,12 +1,31 @@
+// src/modules/users/users.routes.ts
 import { Router } from 'express';
-import { registerHandler, loginHandler } from './user.controller.js';
+import {
+  registerHandler,
+  loginHandler,
+  refreshTokenHandler,
+  logoutHandler,
+  getProfileHandler,
+  requestPasswordResetHandler,
+  resetPasswordHandler,
+} from './user.controller.js';
+import { authMiddleware } from '../../middlewares/auth.middleware.js';
 
 const router = Router();
 
-// POST /api/auth/register
+// Register & Login
 router.post('/register', registerHandler);
-
-// POST /api/auth/login
 router.post('/login', loginHandler);
+
+// Refresh & Logout
+router.post('/refresh-token', refreshTokenHandler);
+router.post('/logout', logoutHandler);
+
+// Get profile (JWT protected)
+router.get('/me', authMiddleware, getProfileHandler);
+
+// Password reset
+router.post('/password-reset-request', requestPasswordResetHandler);
+router.post('/password-reset', resetPasswordHandler);
 
 export default router;
