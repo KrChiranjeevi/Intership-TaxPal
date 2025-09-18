@@ -1,11 +1,15 @@
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { RouterOutlet } from '@angular/router';
+
 
 @Component({
   selector: 'app-root',
-  standalone: true,
-  imports: [RouterModule], // <-- Add this
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+   standalone: true,          // ✅ अब यह standalone है
+  imports: [RouterOutlet],   // ✅ Router का use
+
+  template: `<router-outlet></router-outlet>`
+  // styleUrls: ['./app.component.scss']
 })
 export class AppComponent {}
+
+

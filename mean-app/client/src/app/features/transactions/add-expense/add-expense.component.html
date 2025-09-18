@@ -1,0 +1,35 @@
+<div class="modal-backdrop">
+  <div class="modal">
+    <header>
+      <h2>Record New Expense</h2>
+      <button class="close" (click)="onCancel()">✕</button>
+    </header>
+
+    <p class="subtext">Add details about your expense to track better</p>
+
+    <form (ngSubmit)="onSubmit()" class="form">
+      <label>Description</label>
+      <input type="text" [(ngModel)]="expenseData.description" name="description" placeholder="e.g. Design Project" required>
+
+      <label>Amount</label>
+      <input type="number" [(ngModel)]="expenseData.amount" name="amount" placeholder="$ 0.00" required>
+
+      <label>Category</label>
+      <select [(ngModel)]="expenseData.category" name="category" required>
+        <option value="" disabled>Select category</option>
+        <option *ngFor="let c of categories" [value]="c">{{c}}</option>
+      </select>
+
+      <label>Date</label>
+      <input type="date" [(ngModel)]="expenseData.date" name="date" required>
+
+      <label>Notes (Optional)</label>
+      <textarea [(ngModel)]="expenseData.notes" name="notes" placeholder="Add any additional details..."></textarea>
+
+      <div class="buttons">
+        <button type="button" class="cancel" (click)="onCancel()">Cancel</button>
+        <button type="submit" class="add">Add Expense</button>
+      </div>
+    </form>
+  </div>
+</div>

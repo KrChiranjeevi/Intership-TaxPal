@@ -1,14 +1,13 @@
+// src/app/features/features.module.ts
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-// ✅ alias se import
-import { SharedModule } from '@shared/shared.module';
+// import { DashboardModule } from './dashboard/dashboard.module';
+import { TransactionsModule } from './transactions/transactions.module';
 
 @NgModule({
-  declarations: [],
-  imports: [
-    CommonModule,
-    SharedModule
-  ]
+  // imports: [CommonModule, DashboardModule, TransactionsModule],
+  // exports: [DashboardModule, TransactionsModule]
+   imports: [CommonModule, TransactionsModule],  
+  exports: [TransactionsModule] 
 })
 export class FeaturesModule {}

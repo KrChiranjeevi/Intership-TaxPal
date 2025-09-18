@@ -8,7 +8,7 @@
 // import { AppRoutingModule } from './app-routing.module';
 // import { AppComponent } from './app.component';
 
-// // ✅ imports with aliases (tsconfig.json me paths set hone chahiye)
+// // imports with aliases (tsconfig.json me paths set hone chahiye)
 // import { CoreModule } from '@core/core.module';
 // import { SharedModule } from '@shared/shared.module';
 // import { FeaturesModule } from '@features/features.module';
@@ -16,7 +16,7 @@
 
 // @NgModule({
 //   declarations: [
-//     AppComponent, 
+//     AppComponent 
 //   ],
 //   imports: [
 //     BrowserModule,
@@ -32,6 +32,6 @@
 //     LayoutsModule
 //   ],
 //   providers: [],
-//   bootstrap: [AppComponent]   // ✅ ab error nahi aayega
+//   bootstrap: [AppComponent]
 // })
 // export class AppModule {}
