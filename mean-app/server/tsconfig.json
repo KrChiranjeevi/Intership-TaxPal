@@ -1,11 +1,33 @@
 {
   "compilerOptions": {
-    "target": "ES6",
-    "module": "CommonJS",
-    "outDir": "./dist",
+    /* File Layout */
     "rootDir": "./src",
+    "outDir": "./dist",
+
+    /* Environment Settings */
+    "module": "NodeNext",        // Node.js + ESModules
+    "target": "ESNext",          // Latest JavaScript
+    "moduleResolution": "NodeNext",
+    "lib": ["ESNext"],
+    "types": ["node"],           // for @types/node
+
+    /* Output Options */
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    /* Strict Type Checking */
     "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    /* Compatibility */
     "esModuleInterop": true,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+
+    /* Optional but good for TS projects */
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["src"]
 }

@@ -22,7 +22,7 @@ router.post('/expense', async (req, res) => {
     console.log('Expense added:', amount, description);
     res.status(201).json({ message: 'Expense added successfully' });
   } catch (err) {
-    console.error(err);
+    console.error('Error in /expense:', err);
     res.status(500).json({ message: 'Error adding expense' });
   }
 });
@@ -35,20 +35,21 @@ router.post('/income', async (req, res) => {
     console.log('Income added:', amount, description);
     res.status(201).json({ message: 'Income added successfully' });
   } catch (err) {
-    console.error(err);
+    console.error('Error in /income:', err);
     res.status(500).json({ message: 'Error adding income' });
   }
 });
 
 // Get All Transactions
-router.get('/', async (req, res) => {
+router.get('/', async (_req, res) => {
   try {
     // TODO: Fetch all transactions from DB
     res.json({ transactions: [] });
   } catch (err) {
-    console.error(err);
+    console.error('Error in GET /transactions:', err);
     res.status(500).json({ message: 'Error fetching transactions' });
   }
 });
 
 export default router;
+
