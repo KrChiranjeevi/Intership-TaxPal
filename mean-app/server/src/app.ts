@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import userRoutes from './api/modules/user/user.routes.js';
+import transactionRoutes from './api/modules/transactions/transaction.routes.js';
 
 dotenv.config();
 
@@ -12,6 +13,7 @@ app.use(express.json());
 
 // Mount user routes
 app.use('/api/auth', userRoutes);
+app.use('/api/transactions', transactionRoutes); 
 
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'Server is running 🚀' });

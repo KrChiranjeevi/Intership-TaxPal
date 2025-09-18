@@ -2,8 +2,12 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
+// Extend Express Request to include user object
 export interface AuthRequest extends Request {
-  userId?: string; // attach userId from verified token
+  user?: {
+    id: string;
+    // you can add more fields like email, name if needed
+  };
 }
 
 export function authMiddleware(req: AuthRequest, res: Response, next: NextFunction) {
@@ -27,8 +31,9 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
     // Verify token
     const decoded = jwt.verify(token, secret) as { userId: string };
 
-    // Attach userId to request for protected routes
-    req.userId = decoded.userId;
+    // Attach user object to request
+    req.user = { id: decoded.userId };
+
     next();
   } catch (err) {
     console.error(err);
