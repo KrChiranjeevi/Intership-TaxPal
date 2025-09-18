@@ -1,16 +1,39 @@
+# ========================
 # Node
-node_modules
-dist
-build
+# ========================
+node_modules/
+dist/
+build/
 
-# Env files
+# ========================
+# Client (Angular/React)
+# ========================
+client/node_modules/
+client/dist/
+client/build/
+
+# ========================
+# Server (Express/Node)
+# ========================
+server/node_modules/
+server/dist/
+server/build/
+
+# ========================
+# Environment files
+# ========================
 .env
+*.env
 
+# ========================
 # Logs
+# ========================
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# ========================
 # OS
+# ========================
 .DS_Store
 Thumbs.db

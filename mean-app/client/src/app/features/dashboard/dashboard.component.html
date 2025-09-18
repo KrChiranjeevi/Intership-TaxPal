@@ -1,0 +1,152 @@
+<!-- <div class="dashboard">
+  <aside class="sidebar">
+    <h1 class="logo">TaxPal</h1>
+    <ul class="menu">
+      <li class="active">Dashboard</li>
+      <li>Transactions</li>
+      <li>Budget</li>
+      <li>Tax Estimation</li>
+      <li>Reports</li>
+    </ul>
+    <div class="user">
+      <div class="name">John Doe</div>
+      <div class="role">Premium User</div>
+    </div>
+  </aside>
+
+  <main class="content">
+
+    <section class="stats">
+      <div class="card">Monthly Income <h2>${{monthlyIncome}}</h2></div>
+      <div class="card">Monthly Expenses <h2>${{monthlyExpenses}}</h2></div>
+      <div class="card">Estimated Tax Due <h2>${{taxDue}}</h2></div>
+      <div class="card">Savings Rate <h2>{{savingsRate}}%</h2></div>
+    </section>
+
+    <section class="charts">
+      <div class="chart">
+        <h3>Income vs Expenses</h3>
+        <canvas baseChart
+                [data]="barChartData"
+                [options]="barChartOptions"
+                chartType="bar">
+        </canvas>
+      </div>
+
+      <div class="chart">
+        <h3>Expense Breakdown</h3>
+        <canvas baseChart
+                [data]="pieChartData"
+                [options]="pieChartOptions"
+                chartType="pie">
+        </canvas>
+      </div>
+    </section>
+
+    <section class="transactions">
+      <h3>Recent Transactions</h3>
+      <table>
+        <tr *ngFor="let t of transactions">
+          <td>{{t.name}}</td>
+          <td>{{t.date}}</td>
+          <td>{{t.category}}</td>
+          <td [class.income]="t.type==='income'" [class.expense]="t.type==='expense'">
+            {{t.type==='income' ? '+' : '-'}}${{t.amount}}
+          </td>
+        </tr>
+      </table>
+    </section>
+  </main>
+</div> -->
+
+<!-- src/app/features/dashboard/dashboard.component.html -->
+
+<div class="dashboard">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h1 class="logo">TaxPal</h1>
+    <ul class="menu">
+      <li class="active">Dashboard</li>
+      <li>Transactions</li>
+      <li>Budget</li>
+      <li>Tax Estimation</li>
+      <li>Reports</li>
+    </ul>
+    <div class="bottom-links">
+      <div class="settings">⚙️ Settings</div>
+      <div class="logout">↩ Logout</div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="content">
+    <header class="header">
+      <div class="titles">
+        <h2>Financial Dashboard</h2>
+        <p>Welcome back, <span class="highlight">John Doe!</span> Here’s your financial summary for this month.</p>
+      </div>
+      <div class="actions">
+        <button (click)="showIncome=true" class="btn-income">+ Add Income</button>
+        <button (click)="showExpense=true" class="btn-expense">+ Add Expense</button>
+      </div>
+    </header>
+
+    <!-- Income Form (only when showIncome true) -->
+    <app-add-income 
+      *ngIf="showIncome" 
+      (close)="showIncome=false" 
+      (submitForm)="onIncomeAdded($event)">
+    </app-add-income>
+
+    <!-- Expense Form (only when showExpense true) -->
+    <app-add-expense 
+      *ngIf="showExpense" 
+      (close)="showExpense=false" 
+      (submitForm)="onExpenseAdded($event)">
+    </app-add-expense>
+
+    <!-- Stats Cards -->
+    <section class="stats">
+      <div class="card">Monthly Income <h3>${{monthlyIncome}}</h3></div>
+      <div class="card">Monthly Expenses <h3>${{monthlyExpenses}}</h3></div>
+      <div class="card">Estimated Tax Due <h3>${{estimatedTaxDue}}</h3></div>
+      <div class="card">Savings Rate <h3>{{savingsRate}}%</h3></div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="charts">
+      <div class="chart">
+        <h3>Income vs Expenses</h3>
+        <canvas baseChart
+                [data]="barChartData"
+                [options]="barChartOptions"
+                chartType="bar">
+        </canvas>
+      </div>
+      <div class="chart">
+        <h3>Expense Breakdown</h3>
+        <canvas baseChart
+                [data]="pieChartData"
+                [options]="pieChartOptions"
+                chartType="pie">
+        </canvas>
+      </div>
+    </section>
+
+    <!-- Transactions Section -->
+    <section class="transactions">
+      <h3>Recent Transactions</h3>
+      <div class="transaction-list">
+        <div class="transaction" *ngFor="let t of transactions">
+          <div class="info">
+            <h4>{{t.name}}</h4>
+            <span>{{t.category}} - {{t.date}}</span>
+          </div>
+          <div class="amount" [class.income]="t.type==='income'" [class.expense]="t.type==='expense'">
+            {{t.type==='income' ? '+' : '-'}}${{t.amount}}
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
