@@ -1,0 +1,54 @@
+ <div class="box-container">
+  <h2>Create an Account</h2>
+  <p>Enter your information to create your TaxPal account</p>
+
+  <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+    <div class="forms">
+      <label for="username">Username</label>
+      <input type="text" formControlName="username" placeholder="Choose a username" required>
+    </div>
+
+    <div class="forms">
+      <label for="password">Password</label>
+      <input type="password" formControlName="password" placeholder="Choose a password" required>
+    </div>
+
+    <div class="forms">
+      <label>Full Name</label>
+      <input type="text" formControlName="fullName" placeholder="Enter your Full Name" required>
+    </div>
+
+    <div class="forms">
+      <label>Email</label>
+      <input type="email" formControlName="email" placeholder="Choose your email address" required>
+    </div>
+
+    <div class="forms">
+      <label>Country</label>
+      <select class="select" formControlName="country">
+        <option value="">Select your country</option>
+        <option>India</option>
+        <option>USA</option>
+        <option>Russia</option>
+        <option>UK</option>
+        <option>France</option>
+      </select>
+    </div>
+
+    <div class="forms">
+      <label>Income Bracket (optional)</label>
+      <select class="select" formControlName="incomeBracket">
+        <option value="">Select your income bracket</option>
+        <option>Low</option>
+        <option>Middle</option>
+        <option>High</option>
+      </select>
+    </div>
+
+    <button class="btn" type="submit">Create Account</button>
+  </form>
+
+  <footer>
+    <p>Already have an account? <a routerLink="/login">Sign in</a></p>
+  </footer>
+</div>
