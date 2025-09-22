@@ -18,7 +18,7 @@ export class SignupComponent {
     this.signupForm = this.fb.group({
       username: ['', Validators.required],
       password: ['', Validators.required],
-      fullName: ['', Validators.required], // ← backend expects `name`, not fullName
+      name: ['', Validators.required], // ← backend expects `name`, not fullName
       email: ['', [Validators.required, Validators.email]],
       country: [''],
       incomeBracket: ['']

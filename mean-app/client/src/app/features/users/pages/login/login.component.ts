@@ -27,26 +27,19 @@ export class LoginComponent {
   }
 
   onSubmit() {
-    if (!this.loginForm.valid) {
-      alert('Please fill out all fields');
-      return;
+  if (!this.loginForm.valid) return alert('Please fill out all fields');
+
+  const { email, password } = this.loginForm.value;
+  this.authService.login({ email, password }).subscribe({
+    next: () => {
+      alert(`Welcome, ${email}!`);
+      this.router.navigate(['/dashboard']);
+    },
+    error: (err) => {
+      console.error('Login error:', err);
+      alert('Invalid email or password');
     }
+  });
+}
 
-    this.loading = true;
-    const { email, password } = this.loginForm.value;
-
-    this.authService.login({ email, password }).subscribe({
-      next: (res: any) => {
-        this.loading = false;
-        if (res && res.accessToken) localStorage.setItem('token', res.accessToken);
-        alert(`Welcome, ${email}!`);
-        this.router.navigate(['/dashboard']);
-      },
-      error: (err) => {
-        this.loading = false;
-        alert('Invalid email or password');
-        console.error(err);
-      }
-    });
-  }
 }

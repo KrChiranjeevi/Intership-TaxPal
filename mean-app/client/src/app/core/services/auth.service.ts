@@ -10,26 +10,19 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
-  register(data: {
-    username: string;
-    name: string;
-    email: string;
-    password: string;
-    country?: string;
-    incomeBracket?: string;
-  }): Observable<any> {
+  login(credentials: { email: string; password: string }) {
+  return this.http.post(`${this.api}/login`, credentials).pipe(
+    tap((res: any) => {
+      if (res.data?.accessToken) this.saveToken(res.data.accessToken);
+    })
+  );
+}
+
+
+  register(data: any): Observable<any> {
     return this.http.post(`${this.api}/register`, data).pipe(
       tap((res: any) => {
-        if (res.token) this.saveToken(res.token);
-      })
-    );
-  }
-
-
-  login(credentials: { email: string; password: string }): Observable<any> {
-    return this.http.post(`${this.api}/login`, credentials).pipe(
-      tap((res: any) => {
-        if (res.accessToken) this.saveToken(res.accessToken);
+        if (res.data?.accessToken) this.saveToken(res.data.accessToken);
       })
     );
   }

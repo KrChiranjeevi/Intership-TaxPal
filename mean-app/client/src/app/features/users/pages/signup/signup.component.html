@@ -5,22 +5,22 @@
   <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
     <div class="forms">
       <label for="username">Username</label>
-      <input type="text" formControlName="username" placeholder="Choose a username" required>
+      <input type="text" formControlName="username" placeholder="Choose a username" required autocomplete="off">
     </div>
 
     <div class="forms">
       <label for="password">Password</label>
-      <input type="password" formControlName="password" placeholder="Choose a password" required>
+      <input type="password" formControlName="password" placeholder="Choose a password" required autocomplete="new-password">
     </div>
 
     <div class="forms">
       <label>Full Name</label>
-      <input type="text" formControlName="fullName" placeholder="Enter your Full Name" required>
+      <input type="text" formControlName="name" placeholder="Enter your Full Name" required autocomplete="off">
     </div>
 
     <div class="forms">
       <label>Email</label>
-      <input type="email" formControlName="email" placeholder="Choose your email address" required>
+      <input type="email" formControlName="email" placeholder="Choose your email address" required autocomplete="off">
     </div>
 
     <div class="forms">

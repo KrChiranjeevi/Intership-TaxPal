@@ -10,14 +10,14 @@ export class TransactionService {
   constructor(private http: HttpClient) {}
 
   getTransactions(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.api}`);
+    return this.http.get<any[]>(this.api); // token automatically added by interceptor
   }
 
   addIncome(payload: any): Observable<any> {
-    return this.http.post(`${this.api}/income`, payload);
+    return this.http.post(this.api, { ...payload, type: 'income' });
   }
 
   addExpense(payload: any): Observable<any> {
-    return this.http.post(`${this.api}/expense`, payload);
+    return this.http.post(this.api, { ...payload, type: 'expense' });
   }
 }
