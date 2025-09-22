@@ -1,8 +1,8 @@
-
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '@core/services/auth.service';
 
 @Component({
   selector: 'app-signup',
@@ -14,24 +14,38 @@ import { RouterModule } from '@angular/router';
 export class SignupComponent {
   signupForm: FormGroup;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private authService: AuthService) {
     this.signupForm = this.fb.group({
       username: ['', Validators.required],
       password: ['', Validators.required],
-      fullName: ['', Validators.required],
+      fullName: ['', Validators.required], // ← backend expects `name`, not fullName
       email: ['', [Validators.required, Validators.email]],
-      country: ['', Validators.required],
+      country: [''],
       incomeBracket: ['']
     });
   }
 
   onSubmit() {
-    if (this.signupForm.valid) {
-      console.log('Signup Data:', this.signupForm.value);
-      alert(`Account created for ${this.signupForm.value.username}`);
-      // Here you can add your API call or navigation
-    } else {
+    if (!this.signupForm.valid) {
       alert('Please fill out all required fields correctly');
+      return;
     }
+
+    const { username, name, email, password, country, incomeBracket } = this.signupForm.value;
+
+    this.authService.register({ username, name, email, password, country, incomeBracket })
+      .subscribe({
+        next: (res: any) => {
+          if (res.success) {
+            alert(`Account created successfully for ${username}`);
+          } else {
+            alert(res.message || 'Error creating account');
+          }
+        },
+        error: (err) => {
+          console.error(err);
+          alert('Server error while creating account');
+        }
+      });
   }
 }
