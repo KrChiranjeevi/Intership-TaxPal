@@ -4,6 +4,9 @@
 node_modules/
 dist/
 build/
+.angular/
+.vscode/
+
 
 # ========================
 # Client (Angular/React)
@@ -11,6 +14,8 @@ build/
 client/node_modules/
 client/dist/
 client/build/
+client/.angular/
+
 
 # ========================
 # Server (Express/Node)
