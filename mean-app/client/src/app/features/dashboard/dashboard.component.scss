@@ -1,38 +1,72 @@
 // .dashboard {
 //   display: flex;
+//   height: 100vh;
 //   background: #0b1221;
 //   color: #fff;
-//   height: 100vh;
+//   font-family: 'Segoe UI', sans-serif;
 
+//   h1{
+//           color: #00d4ff;
+
+//   }
 //   .sidebar {
 //     width: 250px;
 //     background: #111b2e;
+//     display: flex;
+//     flex-direction: column;
 //     padding: 1rem;
+//     transition: left 0.3s ease;
 
 //     .logo {
-//       font-size: 1.5rem;
+//       font-size: 1.8rem;
 //       font-weight: bold;
 //       color: #00d4ff;
 //       margin-bottom: 2rem;
+//       text-align: center;
 //     }
+
+//     .hamburger{
+//     display: none;
+//     cursor: pointer;
+// }
 
 //     .menu {
 //       list-style: none;
 //       padding: 0;
+//       flex: 1;
+
 //       li {
-//         padding: 0.75rem;
+//         padding: 0.8rem 1rem;
 //         cursor: pointer;
+//         transition: 0.3s;
+//         border-radius: 6px;
+
+//         &:hover {
+//           background: #1f2b46;
+//         }
+
 //         &.active {
 //           background: #00d4ff;
 //           color: #111b2e;
-//           border-radius: 8px;
+//           font-weight: bold;
 //         }
 //       }
 //     }
 
-//     .user {
-//       margin-top: auto;
-//       padding-top: 2rem;
+//     .bottom-links {
+//       border-top: 1px solid #333;
+//       padding-top: 1rem;
+
+//       .settings,
+//       .logout {
+//         padding: 0.8rem;
+//         cursor: pointer;
+//         border-radius: 6px;
+
+//         &:hover {
+//           background: #1f2b46;
+//         }
+//       }
 //     }
 //   }
 
@@ -41,16 +75,64 @@
 //     padding: 2rem;
 //     overflow-y: auto;
 
+//     .header {
+//       display: flex;
+//       justify-content: space-between;
+//       align-items: center;
+
+//       .titles h1 {
+//         font-size: 1.8rem;
+//         margin-bottom: 3%;
+//         margin-top: 0%;
+//       }
+
+//       .titles p .highlight {
+//         color: #00d4ff;
+//         font-weight: bold;
+//       }
+
+//       .actions button {
+//         padding: 0.6rem 1.2rem;
+//         border: none;
+//         border-radius: 6px;
+//         font-weight: bold;
+//         cursor: pointer;
+//         margin-left: 0.5rem;
+//         margin-bottom: 20%;
+//       }
+
+//       .btn-income {
+//         background: #4CAF50;
+//         color: #fff;
+//       }
+
+//       .btn-expense {
+//         background: #F44336;
+//         color: #fff;
+//       }
+//     }
+
 //     .stats {
 //       display: grid;
-//       grid-template-columns: repeat(4, 1fr);
+//       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 //       gap: 1rem;
+//       margin-top: 1.5rem;
+
 //       .card {
 //         background: #1a2337;
 //         padding: 1rem;
 //         border-radius: 8px;
-//         h2 { margin: 0.5rem 0 0; }
+//         box-shadow: 8px 8px 8px rgb(54, 62, 179);
 //       }
+//     }
+
+//     .stats:hover {
+//       display: grid;
+//       grid-template-columns: repeat(auto-fit, minmax(205px, 1fr));
+//       gap: 1rem;
+//       margin-top: 1.5rem;
+//       cursor: pointer;
+
 //     }
 
 //     .charts {
@@ -58,32 +140,70 @@
 //       display: grid;
 //       grid-template-columns: 2fr 1fr;
 //       gap: 1rem;
-//       .chart {
-//         background: #1a2337;
-//         padding: 1rem;
-//         border-radius: 8px;
-//       }
+
+
+//       border-radius: 12px;
+//       padding-right: 4%;
 //     }
 
-//     .transactions {
-//       margin-top: 2rem;
-//       table {
-//         width: 100%;
-//         border-collapse: collapse;
-//         td {
-//           padding: 0.75rem;
-//           border-bottom: 1px solid #333;
-//         }
-//         .income {
-//           color: #4caf50;
-//         }
-//         .expense {
-//           color: #f44336;
-//         }
+//     .chart {
+//       background: #1a2337;
+//       box-shadow: 8px 8px 8px rgb(54, 62, 179);
+//     }
+
+//     .card {
+//       background: #1a2337;
+//       box-shadow: 8px 8px 8px rgb(54, 62, 179);
+//       border-radius: 12px;
+//       padding: 10px;
+//       box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+//       margin-bottom: 20px;
+//     }
+//       h3 {
+//         margin-bottom: 15px;
+//         text-align: center;
 //       }
+
 //     }
 //   }
-// }
+
+//       .transactions {
+//         margin-top: 2rem;
+
+//         .transaction-list .transaction {
+//           display: flex;
+//           justify-content: space-between;
+//           background: #1a2337;
+//           padding: 0.8rem 1rem;
+//           margin-bottom: 0.5rem;
+//           border-radius: 6px;
+
+//           .amount.income {
+//             color: #4CAF50;
+//           }
+
+//           .amount.expense {
+//             color: #F44336;
+//           }
+//         }
+//       }
+
+
+//   /* Responsive Sidebar */
+//   @media (max-width: 768px) {
+//     .sidebar {
+//       position: fixed;
+//       left: -250px;
+//       top: 0;
+//       bottom: 0;
+//       z-index: 1000;
+//     }
+
+//     .sidebar.open {
+//       left: 0;
+//     }
+//   }
+
 
 
 
@@ -100,14 +220,42 @@
     display: flex;
     flex-direction: column;
     padding: 1rem;
+    transition: left 0.3s ease;
+    
 
     .logo {
       font-size: 1.8rem;
       font-weight: bold;
       color: #00d4ff;
       margin-bottom: 2rem;
-      text-align: center;
+      // text-align: center;
+
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
     }
+
+
+    .close {
+      width: 20px;
+      /* size control */
+      height: 20px;
+      cursor: pointer;
+      margin-left: 8px;
+      // filter: invert(100%); /* 👈 agar icon black hai to white kar dega */
+      // transition: transform 0.2s;
+        filter: brightness(0) invert(1); /* black to white */
+
+
+    }
+
+    .close:hover {
+      transform: scale(1.1);
+    }
+
+
 
     .menu {
       list-style: none;
@@ -118,17 +266,16 @@
         padding: 0.8rem 1rem;
         cursor: pointer;
         transition: 0.3s;
+        border-radius: 6px;
 
         &:hover {
           background: #1f2b46;
-          border-radius: 6px;
         }
 
         &.active {
           background: #00d4ff;
           color: #111b2e;
           font-weight: bold;
-          border-radius: 6px;
         }
       }
     }
@@ -136,13 +283,15 @@
     .bottom-links {
       border-top: 1px solid #333;
       padding-top: 1rem;
+
       .settings,
       .logout {
         padding: 0.8rem;
         cursor: pointer;
+        border-radius: 6px;
+
         &:hover {
           background: #1f2b46;
-          border-radius: 6px;
         }
       }
     }
@@ -158,45 +307,39 @@
       justify-content: space-between;
       align-items: center;
 
-      .titles {
-        h2 {
-          margin: 0;
-          font-size: 1.8rem;
-        }
-        p {
-          margin: 0.3rem 0 0;
-          .highlight {
-            color: #00d4ff;
-            font-weight: bold;
-          }
-        }
+      .titles h2 {
+        margin: 0;
+        font-size: 1.8rem;
       }
 
-      .actions {
-        button {
-          padding: 0.6rem 1.2rem;
-          border: none;
-          border-radius: 6px;
-          font-weight: bold;
-          cursor: pointer;
-          margin-left: 0.5rem;
+      .titles p .highlight {
+        color: #00d4ff;
+        font-weight: bold;
+      }
 
-          &.income {
-            background: #4CAF50;
-            color: #fff;
-          }
+      .actions button {
+        padding: 0.6rem 1.2rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-left: 0.5rem;
+      }
 
-          &.expense {
-            background: #F44336;
-            color: #fff;
-          }
-        }
+      .btn-income {
+        background: #4CAF50;
+        color: #fff;
+      }
+
+      .btn-expense {
+        background: #F44336;
+        color: #fff;
       }
     }
 
     .stats {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 1rem;
       margin-top: 1.5rem;
 
@@ -204,10 +347,6 @@
         background: #1a2337;
         padding: 1rem;
         border-radius: 8px;
-        h3 {
-          margin-top: 0.5rem;
-          font-size: 1.4rem;
-        }
       }
     }
 
@@ -221,54 +360,43 @@
         background: #1a2337;
         padding: 1rem;
         border-radius: 8px;
-
-        h3 {
-          margin-top: 0;
-          margin-bottom: 1rem;
-          font-size: 1.2rem;
-        }
       }
     }
 
     .transactions {
       margin-top: 2rem;
 
-      h3 {
-        margin-bottom: 1rem;
-      }
+      .transaction-list .transaction {
+        display: flex;
+        justify-content: space-between;
+        background: #1a2337;
+        padding: 0.8rem 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 6px;
 
-      .transaction-list {
-        .transaction {
-          display: flex;
-          justify-content: space-between;
-          background: #1a2337;
-          padding: 0.8rem 1rem;
-          margin-bottom: 0.5rem;
-          border-radius: 6px;
+        .amount.income {
+          color: #4CAF50;
+        }
 
-          .info {
-            h4 {
-              margin: 0;
-            }
-            span {
-              font-size: 0.8rem;
-              color: #aaa;
-            }
-          }
-
-          .amount {
-            font-weight: bold;
-
-            &.income {
-              color: #4CAF50;
-            }
-
-            &.expense {
-              color: #F44336;
-            }
-          }
+        .amount.expense {
+          color: #F44336;
         }
       }
     }
+  }
+}
+
+/* Responsive Sidebar */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -250px;
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
+  }
+
+  .sidebar.open {
+    left: 0;
   }
 }
