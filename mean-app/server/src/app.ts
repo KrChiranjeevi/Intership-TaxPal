@@ -17,7 +17,6 @@ app.use(cors({ origin: 'http://localhost:4200', credentials: true }));
 app.use(express.json());
 
 // routes
-app.use('/api/transactions', transactionRoutes);
 app.use('/api/auth', userRoutes);
 app.use('/api/transactions', transactionRoutes); 
 app.use('/api/dashboard', dashboardRoutes);
