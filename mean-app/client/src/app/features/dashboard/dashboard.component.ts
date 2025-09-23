@@ -1,171 +1,104 @@
-
-// import { Component } from '@angular/core';
-// import { CommonModule } from '@angular/common';
-// import { ChartConfiguration, ChartOptions } from 'chart.js';
-// import { NgChartsModule } from 'ng2-charts';
-
-// @Component({
-//   selector: 'app-dashboard',
-//   standalone: true,
-//   imports: [CommonModule, NgChartsModule],
-//   templateUrl: './dashboard.component.html',
-//   styleUrls: ['./dashboard.component.scss']
-// })
-// export class DashboardComponent {
-//   monthlyIncome = 420;
-//   monthlyExpenses = 0;
-//   taxDue = 0;
-//   savingsRate = 100;
-
-//   // Dummy transactions
-//   transactions = [
-//     { name: 'Alex Morgan', date: 'May 8, 2024', category: 'Consulting', amount: 4320, type: 'income' },
-//     { name: 'Office Depot', date: 'May 7, 2024', category: 'Business Equipment', amount: 125.50, type: 'expense' },
-//     { name: 'Sarah Johnson', date: 'May 6, 2024', category: 'Web Development', amount: 2850, type: 'income' },
-//     { name: 'Comcast', date: 'May 5, 2024', category: 'Internet Bill', amount: 89.99, type: 'expense' },
-//   ];
-
-//   // Income vs Expenses Chart
-//   public barChartOptions: ChartOptions<'bar'> = {
-//     responsive: true,
-//     plugins: {
-//       legend: {
-//         labels: {
-//           color: '#fff'
-//         }
-//       }
-//     },
-//     scales: {
-//       x: {
-//         ticks: { color: '#fff' },
-//         grid: { color: '#333' }
-//       },
-//       y: {
-//         ticks: { color: '#fff' },
-//         grid: { color: '#333' }
-//       }
-//     }
-//   };
-
-//   public barChartData: ChartConfiguration<'bar'>['data'] = {
-//     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-//     datasets: [
-//       { data: [150, 200, 250, 300, 350, 400], label: 'Income', backgroundColor: '#00BCD4' },
-//       { data: [50, 80, 100, 150, 200, 250], label: 'Expenses', backgroundColor: '#F44336' }
-//     ]
-//   };
-
-//   // Pie Chart for Expense Breakdown
-//   public pieChartOptions: ChartOptions<'pie'> = {
-//     responsive: true,
-//     plugins: {
-//       legend: {
-//         labels: {
-//           color: '#fff'
-//         }
-//       }
-//     }
-//   };
-
-//   public pieChartData: ChartConfiguration<'pie'>['data'] = {
-//     labels: ['Rent/Mortgage', 'Business Equipment', 'Utilities', 'Food', 'Other'],
-//     datasets: [
-//       {
-//         data: [32, 28, 16, 12, 12],
-//         backgroundColor: ['#00BCD4', '#4CAF50', '#FFC107', '#E91E63', '#9C27B0']
-//       }
-//     ]
-//   };
-// }
-
-
-
-
-
-
-
-
-
-// src/app/features/dashboard/dashboard.component.ts
-import { CommonModule } from '@angular/common';
+// dashboard.component.ts
 import { Component } from '@angular/core';
-import { ChartConfiguration, ChartOptions } from 'chart.js';
+import { Router } from '@angular/router';
+import { AuthService } from '@core/services/auth.service';
+import { CommonModule } from '@angular/common';
 import { NgChartsModule } from 'ng2-charts';
-
-// ⬅️ अपने AddIncome और AddExpense standalone components import करें
-import { AddExpenseComponent } from '../transactions/add-expense/add-expense.component';
 import { AddIncomeComponent } from '../transactions/add-income/add-income.component';
+import { AddExpenseComponent } from '../transactions/add-expense/add-expense.component';
+import { TransactionService } from '@core/services/transaction.service';
+import { ChartConfiguration } from 'chart.js';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  // सारे standalone modules/components imports में डालो
   imports: [CommonModule, NgChartsModule, AddIncomeComponent, AddExpenseComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent {
-
-  // Toggle variables for forms
   showIncome = false;
   showExpense = false;
 
-  // Dummy stats
-  monthlyIncome = 420.00;
-  monthlyExpenses = 0.00;
-  estimatedTaxDue = 0.00;
-  savingsRate = 100.0;
+  monthlyIncome = 0;
+  monthlyExpenses = 0;
+  estimatedTaxDue = 0;
+  savingsRate = 0;
+  transactions: any[] = [];
 
-  // Dummy transactions
-  transactions = [
-    { name: 'Alex Morgan', date: 'May 8, 2024', category: 'Consulting', amount: 4320, type: 'income' },
-    { name: 'Office Depot', date: 'May 7, 2024', category: 'Business Equipment', amount: 125.50, type: 'expense' },
-    { name: 'Sarah Johnson', date: 'May 6, 2024', category: 'Web Development', amount: 2850, type: 'income' },
-    { name: 'Comcast', date: 'May 5, 2024', category: 'Internet Bill', amount: 89.99, type: 'expense' },
-  ];
+  public barChartOptions: ChartConfiguration['options'] = { responsive: true };
+  public barChartData: ChartConfiguration<'bar'>['data'] = { labels: ['Jan', 'Feb', 'Mar', 'Apr'], datasets: [{ data: [], label: 'Income' }, { data: [], label: 'Expense' }] };
+  public pieChartOptions: ChartConfiguration['options'] = { responsive: true };
+  public pieChartData: ChartConfiguration<'pie'>['data'] = { labels: ['Rent', 'Food', 'Travel', 'Other'], datasets: [{ data: [] }] };
 
-  // Income vs Expenses Bar Chart
-  public barChartOptions: ChartOptions<'bar'> = {
-    responsive: true,
-    plugins: {
-      legend: { labels: { color: '#fff' } }
-    },
-    scales: {
-      x: { ticks: { color: '#fff' }, grid: { color: '#333' } },
-      y: { ticks: { color: '#fff' }, grid: { color: '#333' } }
-    }
-  };
+  constructor(
+    private txService: TransactionService,
+    private authService: AuthService,
+    private router: Router
+  ) {
+    this.loadTransactions();
+  }
 
-  public barChartData: ChartConfiguration<'bar'>['data'] = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    datasets: [
-      { data: [150, 200, 250, 300, 350, 400], label: 'Income', backgroundColor: '#00BCD4' },
-      { data: [50, 80, 100, 150, 200, 250], label: 'Expenses', backgroundColor: '#F44336' }
-    ]
-  };
+  onLogout() {
+    this.authService.logout(); // clear local storage token
+    this.router.navigate(['/login']); // redirect to login page
+  }
 
-  // Pie Chart for Expense Breakdown
-  public pieChartOptions: ChartOptions<'pie'> = {
-    responsive: true,
-    plugins: { legend: { labels: { color: '#fff' } } }
-  };
+  loadTransactions() {
+    this.txService.getTransactions().subscribe({
+      next: (res: any) => {
+        this.transactions = res.data;
+        this.calculateStats();
+        this.updateCharts();
+      },
+      error: (err) => console.error('Error loading transactions', err)
+    });
+  }
 
-  public pieChartData: ChartConfiguration<'pie'>['data'] = {
-    labels: ['Rent/Mortgage', 'Business Equipment', 'Utilities', 'Food', 'Other'],
-    datasets: [{
-      data: [32, 28, 16, 12, 12],
-      backgroundColor: ['#00BCD4', '#4CAF50', '#FFC107', '#E91E63', '#9C27B0']
-    }]
-  };
+  calculateStats() {
+    this.monthlyIncome = this.transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    this.monthlyExpenses = this.transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    this.savingsRate = this.monthlyIncome ? ((this.monthlyIncome - this.monthlyExpenses) / this.monthlyIncome) * 100 : 0;
+  }
 
-  // Event handlers
+  updateCharts() {
+    const categories = ['Rent', 'Food', 'Travel', 'Other'];
+    const categoryData = categories.map(cat =>
+      this.transactions.filter(t => t.type === 'expense' && t.category === cat).reduce((sum, t) => sum + t.amount, 0)
+    );
+    this.pieChartData.datasets[0].data = categoryData;
+    this.barChartData.datasets[0].data = [this.monthlyIncome];
+    this.barChartData.datasets[1].data = [this.monthlyExpenses];
+  }
+
   onIncomeAdded(data: any) {
-    console.log('Income added', data);
-    this.showIncome = false;
+    const payload = { ...data, date: new Date(data.date).toISOString() };
+    this.txService.addIncome(payload).subscribe({
+      next: () => {
+        alert('Income added successfully');
+        this.showIncome = false;
+        this.loadTransactions();
+      },
+      error: (err) => {
+        console.error('Error adding income', err);
+        alert(err.error?.message || 'Error adding income');
+      }
+    });
   }
 
   onExpenseAdded(data: any) {
-    console.log('Expense added', data);
-    this.showExpense = false;
+    const payload = { ...data, date: new Date(data.date).toISOString() };
+    this.txService.addExpense(payload).subscribe({
+      next: () => {
+        alert('Expense added successfully');
+        this.showExpense = false;
+        this.loadTransactions();
+      },
+      error: (err) => {
+        console.error('Error adding expense', err);
+        alert(err.error?.message || 'Error adding expense');
+      }
+    });
   }
+
 }

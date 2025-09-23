@@ -11,6 +11,8 @@ build/
 client/node_modules/
 client/dist/
 client/build/
+client/.angular/
+
 
 # ========================
 # Server (Express/Node)

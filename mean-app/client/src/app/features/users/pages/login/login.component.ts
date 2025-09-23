@@ -1,9 +1,8 @@
-
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { Router } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
+import { AuthService } from '@core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -12,45 +11,35 @@ import { Router } from '@angular/router';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
-
 export class LoginComponent {
   loginForm: FormGroup;
+  loading = false;
 
-  constructor(private fb: FormBuilder, private router: Router) {
+  constructor(
+    private fb: FormBuilder,
+    private router: Router,
+    private authService: AuthService
+  ) {
     this.loginForm = this.fb.group({
-      username: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
     });
   }
 
+  onSubmit() {
+  if (!this.loginForm.valid) return alert('Please fill out all fields');
 
-// onSubmit() {
-//   if (this.loginForm.valid) {
-//     const { username, password } = this.loginForm.value;
-
-//     // Hardcoded demo credentials
-//     if (username === 'demo' && password === 'password') {
-//       alert(`Welcome, ${username}!`);
-//         console.log('navigating to dashboard');
-//       this.router.navigate(['/dashboard']);
-//     } else {
-//       alert('Invalid username or password');
-//     }
-//   } else {
-//     alert('Please fill out all fields');
-//   }
-// }
-// }
-
-onSubmit() {
-  if (this.loginForm.valid) {
-    console.log('Login Data:', this.loginForm.value);
-    alert(`Welcome, ${this.loginForm.value.username}!`);
-    this.router.navigate(['/dashboard']);   // ✅ ab chalega
-  } else {
-    alert('Please fill out all fields');
-  }
-  console.log("navigating to dashboard");
+  const { email, password } = this.loginForm.value;
+  this.authService.login({ email, password }).subscribe({
+    next: () => {
+      alert(`Welcome, ${email}!`);
+      this.router.navigate(['/dashboard']);
+    },
+    error: (err) => {
+      console.error('Login error:', err);
+      alert('Invalid email or password');
+    }
+  });
 }
 
 }

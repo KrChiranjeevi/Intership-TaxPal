@@ -6,23 +6,28 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private api = environment.apiUrl + '/users';
+  private api = environment.apiUrl + '/auth';
 
   constructor(private http: HttpClient) {}
 
-  register(data: { name: string; email: string; password: string }) {
-    return this.http.post(`${this.api}/register`, data).pipe(
-      tap((res: any) => { if (res.token) this.saveToken(res.token); })
-    );
-  }
-
   login(credentials: { email: string; password: string }) {
-    return this.http.post(`${this.api}/login`, credentials).pipe(
-      tap((res: any) => { if (res.token) this.saveToken(res.token); })
+  return this.http.post(`${this.api}/login`, credentials).pipe(
+    tap((res: any) => {
+      if (res.data?.accessToken) this.saveToken(res.data.accessToken);
+    })
+  );
+}
+
+
+  register(data: any): Observable<any> {
+    return this.http.post(`${this.api}/register`, data).pipe(
+      tap((res: any) => {
+        if (res.data?.accessToken) this.saveToken(res.data.accessToken);
+      })
     );
   }
 
   saveToken(token: string) { localStorage.setItem('token', token); }
-  getToken() { return localStorage.getItem('token'); }
+  getToken(): string | null { return localStorage.getItem('token'); }
   logout() { localStorage.removeItem('token'); }
 }
