@@ -27,11 +27,10 @@ import { AuthInterceptor } from '@core/interceptors/auth.interceptor';
     SharedModule,
     FeaturesModule,
     LayoutsModule,
-    AppComponent,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
   ],
-  //bootstrap: [AppComponent],
+  bootstrap: [AppComponent]
 })
 export class AppModule {}
