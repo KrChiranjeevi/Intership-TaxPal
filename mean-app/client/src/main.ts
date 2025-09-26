@@ -14,7 +14,7 @@
 // }).catch(err => console.error(err));
 
 
-import { bootstrapApplication } from '@angular/platform-browser';
+/*import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { AppComponent } from './app/app.component';
 // import { LoginComponent } from './app/features/users/pages/login/login.component';
@@ -62,9 +62,32 @@ bootstrapApplication(AppComponent, {
           import('./app/features/transactions/add-expense/add-expense.component').then(
             m => m.AddExpenseComponent
           )
+      },
+      {
+        path: 'budget',
+        loadComponent: () =>
+          import('./app/features/budgets/budget.component').then(
+            (m) => m.BudgetComponent
+          ),
       }
     ]),
     provideHttpClient(),
     importProvidersFrom(BrowserAnimationsModule),
+  ]
+}).catch(err => console.error(err));*/
+
+
+import { bootstrapApplication } from '@angular/platform-browser';
+import { AppComponent } from './app/app.component';
+import { provideRouter } from '@angular/router';
+import { AppRoutingModule } from './app/app-routing.module';
+import { provideHttpClient } from '@angular/common/http';
+import { importProvidersFrom } from '@angular/core';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    importProvidersFrom(AppRoutingModule, BrowserAnimationsModule),
+    provideHttpClient(),
   ]
 }).catch(err => console.error(err));
