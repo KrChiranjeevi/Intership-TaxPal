@@ -1,59 +1,82 @@
-// budget.controller.ts
-
 import type { Request, Response } from 'express';
-// Corrected import path for budget.service.ts
 import * as budgetService from './budget.service.js';
+import type { Budget } from './budget.model.js';
 
-// Handler for creating a new budget
+// Create budget
 export async function createBudget(req: Request, res: Response): Promise<void> {
-    try {
-        const { category, amount, month, description, userId } = req.body;
-        const newBudget = await budgetService.createBudget({
-            category,
-            amount: parseFloat(amount),
-            month: new Date(month),
-            description,
-            userId: parseInt(userId),
-        });
-        res.status(201).json(newBudget);
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating budget', error });
+  try {
+    const { category, amount, month, description, userId } = req.body as Partial<Budget>;
+
+    if (!userId || typeof userId !== 'string') {
+      res.status(400).json({ message: 'User ID is required and must be a string (UUID).' });
+      return;
     }
+
+    const newBudget = await budgetService.createBudget({
+      category: String(category),
+      amount: Number(amount),
+      month: new Date(String(month)),
+      description: description ?? '',
+      userId, // already string
+    });
+
+    res.status(201).json(newBudget);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error creating budget', error });
+  }
 }
 
-// Handler for getting all budgets for a user
+// Get budgets
 export async function getBudgets(req: Request, res: Response): Promise<void> {
-    try {
-        const userId = parseInt(req.query.userId as string);
-        if (!userId) {
-            res.status(400).json({ message: 'User ID is required.' });
-            return;
-        }
-        const budgets = await budgetService.getBudgetsByUserId(userId);
-        res.status(200).json(budgets);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching budgets', error });
+  try {
+    const userIdParam = req.query.userId;
+
+    if (!userIdParam || typeof userIdParam !== 'string') {
+      res.status(400).json({ message: 'User ID is required and must be a string (UUID).' });
+      return;
     }
+
+    const budgets = await budgetService.getBudgetsByUserId(userIdParam);
+    res.status(200).json(budgets);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching budgets', error });
+  }
 }
 
-// Handler for updating a budget
+// Update budget
 export async function updateBudget(req: Request, res: Response): Promise<void> {
-    try {
-        const id = parseInt(req.params.id);
-        const updatedBudget = await budgetService.updateBudget(id, req.body);
-        res.status(200).json(updatedBudget);
-    } catch (error) {
-        res.status(500).json({ message: 'Error updating budget', error });
+  try {
+    const { id } = req.params;
+
+    if (!id || typeof id !== 'string') {
+      res.status(400).json({ message: 'Budget ID is required and must be a string (UUID).' });
+      return;
     }
+
+    const updatedBudget = await budgetService.updateBudget(id, req.body as Partial<Budget>);
+    res.status(200).json(updatedBudget);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error updating budget', error });
+  }
 }
 
-// Handler for deleting a budget
+// Delete budget
 export async function deleteBudget(req: Request, res: Response): Promise<void> {
-    try {
-        const id = parseInt(req.params.id);
-        const deletedBudget = await budgetService.deleteBudget(id);
-        res.status(200).json(deletedBudget);
-    } catch (error) {
-        res.status(500).json({ message: 'Error deleting budget', error });
+  try {
+    const { id } = req.params;
+
+    if (!id || typeof id !== 'string') {
+      res.status(400).json({ message: 'Budget ID is required and must be a string (UUID).' });
+      return;
     }
+
+    const deletedBudget = await budgetService.deleteBudget(id);
+    res.status(200).json(deletedBudget);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error deleting budget', error });
+  }
 }
