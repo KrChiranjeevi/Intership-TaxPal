@@ -1,8 +1,8 @@
 // budget.controller.ts
 
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 // Corrected import path for budget.service.ts
-import * as budgetService from './budget.service';
+import * as budgetService from './budget.service.js';
 
 // Handler for creating a new budget
 export async function createBudget(req: Request, res: Response): Promise<void> {
