@@ -27,21 +27,14 @@ export class BudgetComponent implements OnInit {
   remaining = 0;
   budgetHealth = { status: 'Unknown', color: '#aaa' };
 
-  // Example: get logged-in userId from auth service or localStorage
-  userId = localStorage.getItem('userId') || '';
-
   constructor(private budgetService: BudgetService) {}
 
   ngOnInit(): void {
-    if (!this.userId) {
-      console.error('User ID not found!');
-      return;
-    }
     this.fetchBudgets();
   }
 
   fetchBudgets(): void {
-    this.budgetService.getAllBudgets(this.userId).subscribe({
+    this.budgetService.getAllBudgets().subscribe({
       next: (res: any) => {
         this.budgets = Array.isArray(res) ? res : (res?.data ?? []);
         this.recalcTotals();
@@ -85,7 +78,7 @@ export class BudgetComponent implements OnInit {
       description: this.newBudget.description ?? ''
     };
 
-    this.budgetService.createBudget(payload, this.userId).subscribe({
+    this.budgetService.createBudget(payload).subscribe({
       next: () => {
         this.showCreateForm = false;
         this.resetForm();

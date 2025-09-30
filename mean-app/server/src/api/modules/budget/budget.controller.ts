@@ -1,14 +1,15 @@
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
+import type { AuthRequest } from '../../middlewares/auth.middleware.js';
 import * as budgetService from './budget.service.js';
 import type { Budget } from './budget.model.js';
 
-// Create budget
-export async function createBudget(req: Request, res: Response): Promise<void> {
+// ✅ Create budget
+export async function createBudget(req: AuthRequest, res: Response): Promise<void> {
   try {
-    const { category, amount, month, description, userId } = req.body as Partial<Budget>;
+    const { category, amount, month, description } = req.body as Partial<Budget>;
 
-    if (!userId || typeof userId !== 'string') {
-      res.status(400).json({ message: 'User ID is required and must be a string (UUID).' });
+    if (!req.user?.id) {
+      res.status(400).json({ message: 'User ID is missing from token' });
       return;
     }
 
@@ -17,7 +18,7 @@ export async function createBudget(req: Request, res: Response): Promise<void> {
       amount: Number(amount),
       month: new Date(String(month)),
       description: description ?? '',
-      userId, // already string
+      userId: req.user.id, // ✅ taken from token
     });
 
     res.status(201).json(newBudget);
@@ -27,17 +28,15 @@ export async function createBudget(req: Request, res: Response): Promise<void> {
   }
 }
 
-// Get budgets
-export async function getBudgets(req: Request, res: Response): Promise<void> {
+// ✅ Get budgets (by logged-in user)
+export async function getBudgets(req: AuthRequest, res: Response): Promise<void> {
   try {
-    const userIdParam = req.query.userId;
-
-    if (!userIdParam || typeof userIdParam !== 'string') {
-      res.status(400).json({ message: 'User ID is required and must be a string (UUID).' });
+    if (!req.user?.id) {
+      res.status(400).json({ message: 'User ID is missing from token' });
       return;
     }
 
-    const budgets = await budgetService.getBudgetsByUserId(userIdParam);
+    const budgets = await budgetService.getBudgetsByUserId(req.user.id);
     res.status(200).json(budgets);
   } catch (error) {
     console.error(error);
@@ -45,8 +44,8 @@ export async function getBudgets(req: Request, res: Response): Promise<void> {
   }
 }
 
-// Update budget
-export async function updateBudget(req: Request, res: Response): Promise<void> {
+// ✅ Update budget
+export async function updateBudget(req: AuthRequest, res: Response): Promise<void> {
   try {
     const { id } = req.params;
 
@@ -63,8 +62,8 @@ export async function updateBudget(req: Request, res: Response): Promise<void> {
   }
 }
 
-// Delete budget
-export async function deleteBudget(req: Request, res: Response): Promise<void> {
+// ✅ Delete budget
+export async function deleteBudget(req: AuthRequest, res: Response): Promise<void> {
   try {
     const { id } = req.params;
 
