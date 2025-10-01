@@ -19,8 +19,7 @@ export class BudgetComponent implements OnInit {
     category: '',
     amount: null as number | null,
     month: '', // will store 'YYYY-MM' (input type="month")
-    description: '',
-    spent: 0
+    description: ''
   };
 
   totalBudget = 0;
@@ -37,7 +36,6 @@ export class BudgetComponent implements OnInit {
   fetchBudgets(): void {
     this.budgetService.getAllBudgets().subscribe({
       next: (res: any) => {
-        // support APIs that return either { success: true, data: [...] } or a bare array
         this.budgets = Array.isArray(res) ? res : (res?.data ?? []);
         this.recalcTotals();
       },
@@ -63,30 +61,25 @@ export class BudgetComponent implements OnInit {
       category: '',
       amount: null,
       month: '',
-      description: '',
-      spent: 0
+      description: ''
     };
   }
 
   saveBudget() {
-    // basic validation
     if (!this.newBudget.category || !this.newBudget.amount || !this.newBudget.month) {
       alert('Please fill Category, Amount and Month.');
       return;
     }
 
-    // prepare payload - make sure backend expects this shape
     const payload = {
       category: this.newBudget.category,
       amount: Number(this.newBudget.amount),
-      month: this.newBudget.month, // e.g. 2025-09
-      description: this.newBudget.description ?? '',
-      spent: 0
+      month: this.newBudget.month + '-01', // convert 'YYYY-MM' to full date string
+      description: this.newBudget.description ?? ''
     };
 
     this.budgetService.createBudget(payload).subscribe({
-      next: (res: any) => {
-        // if API returns created resource or array, refresh
+      next: () => {
         this.showCreateForm = false;
         this.resetForm();
         this.fetchBudgets();
