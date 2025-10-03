@@ -1,2 +1,52 @@
-<h3>Notifications</h3>
-<p>Set your preferences for system alerts and notifications.</p>
+<div class="notifications-card">
+  <h3><span class="icon">🔔</span> Notification Preferences</h3>
+  <form>
+    <div class="form-row">
+
+      <div class="form-group full-width toggle-group">
+        <div class="label-description">
+          <label for="emailNotifications">Email Notifications</label>
+          <p class="description-text">Receive email updates about your account</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="emailNotifications" />
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <div class="form-group full-width toggle-group">
+        <div class="label-description">
+          <label for="transactionAlerts">Transaction Alerts</label>
+          <p class="description-text">Get notified when new transactions are added</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="transactionAlerts" />
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <div class="form-group full-width toggle-group">
+        <div class="label-description">
+          <label for="budgetWarnings">Budget Warnings</label>
+          <p class="description-text">Alert when approaching budget limits</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="budgetWarnings" checked />
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <div class="form-group full-width toggle-group">
+        <div class="label-description">
+          <label for="taxReminders">Tax Reminders</label>
+          <p class="description-text">Reminders for tax deadlines and updates</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="taxReminders" checked />
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+    </div>
+  </form>
+</div>

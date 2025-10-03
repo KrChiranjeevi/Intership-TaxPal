@@ -8,57 +8,128 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <h2>{{ data.mode === 'edit' ? 'Edit Category' : 'Add Category' }}</h2>
-    <div>
-      <input [(ngModel)]="categoryName" placeholder="Enter category name" class="input-box"/>
-    </div>
-    <div class="dialog-actions">
-      <button (click)="onCancel()">Cancel</button>
-      <button (click)="onSave()">{{ data.mode === 'edit' ? 'Save' : 'Add' }}</button>
+    <div class="dialog-container">
+      <h2>{{ data.mode === 'edit' ? 'Edit' : 'Add New' }} {{ data.type | titlecase }} Category</h2>
+
+      <div class="form-group">
+        <label for="categoryName">Category Name</label>
+        <input
+          id="categoryName"
+          [(ngModel)]="categoryName"
+          placeholder="Enter category name"
+          class="input-box"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Category Color</label>
+        <div class="color-options">
+          <span
+            *ngFor="let color of predefinedColors"
+            class="color-circle"
+            [ngStyle]="{'background-color': color, 'border': categoryColor === color ? '2px solid #fff' : 'none'}"
+            (click)="categoryColor = color"
+          ></span>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button (click)="onCancel()">Cancel</button>
+        <button (click)="onSave()">{{ data.mode === 'edit' ? 'Save' : 'Add' }}</button>
+      </div>
     </div>
   `,
   styles: [`
+    .dialog-container {
+      padding: 25px;
+      width: 400px;
+      background: #1f2a38;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
     h2 {
-      font-size: 18px;
+      font-size: 20px;
       margin-bottom: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    label {
+      font-weight: 500;
+      color: #ccc;
+    }
+
+    .input-box {
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      background: #2d3d52;
       color: #fff;
     }
-    .input-box {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      background: #2d3d52;
-      color: white;
-      outline: none;
+
+    .color-options {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
     }
+
+    .color-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.2s, border 0.2s;
+    }
+
+    .color-circle:hover {
+      transform: scale(1.1);
+    }
+
     .dialog-actions {
-      margin-top: 16px;
       display: flex;
       justify-content: flex-end;
       gap: 10px;
+      margin-top: 10px;
     }
+
     button {
-      background: #2563eb;
-      border: none;
-      padding: 6px 14px;
+      padding: 6px 16px;
       border-radius: 6px;
-      color: #fff;
+      border: none;
       cursor: pointer;
+      font-weight: 500;
     }
+
     button:first-child {
       background: #6b6969;
+      color: #fff;
+    }
+
+    button:last-child {
+      background: #2563eb;
+      color: #fff;
     }
   `]
 })
 export class CategoryDialogComponent {
   categoryName: string = '';
+  categoryColor: string = '#5c7ad5';
+  predefinedColors: string[] = ['#2563eb', '#e74c3c', '#27ae60', '#f39c12', '#9b59b6', '#1abc9c'];
 
   constructor(
     public dialogRef: MatDialogRef<CategoryDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {
     if (data?.name) this.categoryName = data.name;
+    if (data?.color) this.categoryColor = data.color;
   }
 
   onCancel() {
@@ -67,7 +138,7 @@ export class CategoryDialogComponent {
 
   onSave() {
     if (this.categoryName.trim()) {
-      this.dialogRef.close(this.categoryName.trim());
+      this.dialogRef.close({ name: this.categoryName.trim(), color: this.categoryColor });
     }
   }
 }
@@ -113,26 +184,32 @@ export class CategoriesComponent {
 
   addCategory() {
     const dialogRef = this.dialog.open(CategoryDialogComponent, {
-      width: '300px',
-      data: { mode: 'add' }
+      width: '450px',
+      data: { mode: 'add', type: this.activeTab }
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.categories.push({ name: result, color: '#5c7ad5' });
+        this.categories.push({ name: result.name, color: result.color });
       }
     });
   }
 
   editCategory(index: number) {
     const dialogRef = this.dialog.open(CategoryDialogComponent, {
-      width: '300px',
-      data: { mode: 'edit', name: this.categories[index].name }
+      width: '450px',
+      data: { 
+        mode: 'edit', 
+        type: this.activeTab, 
+        name: this.categories[index].name, 
+        color: this.categories[index].color 
+      }
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.categories[index].name = result;
+        this.categories[index].name = result.name;
+        this.categories[index].color = result.color;
       }
     });
   }
