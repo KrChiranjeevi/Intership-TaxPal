@@ -1,3 +1,4 @@
+/// <reference types="jasmine" />
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NotificationsComponent } from './notifications.component';
 
@@ -7,7 +8,7 @@ describe('NotificationsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [NotificationsComponent]
+      imports: [NotificationsComponent],
     }).compileComponents();
 
     fixture = TestBed.createComponent(NotificationsComponent);
@@ -16,15 +17,6 @@ describe('NotificationsComponent', () => {
   });
 
   it('should create', () => {
-    expect(component).toBeTruthy();
+    (expect(component) as any).toBeTruthy();
   });
 });
-
-function beforeEach(arg0: () => Promise<void>) {
-    throw new Error('Function not implemented.');
-}
-
-function expect(component: NotificationsComponent) {
-    throw new Error('Function not implemented.');
-}
-

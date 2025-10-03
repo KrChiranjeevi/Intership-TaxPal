@@ -1,5 +1,8 @@
+/// <reference types="jasmine" />
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SettingsComponent } from './settings.component';
+import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute } from '@angular/router';
 
 describe('SettingsComponent', () => {
   let component: SettingsComponent;
@@ -7,7 +10,19 @@ describe('SettingsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [SettingsComponent]
+      imports: [
+        SettingsComponent,     // ✅ standalone import
+        RouterTestingModule    // ✅ provides ActivatedRoute + Router
+      ],
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { params: {} },
+            paramMap: { get: () => null }
+          }
+        }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(SettingsComponent);
@@ -16,15 +31,6 @@ describe('SettingsComponent', () => {
   });
 
   it('should create', () => {
-    expect(component).toBeTruthy();
+    (expect(component) as any).toBeTruthy();
   });
 });
-
-function beforeEach(arg0: () => Promise<void>) {
-    throw new Error('Function not implemented.');
-}
-
-function expect(component: SettingsComponent) {
-    throw new Error('Function not implemented.');
-}
-

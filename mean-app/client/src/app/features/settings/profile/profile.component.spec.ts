@@ -1,3 +1,4 @@
+/// <reference types="jasmine" />
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileComponent } from './profile.component';
 
@@ -7,7 +8,7 @@ describe('ProfileComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ProfileComponent]
+      imports: [ProfileComponent],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProfileComponent);
@@ -16,15 +17,6 @@ describe('ProfileComponent', () => {
   });
 
   it('should create', () => {
-    expect(component).toBeTruthy();
+    (expect(component) as any).toBeTruthy();
   });
 });
-
-function beforeEach(arg0: () => Promise<void>) {
-    throw new Error('Function not implemented.');
-}
-
-function expect(component: ProfileComponent) {
-    throw new Error('Function not implemented.');
-}
-

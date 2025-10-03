@@ -1,5 +1,7 @@
+/// <reference types="jasmine" />
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SecurityComponent } from './security.component';
+import { SettingsComponent } from '../settings.component';
 
 describe('SecurityComponent', () => {
   let component: SecurityComponent;
@@ -7,7 +9,7 @@ describe('SecurityComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [SecurityComponent]
+      imports: [SecurityComponent],
     }).compileComponents();
 
     fixture = TestBed.createComponent(SecurityComponent);
@@ -16,15 +18,6 @@ describe('SecurityComponent', () => {
   });
 
   it('should create', () => {
-    expect(component).toBeTruthy();
+    (expect(component) as any).toBeTruthy();
   });
 });
-
-function beforeEach(arg0: () => Promise<void>) {
-    throw new Error('Function not implemented.');
-}
-
-function expect(component: SecurityComponent) {
-    throw new Error('Function not implemented.');
-}
-
