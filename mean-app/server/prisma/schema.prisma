@@ -1,3 +1,5 @@
+// prisma/schema.prisma
+
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -11,29 +13,26 @@ datasource db {
 }
 
 model User {
-  id              String          @id @default(uuid())
-  username        String?         @unique
+  id              String         @id @default(uuid())
+  username        String?        @unique
   name            String
-  email           String          @unique
+  email           String         @unique
   password        String
   country         String?
   incomeBracket   String?
-  createdAt       DateTime        @default(now())
-  
-  // Relations
+  createdAt       DateTime       @default(now())
   refreshTokens   RefreshToken[]
   transactions    Transaction[]
-  budgets         Budget[]
-  categories      Category[]      // New relation: User can have many Categories
+  budgets         Budget[]       // This line links the User model to the new Budget model.
 }
 
 model RefreshToken {
-  id          String   @id @default(uuid())
-  tokenHash   String
-  user        User     @relation(fields: [userId], references: [id])
-  userId      String
-  expiresAt   DateTime
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid())
+  tokenHash String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 model Transaction {
@@ -52,6 +51,7 @@ model Transaction {
   @@index([userId])
 }
 
+// This is the new Budget model that aligns with your existing schema.
 model Budget {
   id          String   @id @default(uuid())
   category    String
@@ -64,23 +64,4 @@ model Budget {
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
-}
-
-// This is the new Category model for user-defined income/expense settings.
-model Category {
-  id          String   @id @default(uuid())
-  name        String   @db.VarChar(100)
-  type        String   @db.VarChar(10) // 'Expense' or 'Income'
-  userId      String   // Foreign key linking to the User (using String for UUID)
-  
-  // Relations
-  user        User     @relation(fields: [userId], references: [id])
-  
-  // Timestamps
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Constraint: A user cannot have two categories with the exact same name
-  @@unique([userId, name])
-  @@map("categories")
 }
