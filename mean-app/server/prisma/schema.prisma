@@ -13,18 +13,19 @@ datasource db {
 }
 
 model User {
-  id              String         @id @default(uuid())
-  username        String?        @unique
-  name            String
-  email           String         @unique
-  password        String
-  country         String?
-  incomeBracket   String?
-  createdAt       DateTime       @default(now())
-  refreshTokens   RefreshToken[]
-  transactions    Transaction[]
-  budgets         Budget[]       // This line links the User model to the new Budget model.
-  categories      Category[] 
+  id                   String                   @id @default(uuid())
+  username             String?                  @unique
+  name                 String
+  email                String                   @unique
+  password             String
+  country              String?
+  incomeBracket        String?
+  createdAt            DateTime                 @default(now())
+  refreshTokens        RefreshToken[]
+  transactions         Transaction[]
+  budgets              Budget[] // This line links the User model to the new Budget model.
+  categories           Category[]
+  notificationSettings UserNotificationSetting?
 }
 
 model RefreshToken {
@@ -40,12 +41,12 @@ model Transaction {
   id          String   @id @default(uuid())
   user        User     @relation(fields: [userId], references: [id])
   userId      String
-  type        String   // "income" | "expense"
+  type        String // "income" | "expense"
   category    String?
   description String
   amount      Float
   date        DateTime
-  notes       String?  // optional (free text)
+  notes       String? // optional (free text)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -70,11 +71,23 @@ model Budget {
 model Category {
   id        String   @id @default(uuid())
   name      String
-  type      String   // "income" | "expense"
+  type      String // "income" | "expense"
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+}
+
+model UserNotificationSetting {
+  id                 String   @id @default(uuid())
+  userId             String   @unique // <--- must be unique for one-to-one
+  emailNotifications Boolean  @default(true)
+  transactionAlerts  Boolean  @default(true)
+  budgetWarnings     Boolean  @default(true)
+  taxReminders       Boolean  @default(true)
+  user               User     @relation(fields: [userId], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }

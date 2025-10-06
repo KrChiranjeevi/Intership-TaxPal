@@ -7,6 +7,7 @@ import userRoutes from './api/modules/user/user.routes.js';
 import transactionRoutes from './api/modules/transactions/transaction.routes.js';
 import dashboardRoutes from './api/modules/dashboard/dashboard.routes.js';
 import budgetRoutes from './api/modules/budget/budget.routes.js';
+import categoriesRouter from './api/modules/categories/categories.routes.js';
 
 dotenv.config();
 
@@ -21,7 +22,7 @@ app.use('/api/auth', userRoutes);
 app.use('/api/transactions', transactionRoutes); 
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/budgets', budgetRoutes);
-
+app.use('/api/categories', categoriesRouter);
 // test route
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'Server is running 🚀' });

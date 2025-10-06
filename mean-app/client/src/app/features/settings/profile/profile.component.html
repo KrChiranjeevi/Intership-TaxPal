@@ -1,32 +1,34 @@
 <div class="profile-card">
   <h3><span class="icon">👤</span> Profile Information</h3>
 
-  <form>
+  <form (ngSubmit)="saveChanges()">
     <div class="form-row">
       <div class="form-group">
         <label for="firstName">First Name</label>
-        <input type="text" id="firstName" placeholder="John" />
+        <input type="text" id="firstName" [(ngModel)]="user.name" name="name" />
       </div>
       <div class="form-group">
         <label for="lastName">Last Name</label>
-        <input type="text" id="lastName" placeholder="Doe" />
+        <input type="text" id="lastName" [(ngModel)]="user.username" name="username" />
       </div>
     </div>
 
     <div class="form-row">
       <div class="form-group full-width">
         <label for="email">Email</label>
-        <input type="email" id="email" placeholder="john.doe@example.com" />
+        <input type="email" id="email" [(ngModel)]="user.email" name="email" />
       </div>
     </div>
 
     <div class="form-row">
       <div class="form-group full-width">
         <label for="phone">Phone Number</label>
-        <input type="tel" id="phone" placeholder="+91 123-4567-890" />
+        <input type="tel" id="phone" [(ngModel)]="user.phone" name="phone" />
       </div>
     </div>
 
     <button type="submit" class="save-btn">Save Changes</button>
   </form>
+
+  <p *ngIf="message">{{ message }}</p>
 </div>
