@@ -1,7 +1,8 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialog, MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { FormsModule } from '@angular/forms'; 
+import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-category-dialog',
@@ -143,36 +144,30 @@ export class CategoryDialogComponent {
   }
 }
 
+interface Category {
+  id: string;
+  name: string;
+  type: 'expenses' | 'income';
+  color: string;
+}
+
 @Component({
   selector: 'app-categories',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, CategoryDialogComponent],
+  imports: [CommonModule, MatDialogModule, FormsModule, HttpClientModule, CategoryDialogComponent],
   templateUrl: './categories.component.html',
   styleUrls: ['./categories.component.scss']
 })
-export class CategoriesComponent {
+export class CategoriesComponent implements OnInit {
   activeTab: 'expenses' | 'income' = 'expenses';
+  expenseCategories: Category[] = [];
+  incomeCategories: Category[] = [];
 
-  expenseCategories = [
-    { name: 'Business Expenses', color: '#e74c3c' },
-    { name: 'Office Rent', color: '#3498db' },
-    { name: 'Software Subscriptions', color: '#9b59b6' },
-    { name: 'Professional Development', color: '#27ae60' },
-    { name: 'Marketing', color: '#f39c12' },
-    { name: 'Travel', color: '#e67e22' },
-    { name: 'Meals & Entertainment', color: '#8e44ad' },
-    { name: 'Utilities', color: '#2ecc71' }
-  ];
+  constructor(private dialog: MatDialog, private http: HttpClient) {}
 
-  incomeCategories = [
-    { name: 'Salary', color: '#1abc9c' },
-    { name: 'Freelance Work', color: '#3498db' },
-    { name: 'Investment Returns', color: '#9b59b6' },
-    { name: 'Business Revenue', color: '#e67e22' },
-    { name: 'Rental Income', color: '#f39c12' }
-  ];
-
-  constructor(private dialog: MatDialog) {}
+  ngOnInit() {
+    this.loadCategories();
+  }
 
   switchTab(tab: 'expenses' | 'income') {
     this.activeTab = tab;
@@ -180,6 +175,16 @@ export class CategoriesComponent {
 
   get categories() {
     return this.activeTab === 'expenses' ? this.expenseCategories : this.incomeCategories;
+  }
+
+  loadCategories() {
+    this.http.get<{ success: boolean; data: Category[] }>('/api/categories')
+      .subscribe(res => {
+        if (res.success) {
+          this.expenseCategories = res.data.filter(c => c.type === 'expenses');
+          this.incomeCategories = res.data.filter(c => c.type === 'income');
+        }
+      });
   }
 
   addCategory() {
@@ -190,34 +195,49 @@ export class CategoriesComponent {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.categories.push({ name: result.name, color: result.color });
+        const payload = { name: result.name, color: result.color, type: this.activeTab };
+        this.http.post<{ success: boolean; data: Category }>('/api/categories', payload)
+          .subscribe(res => {
+            if (res.success) {
+              if (this.activeTab === 'expenses') this.expenseCategories.push(res.data);
+              else this.incomeCategories.push(res.data);
+            }
+          });
       }
     });
   }
 
   editCategory(index: number) {
+    const category = this.categories[index];
     const dialogRef = this.dialog.open(CategoryDialogComponent, {
       width: '450px',
-      data: { 
-        mode: 'edit', 
-        type: this.activeTab, 
-        name: this.categories[index].name, 
-        color: this.categories[index].color 
-      }
+      data: { mode: 'edit', type: this.activeTab, name: category.name, color: category.color }
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.categories[index].name = result.name;
-        this.categories[index].color = result.color;
+      if (result && category.id) {
+        const payload = { name: result.name, color: result.color };
+        this.http.patch<{ success: boolean }>('/api/categories/' + category.id, payload)
+          .subscribe(res => {
+            if (res.success) {
+              category.name = result.name;
+              category.color = result.color;
+            }
+          });
       }
     });
   }
 
   deleteCategory(index: number) {
-    const confirmDelete = confirm(`Delete "${this.categories[index].name}"?`);
-    if (confirmDelete) {
-      this.categories.splice(index, 1);
+    const category = this.categories[index];
+    const confirmDelete = confirm(`Delete "${category.name}"?`);
+    if (confirmDelete && category.id) {
+      this.http.delete<{ success: boolean }>('/api/categories/' + category.id)
+        .subscribe(res => {
+          if (res.success) {
+            this.categories.splice(index, 1);
+          }
+        });
     }
   }
 }
