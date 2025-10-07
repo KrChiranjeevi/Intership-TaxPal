@@ -11,6 +11,8 @@ build/
 client/node_modules/
 client/dist/
 client/build/
+client/.angular/
+
 
 # ========================
 # Server (Express/Node)
@@ -37,3 +39,7 @@ yarn-error.log*
 # ========================
 .DS_Store
 Thumbs.db
+
+
+.angular/
+*.tsbuildinfo

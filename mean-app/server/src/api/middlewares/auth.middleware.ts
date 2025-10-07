@@ -1,34 +1,23 @@
-// src/middlewares/auth.middleware.ts
 import type { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import { verifyToken } from '../../utils/jwt.js';
 
 export interface AuthRequest extends Request {
-  userId?: string; // attach userId from verified token
+  user?: { id: string };
 }
 
 export function authMiddleware(req: AuthRequest, res: Response, next: NextFunction) {
   try {
     const authHeader = req.headers['authorization'];
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader?.startsWith('Bearer '))
       return res.status(401).json({ success: false, message: 'No token provided' });
-    }
 
     const token = authHeader.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ success: false, message: 'Invalid token format' });
-    }
+    if (!token) return res.status(401).json({ success: false, message: 'Invalid token' });
 
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      throw new Error('JWT_SECRET is not defined in environment variables');
-    }
+    const decoded = verifyToken(token);
+    if (!decoded) return res.status(401).json({ success: false, message: 'Invalid or expired token' });
 
-    // Verify token
-    const decoded = jwt.verify(token, secret) as { userId: string };
-
-    // Attach userId to request for protected routes
-    req.userId = decoded.userId;
+    req.user = { id: decoded.userId };
     next();
   } catch (err) {
     console.error(err);
