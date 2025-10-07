@@ -1,36 +1,36 @@
-// src/modules/notifications/notifications.controller.ts
-import type { Response } from 'express';
-import type { AuthRequest } from '../../middlewares/auth.middleware.js';
-import * as notificationsService from './notifications.service.js';
-import { NotificationSettingsSchema } from './notifications.model.js';
+// src/api/modules/notifications/notifications.controller.ts
+import type { Response } from "express";
+import type { AuthRequest } from "../../middlewares/auth.middleware.js";
+import * as notificationsService from "./notifications.service.js";
 
-export async function getSettings(req: AuthRequest, res: Response) {
+export const getNotificationSettings = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!userId)
+      return res.status(401).json({ success: false, message: "Unauthorized" });
 
     const settings = await notificationsService.getNotificationSettings(userId);
-    res.json({ success: true, data: settings });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(200).json({ success: true, data: settings });
+  } catch (err: any) {
+    console.error("Error fetching notification settings:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
-}
+};
 
-export async function updateSettings(req: AuthRequest, res: Response) {
+export const updateNotificationSettings = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    if (!userId)
+      return res.status(401).json({ success: false, message: "Unauthorized" });
 
-    const parsed = NotificationSettingsSchema.partial().safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({ success: false, message: 'Invalid data', errors: parsed.error.format() });
-    }
+    const updatedSettings = await notificationsService.updateNotificationSettings(
+      userId,
+      req.body
+    );
 
-    const updated = await notificationsService.updateNotificationSettings(userId, parsed.data);
-    res.json({ success: true, data: updated });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(200).json({ success: true, data: updatedSettings });
+  } catch (err: any) {
+    console.error("Error updating notification settings:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
-}
+};

@@ -1,34 +1,21 @@
-// src/modules/notifications/notifications.service.ts
-import { prisma } from '../../../config/prisma.client.js';
-import type { NotificationSettingsDto } from './notifications.model.js';
+// src/api/modules/notifications/notifications.service.ts
+import {
+  getNotificationSettings as getSettingsModel,
+  updateNotificationSettings as updateSettingsModel,
+  type NotificationSettingsInput,
+} from "./notifications.model.js";
 
 // Get settings for a user
-export async function getNotificationSettings(userId: string) {
-  //return prisma.userNotificationSetting.findUnique({
-    //where: { userId },
-  //});
-}
-
-// Create settings for a user (only if none exists)
-export async function createNotificationSettings(
-  userId: string,
-  data: NotificationSettingsDto
-) {
-  /*return prisma.userNotificationSetting.create({
-    data: {
-      userId,
-      ...data,
-    },
-  });*/
-}
+export const getNotificationSettings = async (userId: string) => {
+  if (!userId) throw new Error("User ID is required");
+  return await getSettingsModel(userId);
+};
 
 // Update settings for a user
-export async function updateNotificationSettings(
+export const updateNotificationSettings = async (
   userId: string,
-  data: Partial<NotificationSettingsDto>
-) {
-  /*return prisma.userNotificationSetting.update({
-    where: { userId },
-    data,
-  });*/
-}
+  data: NotificationSettingsInput
+) => {
+  if (!userId) throw new Error("User ID is required");
+  return await updateSettingsModel(userId, data);
+};

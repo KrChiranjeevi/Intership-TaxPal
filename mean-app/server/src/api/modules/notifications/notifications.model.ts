@@ -1,11 +1,57 @@
-// src/modules/notifications/notifications.model.ts
-import { z } from 'zod';
+// src/api/modules/notifications/notifications.model.ts
+import { PrismaClient } from "@prisma/client";
 
-export const NotificationSettingsSchema = z.object({
-  emailNotifications: z.boolean().optional(),
-  transactionAlerts: z.boolean().optional(),
-  budgetWarnings: z.boolean().optional(),
-  taxReminders: z.boolean().optional(),
-});
+const prisma = new PrismaClient();
 
-export type NotificationSettingsDto = z.infer<typeof NotificationSettingsSchema>;
+export interface NotificationSettingsInput {
+  emailNotifications?: boolean;
+  transactionAlerts?: boolean;
+  budgetWarnings?: boolean;
+  taxReminders?: boolean;
+}
+
+// Get user notification settings
+export const getNotificationSettings = async (userId: string) => {
+  let settings = await prisma.userNotificationSetting.findUnique({
+    where: { userId },
+  });
+
+  // If no settings found, create defaults automatically
+  if (!settings) {
+    settings = await prisma.userNotificationSetting.create({
+      data: {
+        userId,
+        emailNotifications: true,
+        transactionAlerts: true,
+        budgetWarnings: true,
+        taxReminders: true,
+      },
+    });
+  }
+
+  return settings;
+};
+
+// Update or create user notification settings
+export const updateNotificationSettings = async (
+  userId: string,
+  data: NotificationSettingsInput
+) => {
+  const existing = await prisma.userNotificationSetting.findUnique({
+    where: { userId },
+  });
+
+  if (existing) {
+    return await prisma.userNotificationSetting.update({
+      where: { userId },
+      data,
+    });
+  }
+
+  return await prisma.userNotificationSetting.create({
+    data: {
+      userId,
+      ...data,
+    },
+  });
+};

@@ -20,6 +20,7 @@ model User {
   password             String
   country              String?
   incomeBracket        String?
+  twoFactorEnabled     Boolean                  @default(false)
   createdAt            DateTime                 @default(now())
   refreshTokens        RefreshToken[]
   transactions         Transaction[]
