@@ -3,13 +3,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface Category {
   id?: string;
   name: string;
   type: 'income' | 'expense';
-  color?: string; // optional for category color
+  color?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -23,28 +24,38 @@ export class CategoriesService {
     return {
       headers: new HttpHeaders({
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        Authorization: token ? `Bearer ${token}` : '',
       }),
     };
   }
 
-  // Get all categories
   getCategories(): Observable<Category[]> {
-    return this.http.get<Category[]>(this.apiUrl, this.getAuthHeaders());
+    return this.http.get<{ success: boolean; data: Category[] }>(
+      this.apiUrl,
+      this.getAuthHeaders()
+    ).pipe(map(res => res.data));
   }
 
-  // Create category
   createCategory(category: Category): Observable<Category> {
-    return this.http.post<Category>(this.apiUrl, category, this.getAuthHeaders());
+    return this.http.post<{ success: boolean; data: Category }>(
+      this.apiUrl,
+      category,
+      this.getAuthHeaders()
+    ).pipe(map(res => res.data));
   }
 
-  // Update category
   updateCategory(id: string, category: Partial<Category>): Observable<Category> {
-    return this.http.put<Category>(`${this.apiUrl}/${id}`, category, this.getAuthHeaders());
+    return this.http.put<{ success: boolean; data: Category }>(
+      `${this.apiUrl}/${id}`,
+      category,
+      this.getAuthHeaders()
+    ).pipe(map(res => res.data));
   }
 
-  // Delete category
   deleteCategory(id: string): Observable<{ message: string }> {
-    return this.http.delete<{ message: string }>(`${this.apiUrl}/${id}`, this.getAuthHeaders());
+    return this.http.delete<{ success: boolean; message: string }>(
+      `${this.apiUrl}/${id}`,
+      this.getAuthHeaders()
+    );
   }
 }
