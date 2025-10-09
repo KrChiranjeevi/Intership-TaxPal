@@ -115,24 +115,31 @@
     </section>
 
     <!-- Charts Section -->
-    <section class="charts">
-      <div class="chart">
-        <h3>Income vs Expenses</h3>
-        <canvas baseChart
-                [data]="barChartData"
-                [options]="barChartOptions"
-                chartType="bar">
-        </canvas>
-      </div>
-      <div class="chart">
-        <h3>Expense Breakdown</h3>
-        <canvas baseChart
-                [data]="pieChartData"
-                [options]="pieChartOptions"
-                chartType="pie">
-        </canvas>
-      </div>
-    </section>
+<section class="charts grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+  <!-- Bar Chart: Income vs Expenses -->
+  <div class="chart card shadow p-4 bg-white rounded-2xl">
+    <h3 class="text-lg font-semibold mb-3 text-gray-700">Income vs Expenses (Monthly)</h3>
+    <canvas
+      baseChart
+      #barChart
+      [data]="barChartData"
+      [options]="barChartOptions"
+      chartType="bar">
+    </canvas>
+  </div>
+
+  <!-- Pie Chart: Expense Breakdown -->
+  <div class="chart card shadow p-4 bg-white rounded-2xl">
+    <h3 class="text-lg font-semibold mb-3 text-gray-700">Expense Breakdown</h3>
+    <canvas
+      baseChart
+      #pieChart
+      [data]="pieChartData"
+      [options]="pieChartOptions"
+      chartType="pie">
+    </canvas>
+  </div>
+</section>
 
     <!-- Transactions Section -->
     <section class="transactions">
