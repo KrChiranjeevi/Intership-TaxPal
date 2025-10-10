@@ -1,15 +1,22 @@
 import { Router } from 'express';
-import * as taxController from './taxestimator.controller.js';
+import * as taxController from './taxEstimator.controller.js';
 import { authMiddleware } from '../../middlewares/auth.middleware.js';
 
 const router = Router();
 
-// The tax estimator route requires authentication
+// Public route to perform a quick calculation
+router.post('/calculate', taxController.calculateTaxHandler);
+
+// All subsequent routes require a user to be authenticated
 router.use(authMiddleware);
 
-// Defines the endpoint to get the tax estimation
-// Method: GET
-// Endpoint: /api/tax/estimate
-router.get('/estimate', taxController.getTaxEstimate);
+// Save a new tax estimate
+router.post('/save', taxController.saveTaxEstimateHandler);
+
+// Get all estimates for the logged-in user
+router.get('/user', taxController.getUserTaxEstimatesHandler);
+
+// Delete a specific tax estimate by its ID
+router.delete('/:id', taxController.deleteTaxEstimateHandler);
 
 export default router;

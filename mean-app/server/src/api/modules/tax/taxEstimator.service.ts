@@ -1,84 +1,87 @@
 import { PrismaClient } from '@prisma/client';
+import type { TaxEstimate, TaxEstimateDto } from './taxEstimator.model.js';
 
 const prisma = new PrismaClient();
 
 /**
- * Calculates the total income for a user within the current financial year.
- * @param userId - The ID of the user.
- * @returns The total income.
+ * Performs a non-persistent tax calculation based on the provided data.
+ * @param data - The input data for the tax calculation.
+ * @returns The calculated tax details.
  */
-async function getTotalIncome(userId: string): Promise<number> {
-  // Determine the start and end of the current financial year (April 1 to March 31)
-  const now = new Date();
-  const currentMonth = now.getMonth(); // 0 = January, 11 = December
-  const currentYear = now.getFullYear();
+export function calculateTax(data: TaxEstimateDto) {
+  const totalDeductions =
+    (data.businessExpenses ?? 0) +
+    (data.retirement ?? 0) +
+    (data.healthInsurance ?? 0) +
+    (data.homeOffice ?? 0) +
+    (data.additionalDeductions ?? 0);
 
-  let financialYearStart: Date;
-  let financialYearEnd: Date;
+  const taxableIncome = Math.max(0, data.income - totalDeductions);
 
-  if (currentMonth >= 3) { // April or later
-    financialYearStart = new Date(currentYear, 3, 1); // April 1 of current year
-    financialYearEnd = new Date(currentYear + 1, 2, 31); // March 31 of next year
-  } else { // January, February, or March
-    financialYearStart = new Date(currentYear - 1, 3, 1); // April 1 of previous year
-    financialYearEnd = new Date(currentYear, 2, 31); // March 31 of current year
-  }
+  // Simple tax calculation using a 15% flat rate, as per the example logic
+  const estimatedTax = taxableIncome * 0.15;
 
-  const incomeTransactions = await prisma.transaction.findMany({
-    where: {
-      userId,
-      type: 'income',
-      date: {
-        gte: financialYearStart,
-        lte: financialYearEnd,
-      },
-    },
-  });
-
-  const totalIncome = incomeTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
-  return totalIncome;
-}
-
-
-/**
- * Estimates the income tax for a user based on their total income.
- * This calculation uses the default New Tax Regime for FY 2024-25 (AY 2025-26).
- * @param userId - The ID of the user.
- * @returns An object containing the tax calculation details.
- */
-export async function estimateTax(userId: string) {
-  const totalAnnualIncome = await getTotalIncome(userId);
-
-  // A standard deduction of ₹50,000 is available under the new regime.
-  const standardDeduction = 50000;
-  const taxableIncome = Math.max(0, totalAnnualIncome - standardDeduction);
-
-  let incomeTax = 0;
-
-  // New Tax Regime Slabs (FY 2024-25)
-  if (taxableIncome > 1500000) {
-    incomeTax = 150000 + (taxableIncome - 1500000) * 0.30;
-  } else if (taxableIncome > 1200000) {
-    incomeTax = 90000 + (taxableIncome - 1200000) * 0.20;
-  } else if (taxableIncome > 900000) {
-    incomeTax = 45000 + (taxableIncome - 900000) * 0.15;
-  } else if (taxableIncome > 600000) {
-    incomeTax = 15000 + (taxableIncome - 600000) * 0.10;
-  } else if (taxableIncome > 300000) {
-    incomeTax = (taxableIncome - 300000) * 0.05;
-  }
-  
-  // Health and Education Cess is 4% of the income tax.
-  const cess = incomeTax * 0.04;
-  const totalTaxPayable = incomeTax + cess;
+  const effectiveTaxRate = data.income > 0 ? (estimatedTax / data.income) * 100 : 0;
 
   return {
-    totalAnnualIncome,
-    standardDeduction,
     taxableIncome,
-    incomeTax: parseFloat(incomeTax.toFixed(2)),
-    cess: parseFloat(cess.toFixed(2)),
-    totalTaxPayable: parseFloat(totalTaxPayable.toFixed(2)),
-    taxRegime: 'New Regime (FY 2024-25)',
+    estimatedTax,
+    effectiveTaxRate: parseFloat(effectiveTaxRate.toFixed(2)),
+    totalDeductions,
   };
+}
+
+/**
+ * Saves a new tax estimate record for a user.
+ * @param userId - The ID of the user saving the estimate.
+ * @param data - The input data for the tax estimate.
+ * @returns The saved tax estimate record.
+ */
+export async function saveTaxEstimate(userId: string, data: TaxEstimateDto): Promise<TaxEstimate> {
+  // First, run the calculation logic
+  const calculated = calculateTax(data);
+
+  // Then, create the full record in the database
+  const newEstimate = await prisma.taxEstimate.create({
+    data: {
+      userId,
+      country: data.country,
+      state: data.state,
+      status: data.status,
+      quarter: data.quarter,
+      year: data.year,
+      income: data.income,
+      businessExpenses: data.businessExpenses,
+      retirement: data.retirement,
+      healthInsurance: data.healthInsurance,
+      homeOffice: data.homeOffice,
+      additionalDeductions: data.additionalDeductions,
+      taxableIncome: calculated.taxableIncome,
+      estimatedTax: calculated.estimatedTax,
+      effectiveTaxRate: calculated.effectiveTaxRate,
+    },
+  });
+  return newEstimate as TaxEstimate;
+}
+
+/**
+ * Retrieves all tax estimates for a specific user.
+ * @param userId - The ID of the user.
+ * @returns A list of tax estimates.
+ */
+export async function getTaxEstimatesByUserId(userId: string): Promise<TaxEstimate[]> {
+  return (await prisma.taxEstimate.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+  })) as TaxEstimate[];
+}
+
+/**
+ * Deletes a specific tax estimate by its ID.
+ * @param id - The ID of the tax estimate to delete.
+ */
+export async function deleteTaxEstimate(id: string): Promise<void> {
+  await prisma.taxEstimate.delete({
+    where: { id },
+  });
 }
