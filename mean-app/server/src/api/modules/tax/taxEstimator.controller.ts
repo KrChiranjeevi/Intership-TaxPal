@@ -53,6 +53,9 @@ export async function getUserTaxEstimatesHandler(req: AuthRequest, res: Response
 export async function deleteTaxEstimateHandler(req: AuthRequest, res: Response) {
   try {
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ message: 'Tax Estimate ID is required.' });
+    }
     // Optional: You could add a check here to ensure the user owns this estimate before deleting.
     await taxService.deleteTaxEstimate(id);
     res.status(200).json({ message: 'Tax estimate deleted successfully' });

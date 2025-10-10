@@ -24,6 +24,7 @@ model User {
   refreshTokens   RefreshToken[]
   transactions    Transaction[]
   budgets         Budget[]       // This line links the User model to the new Budget model.
+  taxEstimates    TaxEstimate[]
 }
 
 model RefreshToken {

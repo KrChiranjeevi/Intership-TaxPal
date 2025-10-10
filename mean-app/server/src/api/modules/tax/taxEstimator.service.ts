@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../config/prisma.client.js'; 
 import type { TaxEstimate, TaxEstimateDto } from './taxEstimator.model.js';
 
-const prisma = new PrismaClient();
+//const prisma = new PrismaClient();
 
 /**
  * Performs a non-persistent tax calculation based on the provided data.
