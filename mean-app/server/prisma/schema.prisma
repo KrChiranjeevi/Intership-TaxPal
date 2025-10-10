@@ -24,6 +24,7 @@ model User {
   refreshTokens   RefreshToken[]
   transactions    Transaction[]
   budgets         Budget[]       // This line links the User model to the new Budget model.
+  taxEstimates    TaxEstimate[]
 }
 
 model RefreshToken {
@@ -65,3 +66,28 @@ model Budget {
 
   @@index([userId])
 }
+model TaxEstimate {
+  id                    String   @id @default(uuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  country               String   @default("United States")
+  state                 String?
+  status                String   @default("Single") // e.g., 'Single', 'Married Filing Jointly'
+  quarter               String   @default("Q1") // 'Q1', 'Q2', 'Q3', 'Q4'
+  year                  Int
+  income                Float
+  businessExpenses      Float    @default(0)
+  retirement            Float    @default(0)
+  healthInsurance       Float    @default(0)
+  homeOffice            Float    @default(0)
+  additionalDeductions  Float    @default(0)
+  // Calculated fields
+  taxableIncome         Float
+  estimatedTax          Float
+  effectiveTaxRate      Float
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([userId])
+}
+
