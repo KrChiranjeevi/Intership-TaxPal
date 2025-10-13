@@ -1,0 +1,32 @@
+<div class="categories-container">
+  <h3><span class="icon">📂</span> Category Management</h3>
+
+  <!-- Horizontal sub-nav -->
+  <nav class="categories-nav">
+    <p (click)="switchTab('expense')" [class.active]="activeTab === 'expense'" class="nav-item">
+      Expense Categories
+    </p>
+    <p (click)="switchTab('income')" [class.active]="activeTab === 'income'" class="nav-item">
+      Income Categories
+    </p>
+  </nav>
+
+  <!-- Category list -->
+  <div class="category-list">
+    <div 
+      class="category-card" 
+      *ngFor="let category of categories; let i = index">
+      <span class="dot" [style.background]="category.color"></span>
+      <span class="name">{{ category.name }}</span>
+
+      <span class="actions">
+        <button (click)="editCategory(i)">✏️</button>
+        <button (click)="deleteCategory(i)">🗑️</button>
+      </span>
+    </div>
+
+    <div class="add-category-btn" (click)="addCategory()">
+      + Add New Category
+    </div>
+  </div>
+</div>
