@@ -8,6 +8,11 @@ import {
   type UpdateTransactionInput,
   type TransactionType,
 } from "./transaction.model.js";
+import transactionRoutes from './transaction.routes.js';
+import { PrismaClient } from "@prisma/client";
+
+
+
 
 // -------------------------
 // SERVICE FUNCTIONS

@@ -1,0 +1,111 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { BudgetService } from '@core/services/budget.service';
+
+@Component({
+  selector: 'app-budget',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule],
+    template: `<h1>Budgets Page</h1>`,
+  templateUrl: './budget.component.html',
+    styles: [`h1 { color: #fff; }`],
+  styleUrls: ['./budget.component.scss']
+})
+export class BudgetComponent implements OnInit {
+  budgets: Array<any> = [];
+  showCreateForm = false;
+
+  newBudget = {
+    category: '',
+    amount: null as number | null,
+    month: '', // will store 'YYYY-MM' (input type="month")
+    description: ''
+  };
+
+  totalBudget = 0;
+  totalSpent = 0;
+  remaining = 0;
+  budgetHealth = { status: 'Unknown', color: '#aaa' };
+
+  constructor(private budgetService: BudgetService) {}
+
+  ngOnInit(): void {
+    this.fetchBudgets();
+  }
+
+  fetchBudgets(): void {
+    this.budgetService.getAllBudgets().subscribe({
+      next: (res: any) => {
+        this.budgets = Array.isArray(res) ? res : (res?.data ?? []);
+        this.recalcTotals();
+      },
+      error: (err) => {
+        console.error('Error fetching budgets', err);
+        this.budgets = [];
+        this.recalcTotals();
+      }
+    });
+  }
+
+  openForm() {
+    this.showCreateForm = true;
+  }
+
+  cancelForm() {
+    this.showCreateForm = false;
+    this.resetForm();
+  }
+
+  resetForm() {
+    this.newBudget = {
+      category: '',
+      amount: null,
+      month: '',
+      description: ''
+    };
+  }
+
+  saveBudget() {
+    if (!this.newBudget.category || !this.newBudget.amount || !this.newBudget.month) {
+      alert('Please fill Category, Amount and Month.');
+      return;
+    }
+
+    const payload = {
+      category: this.newBudget.category,
+      amount: Number(this.newBudget.amount),
+      month: this.newBudget.month + '-01', // convert 'YYYY-MM' to full date string
+      description: this.newBudget.description ?? ''
+    };
+
+    this.budgetService.createBudget(payload).subscribe({
+      next: () => {
+        this.showCreateForm = false;
+        this.resetForm();
+        this.fetchBudgets();
+      },
+      error: (err) => {
+        console.error('Error creating budget', err);
+        alert(err?.error?.message || 'Failed to create budget');
+      }
+    });
+  }
+
+  recalcTotals() {
+    this.totalBudget = this.budgets.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+    this.totalSpent = this.budgets.reduce((sum, b) => sum + (Number(b.spent) || 0), 0);
+    this.remaining = this.totalBudget - this.totalSpent;
+
+    const ratio = this.totalBudget > 0 ? (this.totalSpent / this.totalBudget) : 0;
+    if (ratio < 0.6) {
+      this.budgetHealth = { status: 'Good', color: '#4CAF50' };
+    } else if (ratio < 0.9) {
+      this.budgetHealth = { status: 'Warning', color: '#FFB300' };
+    } else {
+      this.budgetHealth = { status: 'Critical', color: '#F44336' };
+    }
+  }
+  
+}

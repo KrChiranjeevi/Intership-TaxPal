@@ -1,6 +1,6 @@
 // dashboard.component.ts
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { CommonModule } from '@angular/common';
 import { NgChartsModule } from 'ng2-charts';
@@ -12,7 +12,7 @@ import { ChartConfiguration, ChartData, ChartOptions, ChartType } from 'chart.js
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, NgChartsModule, AddIncomeComponent, AddExpenseComponent],
+  imports: [CommonModule, NgChartsModule, AddIncomeComponent, AddExpenseComponent,RouterModule],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
