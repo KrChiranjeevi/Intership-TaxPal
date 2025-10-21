@@ -23,6 +23,7 @@ model User {
   transactions         Transaction[]
   notificationSettings UserNotificationSetting?
   taxEstimates    TaxEstimate[]
+  reports              Report[]                 // <- relation to Report
 }
 
 model RefreshToken {
@@ -109,6 +110,22 @@ model TaxEstimate {
   effectiveTaxRate      Float
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Report {
+  id         String   @id @default(uuid())
+  userId     String
+  reportType String
+  period     String
+  format     String
+  filePath   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  generatedAt DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
 }

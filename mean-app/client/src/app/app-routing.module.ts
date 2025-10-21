@@ -21,6 +21,7 @@ const routes: Routes = [
       { path: 'expense', loadComponent: () => import('./features/transactions/add-expense/add-expense.component').then(m => m.AddExpenseComponent) },
       { path: 'budget', loadComponent: () => import('./features/budgets/budget.component').then(m => m.BudgetComponent) },
       { path: 'tax-estimation', loadComponent: () => import('./features/tax-estimator/tax-estimator.component').then(m => m.TaxEstimatorComponent) },
+      { path: 'reports', loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent) },
       {
         path: 'settings',
         loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent),
@@ -45,8 +46,6 @@ const routes: Routes = [
           { path: '', redirectTo: 'profile', pathMatch: 'full' }
         ]
       },
-      //{ path: 'tax-estimation', loadComponent: () => import('./features/tax-estimation/tax-estimation.component').then(m => m.TaxEstimationComponent) },
-      //{ path: 'reports', loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent) },
     ]
   },
 

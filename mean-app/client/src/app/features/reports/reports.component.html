@@ -1,0 +1,102 @@
+<div class="reports-page">
+  <header>
+    <h1>Financial Reports</h1>
+    <p>Generate and download your financial reports</p>
+  </header>
+
+  <!-- Generate Report Card -->
+  <div class="card generate-report-card">
+    <h2>Generate Report</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="reportType">Report Type</label>
+        <select id="reportType" [(ngModel)]="reportTypeValue">
+          <option *ngFor="let type of REPORT_TYPES" [value]="type">{{ type }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="period">Period</label>
+        <select id="period" [(ngModel)]="periodValue">
+          <option *ngFor="let p of PERIODS" [value]="p">{{ p }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="format">Format</label>
+        <select id="format" [(ngModel)]="formatValue">
+          <option *ngFor="let f of FORMATS" [value]="f">{{ f }}</option>
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button (click)="resetForm()" class="reset-btn">Reset</button>
+        <button (click)="generateReport()" class="generate-btn" [disabled]="loading">
+          {{ loading ? 'Generating...' : 'Generate Report' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Reports Card with Actions -->
+  <div class="card recent-reports-card">
+    <h2>Recent Reports</h2>
+    <table>
+      <thead>
+        <tr>
+          <!--<th>File</th>-->
+          <th>Name</th>
+          <th>Generated</th>
+          <th>Period</th>
+          <th>Format</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let report of recentReports">
+          <!-- <td>
+             reports.component.html 
+            <img [src]="fileIconUrl" alt="File Icon" class="file-icon" />
+          </td>-->
+          <td>{{ report.name }}</td>
+          <td>{{ report.generated | date:'short' }}</td>
+          <td>{{ report.period }}</td>
+          <td>{{ report.format }}</td>
+          <td class="actions">
+            <button (click)="selectReport(report)">👁️ Preview</button>
+            <button (click)="printReport()" [disabled]="!report">🖨️ Print</button>
+            <button (click)="downloadReport()" [disabled]="!report">⬇️ Download</button>
+          </td>
+        </tr>
+        <tr *ngIf="recentReports.length === 0">
+          <td colspan="6" class="no-results">No results</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Report Preview Card -->
+  <div class="card report-preview-card">
+    <h2>Report Preview</h2>
+    <div class="preview-actions">
+      <button (click)="printReport()" [disabled]="!selectedReport">🖨️ Print</button>
+      <button (click)="downloadReport()" [disabled]="!selectedReport">⬇️ Download</button>
+    </div>
+
+    <div class="preview-content" *ngIf="selectedReport; else noPreview">
+      <p><strong>{{ selectedReport.name }}</strong></p>
+      <p>Generated on: {{ selectedReport.generated | date:'short' }}</p>
+      <p>Period: {{ selectedReport.period }}</p>
+      <p>Format: {{ selectedReport.format }}</p>
+      <p>File: <a [href]="selectedReport.fileUrl" target="_blank">View File</a></p>
+    </div>
+
+    <ng-template #noPreview>
+      <div class="no-preview">
+        <img [src]="fileIconUrl" alt="File Icon" class="file-icon" />
+        <p>Select a report to preview</p>
+        <small>Generated reports will appear here for review before downloading</small>
+      </div>
+    </ng-template>
+  </div>
+</div>

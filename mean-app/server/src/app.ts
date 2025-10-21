@@ -11,6 +11,7 @@ import categoriesRouter from './api/modules/categories/categories.routes.js';
 import notificationsRouter from "./api/modules/notifications/notifications.routes.js";
 import securityRouter from './api/modules/security/security.routes.js';
 import taxEstimatorRoutes from './api/modules/tax/taxEstimator.routes.js';
+import reportsRoutes from './api/modules/reports/reports.routes.js';
 
 
 dotenv.config();
@@ -30,6 +31,7 @@ app.use('/api/categories', categoriesRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use('/api/security', securityRouter);
 app.use('/api/tax-estimator', taxEstimatorRoutes);
+app.use('/api/reports', reportsRoutes);
 // test route
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'Server is running 🚀' });
