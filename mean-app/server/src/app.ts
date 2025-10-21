@@ -27,7 +27,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/categories', categoriesRouter);
-app.use("/notifications", notificationsRouter);
+app.use("/api/notifications", notificationsRouter);
 app.use('/api/security', securityRouter);
 app.use('/api/tax-estimator', taxEstimatorRoutes);
 // test route

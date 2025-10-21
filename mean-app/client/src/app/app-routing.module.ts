@@ -20,6 +20,7 @@ const routes: Routes = [
       { path: 'income', loadComponent: () => import('./features/transactions/add-income/add-income.component').then(m => m.AddIncomeComponent) },
       { path: 'expense', loadComponent: () => import('./features/transactions/add-expense/add-expense.component').then(m => m.AddExpenseComponent) },
       { path: 'budget', loadComponent: () => import('./features/budgets/budget.component').then(m => m.BudgetComponent) },
+      { path: 'tax-estimation', loadComponent: () => import('./features/tax-estimator/tax-estimator.component').then(m => m.TaxEstimatorComponent) },
       {
         path: 'settings',
         loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent),
