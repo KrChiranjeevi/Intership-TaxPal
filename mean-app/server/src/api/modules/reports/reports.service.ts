@@ -12,10 +12,14 @@ export interface ReportInput {
 
 // Create a new report
 export async function createReport(data: ReportInput): Promise<Report> {
+  // Dynamically generate a name for frontend display
+  const name = `${data.reportType} - ${data.period} (${data.format})`;
+
   return prisma.report.create({
     data: {
       ...data,
-      generatedAt: new Date(), // optional, will default in DB
+      name,               // added for frontend
+      createdAt: new Date(), // updated from generatedAt to createdAt
     },
   });
 }
@@ -24,7 +28,7 @@ export async function createReport(data: ReportInput): Promise<Report> {
 export async function getReportsByUserId(userId: string): Promise<Report[]> {
   return prisma.report.findMany({
     where: { userId },
-    orderBy: { generatedAt: 'desc' },
+    orderBy: { createdAt: 'desc' }, // updated from generatedAt to createdAt
   });
 }
 

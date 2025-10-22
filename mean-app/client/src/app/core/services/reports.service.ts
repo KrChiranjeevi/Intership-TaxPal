@@ -36,4 +36,11 @@ export class ReportsService {
   createReport(data: Partial<Report>, accessToken?: any): Observable<Report> {
     return this.http.post<Report>(this.apiUrl, data, this.getAuthHeaders());
   }
+  updateReport(id: string, data: Partial<Report>): Observable<Report> {
+  return this.http.put<Report>(`${this.apiUrl}/${id}`, data, this.getAuthHeaders());
+  }
+  deleteReport(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`, this.getAuthHeaders());
+  }
+
 }

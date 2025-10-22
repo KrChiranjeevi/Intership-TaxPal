@@ -124,6 +124,7 @@ model Report {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   generatedAt DateTime @default(now())
+  name       String?   // <-- add this
 
   user       User     @relation(fields: [userId], references: [id])
 

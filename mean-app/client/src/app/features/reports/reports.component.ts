@@ -42,7 +42,6 @@ export class ReportsComponent implements OnInit {
   generateReport(): void {
     this.loading = true;
 
-    // Get logged-in user from localStorage (replace with your auth logic if different)
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
     if (!user.id) {
@@ -51,15 +50,14 @@ export class ReportsComponent implements OnInit {
       return;
     }
 
-    // Default filePath for testing
     const defaultFilePath = '/path/to/report.pdf';
 
     const newReport = {
-      userId: user.id,                  // required by backend
+      userId: user.id,
       reportType: this.reportTypeValue,
       period: this.periodValue,
       format: this.formatValue,
-      filePath: defaultFilePath,        // required by backend
+      filePath: defaultFilePath,
     };
 
     console.log('Sending report to backend:', newReport);
@@ -67,7 +65,7 @@ export class ReportsComponent implements OnInit {
     this.reportsService.createReport(newReport).subscribe({
       next: (res) => {
         this.recentReports.unshift(res);
-        this.selectedReport = res;
+        this.selectReport(res); // Auto-select and preview new report
         this.loading = false;
       },
       error: (err) => {
@@ -85,11 +83,58 @@ export class ReportsComponent implements OnInit {
 
   selectReport(report: Report): void {
     this.selectedReport = report;
+    this.previewReport(report.fileUrl, report.format);
+  }
+
+  previewReport(fileUrl: string, format: string) {
+    const container = document.getElementById('report-preview-container');
+    if (!container) return;
+
+    if (format === 'PDF') {
+      container.innerHTML = `<iframe src="${fileUrl}" width="100%" height="500px"></iframe>`;
+    } else if (format === 'CSV') {
+      fetch(fileUrl)
+        .then(res => res.text())
+        .then(data => {
+          const rows = data
+            .split('\n')
+            .map(r => `<tr>${r.split(',').map(c => `<td>${c}</td>`).join('')}</tr>`)
+            .join('');
+          container.innerHTML = `<table border="1" style="width:100%; border-collapse:collapse;">${rows}</table>`;
+        });
+    }
+  }
+
+  updateReport(report: Report): void {
+    if (!report) return;
+    const updatedData = {
+      reportType: this.reportTypeValue,
+      period: this.periodValue,
+      format: this.formatValue
+    };
+    this.reportsService.updateReport(report.id, updatedData).subscribe({
+      next: (res) => {
+        const index = this.recentReports.findIndex(r => r.id === report.id);
+        if (index > -1) this.recentReports[index] = res;
+        this.selectReport(res);
+      },
+      error: (err) => console.error(err)
+    });
+  }
+
+  deleteReport(report: Report): void {
+    if (!report) return;
+    this.reportsService.deleteReport(report.id).subscribe({
+      next: () => {
+        this.recentReports = this.recentReports.filter(r => r.id !== report.id);
+        if (this.selectedReport?.id === report.id) this.selectedReport = null;
+      },
+      error: (err) => console.error(err)
+    });
   }
 
   downloadReport(): void {
     if (!this.selectedReport) return;
-    // Assuming your backend returns filePath or fileUrl
     window.open(this.selectedReport.filePath || this.selectedReport.fileUrl, '_blank');
   }
 
