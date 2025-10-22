@@ -4,10 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { TaxEstimatorService, TaxInputs, EstimatedTaxData } from '@core/services/tax-estimator.service';
 import { catchError, retry } from 'rxjs/operators';
 import { of } from 'rxjs';
-
-const QUARTERS_COUNT = 4;
-const DUE_DAY = 15;
-export const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+import { 
+  QUARTERS_COUNT, DUE_DAY, MONTH_NAMES, REGION_OPTIONS, 
+  FILING_STATUSES, TAX_RESULT_ITEMS, STATE_OPTIONS, QUARTER_OPTIONS, STATIC_QUARTERS 
+} from '@core/constants/tax-estimator.constants';
 
 @Component({
   selector: 'app-tax-estimator',
@@ -28,7 +28,9 @@ export class TaxEstimatorComponent implements OnInit {
     healthInsurance: 0,
     homeOffice: 0
   });
-
+  readonly QUARTERS_COUNT = QUARTERS_COUNT;
+  readonly DUE_DAY = DUE_DAY;
+  readonly MONTH_NAMES = MONTH_NAMES;
   // Latest calculation for Tax Summary
   estimatedTaxData = signal<EstimatedTaxData & { totalTax?: number; quarterlyPayment?: number } | null>(null);
 
@@ -37,59 +39,13 @@ export class TaxEstimatorComponent implements OnInit {
 
   isCalculating = signal(false);
   errorMessage = signal('');
-  quarters = [];
+  quarters = STATIC_QUARTERS;
 
-  readonly REGION_OPTIONS = [
-    { code: 'us', label: 'United States (US)' },
-    { code: 'in', label: 'India (IN)' },
-    { code: 'ca', label: 'Canada (CA)' },
-    { code: 'uk', label: 'United Kingdom (UK)' }
-  ];
-
-  readonly FILING_STATUSES = [
-    { code: 'single', label: 'Single' },
-    { code: 'married', label: 'Married' }
-  ];
-
-  readonly TAX_RESULT_ITEMS = [
-    { key: 'taxableIncome', label: 'Taxable Income' },
-    { key: 'totalTax', label: 'Total Tax' },
-    { key: 'quarterlyPayment', label: 'Quarterly Payment' }
-  ];
-
-  readonly STATE_OPTIONS = {
-    us: [
-      { code: 'CA', label: 'California' },
-      { code: 'NY', label: 'New York' },
-      { code: 'TX', label: 'Texas' },
-      { code: 'FL', label: 'Florida' }
-    ],
-    in: [
-      { code: 'MH', label: 'Maharashtra' },
-      { code: 'DL', label: 'Delhi' },
-      { code: 'KA', label: 'Karnataka' },
-      { code: 'TN', label: 'Tamil Nadu' }
-    ],
-    ca: [
-      { code: 'ON', label: 'Ontario' },
-      { code: 'QC', label: 'Quebec' },
-      { code: 'BC', label: 'British Columbia' },
-      { code: 'AB', label: 'Alberta' }
-    ],
-    uk: [
-      { code: 'ENG', label: 'England' },
-      { code: 'SCT', label: 'Scotland' },
-      { code: 'WLS', label: 'Wales' },
-      { code: 'NIR', label: 'Northern Ireland' }
-    ]
-  };
-
-  readonly QUARTER_OPTIONS = [
-    { code: 'Q1', label: 'Jan – Mar' },
-    { code: 'Q2', label: 'Apr – Jun' },
-    { code: 'Q3', label: 'Jul – Sep' },
-    { code: 'Q4', label: 'Oct – Dec' }
-  ];
+  readonly REGION_OPTIONS = REGION_OPTIONS;
+  readonly FILING_STATUSES = FILING_STATUSES;
+  readonly TAX_RESULT_ITEMS = TAX_RESULT_ITEMS;
+  readonly STATE_OPTIONS = STATE_OPTIONS;
+  readonly QUARTER_OPTIONS = QUARTER_OPTIONS;
 
   constructor(private taxService: TaxEstimatorService) {}
 
