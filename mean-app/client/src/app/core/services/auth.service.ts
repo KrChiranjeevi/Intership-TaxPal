@@ -20,12 +20,18 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   login(credentials: { email: string; password: string }) {
-    return this.http.post(`${this.api}/login`, credentials).pipe(
-      tap((res: any) => {
-        if (res.data?.accessToken) this.saveToken(res.data.accessToken);
-      })
-    );
-  }
+  return this.http.post(`${this.api}/login`, credentials).pipe(
+    tap((res: any) => {
+      if (res.data?.accessToken) this.saveToken(res.data.accessToken);
+
+      // ------------------- STORE USER -------------------
+      if (res.data) {
+        localStorage.setItem('user', JSON.stringify(res.data)); // store user data
+      }
+    })
+  );
+}
+
 
   register(data: any) {
     return this.http.post(`${this.api}/register`, data).pipe(
