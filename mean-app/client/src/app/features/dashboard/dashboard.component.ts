@@ -7,6 +7,7 @@ import { NgChartsModule, BaseChartDirective } from 'ng2-charts';
 import { AddIncomeComponent } from '../transactions/add-income/add-income.component';
 import { AddExpenseComponent } from '../transactions/add-expense/add-expense.component';
 import { TransactionService } from '@core/services/transaction.service';
+import { BudgetService } from '@core/services/budget.service';
 import { ChartConfiguration } from 'chart.js';
 
 @Component({
@@ -56,7 +57,8 @@ export class DashboardComponent implements OnInit {
   constructor(
     private txService: TransactionService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private budgetService: BudgetService
   ) {}
 
   ngOnInit(): void {
@@ -194,16 +196,44 @@ setTimeout(() => {
   }
 
   onExpenseAdded(data: any) {
-    const payload = { ...data, date: new Date(data.date).toISOString() };
-    this.txService.addExpense(payload).subscribe({
-      next: () => {
-        this.showExpense = false;
-        this.loadTransactions();
-      },
-      error: (err) => {
-        console.error('Error adding expense', err);
-        alert(err?.error?.message || 'Error adding expense');
+  const payload = { ...data, date: new Date(data.date).toISOString() };
+  this.txService.addExpense(payload).subscribe({
+    next: () => {
+      this.showExpense = false;
+      this.loadTransactions();
+      this.applyExpenseToBudget(payload); // <-- pass payload, not raw form data
+    },
+    error: (err) => {
+      console.error('Error adding expense', err);
+      alert(err?.error?.message || 'Error adding expense');
+    }
+  });
+}
+
+private applyExpenseToBudget(expense: any) {
+  const expenseDate = new Date(expense.date);
+  const monthStr = `${expenseDate.getFullYear()}-${('0'+(expenseDate.getMonth()+1)).slice(-2)}`;
+
+  this.budgetService.getAllBudgets().subscribe({
+    next: (res: any) => {
+      const budgets = Array.isArray(res) ? res : (res?.data ?? []);
+      const budgetForCategory = budgets.find(
+        (b: any) => b.category === expense.category && b.month?.startsWith(monthStr)
+      );
+
+      if (budgetForCategory) {
+        const newSpent = (Number(budgetForCategory.spent || 0)) + Number(expense.amount || 0);
+        this.budgetService.updateBudget(budgetForCategory.id, { ...budgetForCategory, spent: newSpent })
+          .subscribe({
+            next: () => console.log(`Budget updated for ${expense.category} in ${monthStr}`),
+            error: (err) => console.error('Error updating budget', err)
+          });
+      } else {
+        console.warn(`No budget found for ${expense.category} in ${monthStr}`);
       }
-    });
-  }
+    },
+    error: (err) => console.error('Error fetching budgets', err)
+  });
+}
+
 }

@@ -27,7 +27,13 @@ app.use(express.json());
 app.use('/api/auth', userRoutes);
 app.use('/api/transactions', transactionRoutes); 
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/budgets', budgetRoutes);
+// app.ts
+app.use('/api/budgets', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store'); // disable caching
+  next();
+}, budgetRoutes);
+
+//app.use('/api/budgets', budgetRoutes);
 app.use('/api/categories', categoriesRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use('/api/security', securityRouter);

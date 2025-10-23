@@ -59,12 +59,7 @@ export class TaxEstimatorComponent implements OnInit {
 
   /** Hardcoded static quarters with due dates */
   private generateStaticQuarters() {
-    return [
-      { name: 'Q1', range: 'Jan – Mar 2025', dueDate: 'Apr 15, 2025' },
-      { name: 'Q2', range: 'Apr – Jun 2025', dueDate: 'Jul 15, 2025' },
-      { name: 'Q3', range: 'Jul – Sep 2025', dueDate: 'Oct 15, 2025' },
-      { name: 'Q4', range: 'Oct – Dec 2025', dueDate: 'Jan 15, 2026' }
-    ];
+    return STATIC_QUARTERS;
   }
 
   /** Calculate tax */

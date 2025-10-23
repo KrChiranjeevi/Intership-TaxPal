@@ -75,7 +75,8 @@ export class BudgetComponent implements OnInit {
       category: this.newBudget.category,
       amount: Number(this.newBudget.amount),
       month: this.newBudget.month + '-01', // convert 'YYYY-MM' to full date string
-      description: this.newBudget.description ?? ''
+      description: this.newBudget.description ?? '',
+      spent: 0
     };
 
     this.budgetService.createBudget(payload).subscribe({
@@ -92,17 +93,44 @@ export class BudgetComponent implements OnInit {
   }
 
   recalcTotals() {
-    this.totalBudget = this.budgets.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
-    this.totalSpent = this.budgets.reduce((sum, b) => sum + (Number(b.spent) || 0), 0);
-    this.remaining = this.totalBudget - this.totalSpent;
+  this.totalBudget = this.budgets.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+  this.totalSpent = this.budgets.reduce((sum, b) => sum + (Number(b.spent) || 0), 0);
+  this.remaining = this.totalBudget - this.totalSpent;
 
-    const ratio = this.totalBudget > 0 ? (this.totalSpent / this.totalBudget) : 0;
-    if (ratio < 0.6) {
-      this.budgetHealth = { status: 'Good', color: '#4CAF50' };
-    } else if (ratio < 0.9) {
-      this.budgetHealth = { status: 'Warning', color: '#FFB300' };
+  // Overall dashboard health
+  const ratio = this.totalBudget > 0 ? (this.totalSpent / this.totalBudget) : 0;
+  if (ratio < 0.6) {
+    this.budgetHealth = { status: 'Good', color: '#4CAF50' };
+  } else if (ratio < 0.9) {
+    this.budgetHealth = { status: 'Warning', color: '#FFB300' };
+  } else {
+    this.budgetHealth = { status: 'Critical', color: '#F44336' };
+  }
+
+  // **Per-budget row health**
+  this.budgets = this.budgets.map(b => {
+    const bRatio = b.amount ? (Number(b.spent || 0) / b.amount) : 0;
+    let rowHealth = { status: 'Unknown', color: '#aaa' };
+    if (bRatio < 0.6) rowHealth = { status: 'Good', color: '#4CAF50' };
+    else if (bRatio < 0.9) rowHealth = { status: 'Warning', color: '#FFB300' };
+    else rowHealth = { status: 'Critical', color: '#F44336' };
+    return { ...b, rowHealth };
+  });
+}
+
+  applyExpenseToBudget(expense: any) {
+    const expenseMonth = expense.date.slice(0, 7); // YYYY-MM
+    const budgetIndex = this.budgets.findIndex(
+      b => b.category === expense.category && b.month.slice(0, 7) === expenseMonth
+    );
+
+    if (budgetIndex >= 0) {
+      const budget = this.budgets[budgetIndex];
+      budget.spent = (Number(budget.spent) || 0) + Number(expense.amount);
+      this.budgets[budgetIndex] = budget;
+      this.recalcTotals();
     } else {
-      this.budgetHealth = { status: 'Critical', color: '#F44336' };
+      console.warn(`No budget found for category "${expense.category}" in month "${expenseMonth}"`);
     }
   }
 }
