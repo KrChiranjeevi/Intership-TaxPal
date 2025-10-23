@@ -54,7 +54,7 @@
       <tbody>
         <tr *ngFor="let report of recentReports">
           <td>{{ report.name }}</td>
-          <td>{{ report.generated | date:'short' }}</td>
+          <td>{{ report.createdAt | date:'short' }}</td>
           <td>{{ report.period }}</td>
           <td>{{ report.format }}</td>
           <td class="actions">
@@ -80,7 +80,7 @@
 
     <div class="preview-content" *ngIf="selectedReport; else noPreview">
       <p><strong>{{ selectedReport.name }}</strong></p>
-      <p>Generated on: {{ selectedReport.generated | date:'short' }}</p>
+      <p>Generated on: {{ selectedReport.createdAt | date:'short' }}</p>
       <p>Period: {{ selectedReport.period }}</p>
       <p>Format: {{ selectedReport.format }}</p>
       

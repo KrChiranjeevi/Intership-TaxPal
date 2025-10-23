@@ -4,9 +4,9 @@ import * as reportsService from './reports.service.js';
 // Create a new report
 export async function createReport(req: Request, res: Response) {
   try {
-    const { userId, reportType, period, format, filePath } = req.body;
+    const { userId, reportType, period, format } = req.body;
 
-    if (!userId || !reportType || !period || !format || !filePath) {
+    if (!userId || !reportType || !period || !format) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
@@ -15,7 +15,6 @@ export async function createReport(req: Request, res: Response) {
       reportType,
       period,
       format,
-      filePath,
     });
 
     res.status(201).json(report);
@@ -24,6 +23,7 @@ export async function createReport(req: Request, res: Response) {
     res.status(500).json({ message: 'Failed to create report' });
   }
 }
+
 
 // Get all reports for the logged-in user
 export async function getReports(req: Request, res: Response) {

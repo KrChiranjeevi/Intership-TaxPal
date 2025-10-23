@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReportsService, Report } from '@core/services/reports.service';
+import { REPORT_TYPES, PERIODS, FORMATS, FILE_ICON_URL } from '@core/constants/reports.constants';
 
 @Component({
   selector: 'app-reports',
@@ -11,10 +12,11 @@ import { ReportsService, Report } from '@core/services/reports.service';
   styleUrls: ['./reports.component.scss'],
 })
 export class ReportsComponent implements OnInit {
-  fileIconUrl = 'https://cdn-icons-png.flaticon.com/512/7945/7945212.png';
-  readonly REPORT_TYPES = ['Income Statement', 'Expense Report', 'Balance Sheet'];
-  readonly PERIODS = ['Current Month', 'Last Month', 'Quarter', 'Year'];
-  readonly FORMATS = ['PDF', 'CSV'];
+  fileIconUrl = FILE_ICON_URL;
+  readonly REPORT_TYPES = REPORT_TYPES;
+  readonly PERIODS = PERIODS;
+  readonly FORMATS = FORMATS;
+
 
   // Form values
   reportTypeValue: string = this.REPORT_TYPES[0];
@@ -57,7 +59,7 @@ export class ReportsComponent implements OnInit {
       reportType: this.reportTypeValue,
       period: this.periodValue,
       format: this.formatValue,
-      filePath: defaultFilePath,
+      
     };
 
     console.log('Sending report to backend:', newReport);
@@ -83,27 +85,30 @@ export class ReportsComponent implements OnInit {
 
   selectReport(report: Report): void {
     this.selectedReport = report;
-    this.previewReport(report.fileUrl, report.format);
+    this.previewReport(report.filePath, report.format);
   }
 
   previewReport(fileUrl: string, format: string) {
-    const container = document.getElementById('report-preview-container');
-    if (!container) return;
+  const container = document.getElementById('report-preview-container');
+  if (!container) return;
 
-    if (format === 'PDF') {
-      container.innerHTML = `<iframe src="${fileUrl}" width="100%" height="500px"></iframe>`;
-    } else if (format === 'CSV') {
-      fetch(fileUrl)
-        .then(res => res.text())
-        .then(data => {
-          const rows = data
-            .split('\n')
-            .map(r => `<tr>${r.split(',').map(c => `<td>${c}</td>`).join('')}</tr>`)
-            .join('');
-          container.innerHTML = `<table border="1" style="width:100%; border-collapse:collapse;">${rows}</table>`;
-        });
-    }
-  }
+  // Add your backend base URL
+  const backendBaseUrl = 'http://localhost:4000';
+  const timestamp = new Date().getTime();
+  if (format === 'PDF') {
+  
+  container.innerHTML = `<iframe src="${backendBaseUrl}${encodeURI(fileUrl)}?t=${timestamp}" width="100%" height="500px"></iframe>`;
+}
+ else if (format === 'CSV') {
+  fetch(`${backendBaseUrl}${encodeURI(fileUrl)}`)
+    .then(res => res.text())
+    .then(data => {
+      container.innerHTML = `<pre style="width:100%;height:500px;overflow:auto;background:#fff;color:#000;padding:10px;font-family:monospace;">${data}</pre>`;
+    });
+}
+
+}
+
 
   updateReport(report: Report): void {
     if (!report) return;
@@ -134,12 +139,32 @@ export class ReportsComponent implements OnInit {
   }
 
   downloadReport(): void {
-    if (!this.selectedReport) return;
-    window.open(this.selectedReport.filePath || this.selectedReport.fileUrl, '_blank');
-  }
+  if (!this.selectedReport) return;
+
+  const backendBaseUrl = 'http://localhost:4000';
+  const fileUrl = `${backendBaseUrl}${encodeURI(this.selectedReport.filePath)}`;
+
+  // Open in new tab for browser default download behavior
+  window.open(fileUrl, '_blank');
+}
+
 
   printReport(): void {
-    if (!this.selectedReport) return;
-    window.print();
-  }
+  if (!this.selectedReport) return;
+
+  const container = document.getElementById('report-preview-container');
+  if (!container) return;
+
+  const printWindow = window.open('', '_blank', 'width=800,height=600');
+  if (!printWindow) return;
+
+  // Clone the preview HTML for printing
+  printWindow.document.write('<html><head><title>Print Report</title></head><body>');
+  printWindow.document.write(container.innerHTML);
+  printWindow.document.write('</body></html>');
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+}
+
 }

@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 
 
 import userRoutes from './api/modules/user/user.routes.js';
@@ -32,7 +33,20 @@ app.use("/api/notifications", notificationsRouter);
 app.use('/api/security', securityRouter);
 app.use('/api/tax-estimator', taxEstimatorRoutes);
 app.use('/api/reports', reportsRoutes);
-// test route
+app.use('/generated_reports', express.static(path.join(process.cwd(), 'generated_reports'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.pdf')) {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Cache-Control', 'no-store'); // <-- Disable caching
+    }
+    if (path.endsWith('.csv')) {
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Cache-Control', 'no-store');
+    }
+  }
+}));
+
+
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'Server is running 🚀' });
 });

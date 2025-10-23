@@ -7,7 +7,7 @@ export interface Report {
   filePath: string;
   id: string;
   name: string;
-  generated: string;
+  createdAt: string;
   period: string;
   format: string;
   fileUrl: string;
