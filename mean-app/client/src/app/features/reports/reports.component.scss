@@ -1,0 +1,101 @@
+/* client/src/app/features/reports/reports.component.scss */
+
+.reports-page {
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #e6eef4;
+  background-color: #0b1221;
+  min-height: 100vh;
+  
+  h1 {
+    font-size: 1.8rem;
+    color: #00d4ff;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    font-size: 1rem;
+    color: #aaa;
+    margin-bottom: 2rem;
+  }
+
+  .generate-form {
+    background: #1a2337;
+    padding: 1.5rem;
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+
+    label {
+      font-size: 0.9rem;
+      color: #9fd8ff;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    select {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background: #111b2e;
+      color: #e6eef4;
+      appearance: none; /* remove default arrow */
+      background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-down"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+    }
+    
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 6px;
+      border: none;
+      background: #00d4ff;
+      color: #111b2e;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+
+      &:hover {
+        background: #00b4d4;
+      }
+    }
+  }
+
+  .recent-reports {
+    margin-top: 2rem;
+    background: #1a2337;
+    padding: 1.5rem;
+    border-radius: 8px;
+
+    h3 {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      color: #00d4ff;
+    }
+
+    p {
+      text-align: center;
+      color: #aaa;
+      padding: 2rem;
+    }
+    
+    .report-preview {
+      background: #0b1221;
+      border: 1px solid #333;
+      border-radius: 6px;
+      margin-top: 1rem;
+      padding: 1rem;
+      font-size: 0.9rem;
+      overflow-x: auto;
+      
+      pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+    }
+  }
+}

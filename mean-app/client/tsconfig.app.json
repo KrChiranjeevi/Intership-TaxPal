@@ -26,5 +26,5 @@
   "include": [
     "src/**/*.d.ts",
     "src/**/*.ts"
-  ]
+, "../server/src/api/modules/FinancialReport/FinancialReport.controller.ts", "../server/src/api/modules/FinancialReport/FinancialReport.routes.ts", "../server/src/api/modules/FinancialReport/FinancialReport.service.ts", "../server/src/api/modules/FinancialReport/FinancialReport.types.ts", "../server/src/api/modules/FinancialReport/reports.component.ts"  ]
 }

@@ -1,20 +1,14 @@
- <div class="dashboard">
 
+<div class="dashboard">
   <!-- Sidebar -->
   <aside class="sidebar">
-
-    <div class="logo">
-    <h1>TaxPal</h1>
-    <img class="close" src="assets/close.svg" alt="Close">
-    </div>
-
+    <h1 class="logo">TaxPal</h1>
     <ul class="menu">
-
-      <li class="active">📊 Dashboard</li>
-      <li>💸 Transactions</li>
-      <li>📑 Budget</li>
-      <li>🧾 Tax Estimation</li>
-      <li>📈 Reports</li>
+      <li routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</li>
+      <li>Transactions</li>
+      <li >Budget</li>
+      <li>Tax Estimation</li>
+      <li>Reports</li>
     </ul>
     
     <div class="bottom-links">
@@ -23,13 +17,11 @@
     </div>
   </aside> 
 
-  <!-- Content -->
+  <!-- Main Content -->
   <main class="content">
     <header class="header">
-      <img class="hamburger" src="hamburger.svg" alt="hamburger">
-
       <div class="titles">
-        <h1>Financial Dashboard</h1>
+        <h2>Financial Dashboard</h2>
         <p>Welcome back, <span class="highlight">John Doe!</span> Here’s your financial summary for this month.</p>
       </div>
       <div class="actions">
@@ -38,11 +30,21 @@
       </div>
     </header>
 
-    <!-- Popups -->
-    <app-add-income *ngIf="showIncome" (close)="showIncome=false" (submitForm)="onIncomeAdded($event)"></app-add-income>
-    <app-add-expense *ngIf="showExpense" (close)="showExpense=false" (submitForm)="onExpenseAdded($event)"></app-add-expense>
+    <!-- Income Form (only when showIncome true) -->
+    <app-add-income 
+      *ngIf="showIncome" 
+      (close)="showIncome=false" 
+      (submitForm)="onIncomeAdded($event)">
+    </app-add-income>
 
-    <!-- Stats -->
+    <!-- Expense Form (only when showExpense true) -->
+    <app-add-expense 
+      *ngIf="showExpense" 
+      (close)="showExpense=false" 
+      (submitForm)="onExpenseAdded($event)">
+    </app-add-expense>
+
+    <!-- Stats Cards -->
     <section class="stats">
       <div class="card">Monthly Income <h3>${{monthlyIncome}}</h3></div>
       <div class="card">Monthly Expenses <h3>${{monthlyExpenses}}</h3></div>
@@ -50,32 +52,34 @@
       <div class="card">Savings Rate <h3>{{savingsRate}}%</h3></div>
     </section>
 
-    <!-- Charts -->
-    <section class="charts">
-      <div class="chart">
-        <h3>Income vs Expenses</h3>
-        <canvas baseChart [data]="barChartData" [options]="barChartOptions" chartType="bar"></canvas>
-      </div>
-      <!-- <div class="chart">
-        <h3>Expense Breakdown</h3>
-        <canvas baseChart [data]="pieChartData" [options]="pieChartOptions" chartType="pie"></canvas>
-      </div> -->
-
- <!-- Expense Breakdown -->
-  <div class="card">
-    <h3>Expense Breakdown</h3>
-    <div style="display: block; max-width: 400px; margin: auto;">
-      <canvas baseChart
-        [data]="pieChartData"
-        [type]="pieChartType"
-        [options]="pieChartOptions">
-      </canvas>
-    </div>
+    <!-- Charts Section -->
+<section class="charts grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+  <!-- Bar Chart: Income vs Expenses -->
+  <div class="chart card shadow p-4 bg-white rounded-2xl">
+    <h3 class="text-lg font-semibold mb-3 text-gray-700">Income vs Expenses (Monthly)</h3>
+    <canvas
+      baseChart
+      #barChart
+      [data]="barChartData"
+      [options]="barChartOptions"
+      chartType="bar">
+    </canvas>
   </div>
 
-    </section>
+  <!-- Pie Chart: Expense Breakdown -->
+  <div class="chart card shadow p-4 bg-white rounded-2xl">
+    <h3 class="text-lg font-semibold mb-3 text-gray-700">Expense Breakdown</h3>
+    <canvas
+      baseChart
+      #pieChart
+      [data]="pieChartData"
+      [options]="pieChartOptions"
+      chartType="pie">
+    </canvas>
+  </div>
+</section>
 
-    <!-- Transactions -->
+    <!-- Transactions Section -->
     <section class="transactions">
       <h3>Recent Transactions</h3>
       <div class="transaction-list">

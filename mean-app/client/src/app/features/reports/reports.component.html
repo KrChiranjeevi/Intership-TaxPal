@@ -1,0 +1,41 @@
+<div class="reports-page">
+  <h1>Financial Reports</h1>
+  <p>Generate and download your financial reports.</p>
+
+  <div class="generate-form">
+    
+    <label for="reportType">Report Type:</label>
+    <select id="reportType" [(ngModel)]="reportType">
+      <option value="Income Statement">Income Statement</option>
+      <option value="Spending Breakdown">Spending Breakdown</option>
+    </select>
+
+    <label for="period">Period:</label>
+    <select id="period" [(ngModel)]="period">
+      <option value="Current Month">Current Month</option>
+      <option value="Last Quarter">Last Quarter</option>
+      <option value="Full Year">Full Year</option>
+    </select>
+
+    <label for="format">Format:</label>
+    <select id="format" [(ngModel)]="format">
+      <option value="JSON">JSON</option>
+      <option value="CSV">CSV</option>
+      <option value="PDF" disabled>PDF (Not Implemented)</option>
+      <option value="EXCEL" disabled>EXCEL (Not Implemented)</option>
+    </select>
+    
+    <button (click)="generateReport()">Generate Report</button>
+  </div>
+  
+  <div class="recent-reports">
+    <h3>Recent Reports</h3>
+    <p *ngIf="!generatedReportData && !reportMessage">No recent reports found.</p>
+    <p *ngIf="reportMessage">{{ reportMessage }}</p>
+    
+    <div class="report-preview" *ngIf="generatedReportData">
+        <h4>Report Preview ({{ generatedReportData.reportName || 'Data' }})</h4>
+        <pre>{{ getReportDisplay() }}</pre>
+    </div>
+  </div>
+</div>

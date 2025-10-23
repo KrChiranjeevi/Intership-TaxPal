@@ -1,0 +1,60 @@
+<div class="notifications-card">
+  <h3><span class="icon">🔔</span> Notification Preferences</h3>
+  <form>
+    <div class="form-row">
+
+      <div class="form-group full-width toggle-group">
+        <div class="label-description">
+          <label for="emailNotifications">Email Notifications</label>
+          <p class="description-text">Receive email updates about your account</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="emailNotifications" 
+                 [(ngModel)]="settings.emailNotifications" 
+                 (change)="savePreferences()" />
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <div class="form-group full-width toggle-group">
+        <div class="label-description">
+          <label for="transactionAlerts">Transaction Alerts</label>
+          <p class="description-text">Get notified when new transactions are added</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="transactionAlerts" 
+                 [(ngModel)]="settings.transactionAlerts" 
+                 (change)="savePreferences()" />
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <div class="form-group full-width toggle-group">
+        <div class="label-description">
+          <label for="budgetWarnings">Budget Warnings</label>
+          <p class="description-text">Alert when approaching budget limits</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="budgetWarnings" 
+                 [(ngModel)]="settings.budgetWarnings" 
+                 (change)="savePreferences()" />
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <div class="form-group full-width toggle-group">
+        <div class="label-description">
+          <label for="taxReminders">Tax Reminders</label>
+          <p class="description-text">Reminders for tax deadlines and updates</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="taxReminders" 
+                 [(ngModel)]="settings.taxReminders" 
+                 (change)="savePreferences()" />
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+    </div>
+  </form>
+</div>

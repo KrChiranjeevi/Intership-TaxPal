@@ -106,6 +106,10 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from "./routes/authRoutes.js";
 import transactionRoutes from "./api/modules/transactions/transaction.routes.js";
+// import financialReportRoutes from "./api/modules/FinancialReport/FinancialReport.routes.js";
+import financialReportRoutes from "./api/modules/FinancialReport/FinancialReport.routes.js"; // 👈 Correct Path
+
+
 
 dotenv.config();
 const app = express();
