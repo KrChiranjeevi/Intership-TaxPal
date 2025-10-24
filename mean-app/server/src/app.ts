@@ -22,7 +22,14 @@ const app = express();
 // middleware
 app.use(cors({ origin: 'http://localhost:4200', credentials: true }));
 app.use(express.json());
+// ✅ Disable ETag globally (prevents 304 responses)
+app.disable('etag');
 
+// ✅ Add universal no-cache middleware (lightweight)
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
 // routes
 app.use('/api/auth', userRoutes);
 app.use('/api/transactions', transactionRoutes); 

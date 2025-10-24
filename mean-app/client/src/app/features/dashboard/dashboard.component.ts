@@ -9,6 +9,7 @@ import { AddExpenseComponent } from '../transactions/add-expense/add-expense.com
 import { TransactionService } from '@core/services/transaction.service';
 import { BudgetService } from '@core/services/budget.service';
 import { ChartConfiguration } from 'chart.js';
+import { TaxEstimatorService } from '@core/services/tax-estimator.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -27,6 +28,7 @@ export class DashboardComponent implements OnInit {
   monthlyIncome = 0;
   monthlyExpenses = 0;
   estimatedTaxDue = 0;
+  latestTaxEstimate: any = null;
   savingsRate = 0;
   transactions: any[] = [];
 
@@ -58,11 +60,13 @@ export class DashboardComponent implements OnInit {
     private txService: TransactionService,
     private authService: AuthService,
     private router: Router,
-    private budgetService: BudgetService
+    private budgetService: BudgetService,
+    private taxService: TaxEstimatorService,   
   ) {}
 
   ngOnInit(): void {
     this.loadTransactions();
+    this.loadLatestTaxEstimate();
   }
 
   onLogout() {
@@ -79,6 +83,28 @@ export class DashboardComponent implements OnInit {
         this.updateCharts();
       },
       error: (err) => console.error('Error loading transactions', err)
+    });
+  }
+
+  loadLatestTaxEstimate() {
+    this.taxService.getAllEstimates().subscribe({
+      next: (res: any) => {
+        const estimates = Array.isArray(res) ? res : (res?.data ?? []);
+        if (estimates.length > 0) {
+          // API returns ordered by createdAt desc (controller does this) — take first as latest
+          const latest = estimates[0];
+          this.latestTaxEstimate = latest;
+          this.estimatedTaxDue = Number(latest.estimatedTax || 0);
+        } else {
+          this.latestTaxEstimate = null;
+          this.estimatedTaxDue = 0;
+        }
+      },
+      error: (err) => {
+        console.error('Error fetching tax estimates', err);
+        this.latestTaxEstimate = null;
+        this.estimatedTaxDue = 0;
+      }
     });
   }
 
@@ -187,6 +213,7 @@ setTimeout(() => {
       next: () => {
         this.showIncome = false;
         this.loadTransactions();
+        this.loadLatestTaxEstimate();
       },
       error: (err) => {
         console.error('Error adding income', err);
@@ -201,7 +228,8 @@ setTimeout(() => {
     next: () => {
       this.showExpense = false;
       this.loadTransactions();
-      this.applyExpenseToBudget(payload); // <-- pass payload, not raw form data
+      this.applyExpenseToBudget(payload);// <-- pass payload, not raw form data
+      this.loadLatestTaxEstimate(); 
     },
     error: (err) => {
       console.error('Error adding expense', err);
