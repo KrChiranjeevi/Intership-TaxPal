@@ -1,0 +1,77 @@
+.dialog-container {
+  padding: 25px;
+  width: 400px;
+  background: #1f2a38;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+h2 {
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+label {
+  font-weight: 500;
+  color: #ccc;
+}
+
+.input-box {
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  background: #2d3d52;
+  color: #fff;
+}
+
+.color-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.color-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s, border 0.2s;
+}
+
+.color-circle:hover {
+  transform: scale(1.1);
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+button {
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+button:first-child {
+  background: #6b6969;
+  color: #fff;
+}
+
+button:last-child {
+  background: #2563eb;
+  color: #fff;
+}

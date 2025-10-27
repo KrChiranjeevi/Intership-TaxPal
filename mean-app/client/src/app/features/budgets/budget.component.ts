@@ -1,3 +1,5 @@
+// budget.component.ts
+
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -8,9 +10,7 @@ import { BudgetService } from '@core/services/budget.service';
   selector: 'app-budget',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
-    template: `<h1>Budgets Page</h1>`,
   templateUrl: './budget.component.html',
-    styles: [`h1 { color: #fff; }`],
   styleUrls: ['./budget.component.scss']
 })
 export class BudgetComponent implements OnInit {
@@ -107,5 +107,4 @@ export class BudgetComponent implements OnInit {
       this.budgetHealth = { status: 'Critical', color: '#F44336' };
     }
   }
-  
 }

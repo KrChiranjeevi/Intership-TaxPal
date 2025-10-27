@@ -1,71 +1,145 @@
-// // client/src/app/features/reports/reports.component.ts
+import { Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { ReportsService, Report } from '@core/services/reports.service';
 
-// import { Component } from '@angular/core';
-// import { CommonModule } from '@angular/common';
-// import { FormsModule } from '@angular/forms';
-// import { ReportsService } from '@core/services/reports.service';
+@Component({
+  selector: 'app-reports',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './reports.component.html',
+  styleUrls: ['./reports.component.scss'],
+})
+export class ReportsComponent implements OnInit {
+  fileIconUrl = 'https://cdn-icons-png.flaticon.com/512/7945/7945212.png';
+  readonly REPORT_TYPES = ['Income Statement', 'Expense Report', 'Balance Sheet'];
+  readonly PERIODS = ['Current Month', 'Last Month', 'Quarter', 'Year'];
+  readonly FORMATS = ['PDF', 'CSV'];
 
-// @Component({
-//   selector: 'app-reports',
-//   standalone: true,
-//   imports: [CommonModule, FormsModule],
-//   templateUrl: './reports.component.html',
-//   styleUrls: ['./reports.component.scss']
-// })
-// export class ReportsComponent {
-//   reportType = 'Income Statement';
-//   period = 'Current Month';
-//   format = 'JSON'; // Default to JSON for display
-//   generatedReportData: any = null;
-//   reportMessage: string | null = null;
+  // Form values
+  reportTypeValue: string = this.REPORT_TYPES[0];
+  periodValue: string = this.PERIODS[0];
+  formatValue: string = this.FORMATS[0];
 
-//   constructor(private reportsService: ReportsService) {}
+  recentReports: Report[] = [];
+  selectedReport: Report | null = null;
 
-//   generateReport() {
-//     this.reportMessage = 'Generating report...';
-//     const reportOptions = {
-//       reportType: this.reportType,
-//       period: this.period,
-//       format: this.format
-//     };
-    
-//     this.reportsService.generateReport(reportOptions).subscribe(
-//       (res: any) => {
-//         this.reportMessage = 'Report generated successfully!';
-//         if (this.format === 'CSV') {
-//             // Handle CSV download
-//             const blob = new Blob([res], { type: 'text/csv' });
-//             const url = window.URL.createObjectURL(blob);
-//             const a = document.createElement('a');
-//             a.href = url;
-//             a.download = `TaxPal_${this.reportType}_${this.period}.csv`;
-//             document.body.appendChild(a);
-//             a.click();
-//             window.URL.revokeObjectURL(url);
-//             a.remove();
-//             this.generatedReportData = null; // CSV is downloaded, no display needed
-//         } else {
-//             // Display JSON report data
-//             this.generatedReportData = res.data;
-//         }
-//       },
-//       (err) => {
-//         this.reportMessage = 'Failed to generate report.';
-//         this.generatedReportData = null;
-//         console.error('Failed to generate report:', err);
-//         alert('Report generation failed. Check console for details.');
-//       }
-//     );
-//   }
+  loading: boolean = false;
 
-//   // Helper to display data clearly
-//   getReportDisplay() {
-//       if (!this.generatedReportData) return '';
-//       if (Array.isArray(this.generatedReportData) && this.generatedReportData.length > 0) {
-//           return JSON.stringify(this.generatedReportData, null, 2);
-//       } else if (this.generatedReportData.totalIncome !== undefined) {
-//           return JSON.stringify(this.generatedReportData, null, 2);
-//       }
-//       return 'No specific data returned for JSON report.';
-//   }
-// }
+  constructor(private reportsService: ReportsService) {}
+
+  ngOnInit(): void {
+    this.loadReports();
+  }
+
+  loadReports(): void {
+    this.reportsService.getReports().subscribe({
+      next: (res) => (this.recentReports = res),
+      error: (err) => console.error(err),
+    });
+  }
+
+  generateReport(): void {
+    this.loading = true;
+
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    if (!user.id) {
+      console.error('User ID is missing. Make sure user is logged in.');
+      this.loading = false;
+      return;
+    }
+
+    const defaultFilePath = '/path/to/report.pdf';
+
+    const newReport = {
+      userId: user.id,
+      reportType: this.reportTypeValue,
+      period: this.periodValue,
+      format: this.formatValue,
+      filePath: defaultFilePath,
+    };
+
+    console.log('Sending report to backend:', newReport);
+
+    this.reportsService.createReport(newReport).subscribe({
+      next: (res) => {
+        this.recentReports.unshift(res);
+        this.selectReport(res); // Auto-select and preview new report
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Failed to create report:', err);
+        this.loading = false;
+      },
+    });
+  }
+
+  resetForm(): void {
+    this.reportTypeValue = this.REPORT_TYPES[0];
+    this.periodValue = this.PERIODS[0];
+    this.formatValue = this.FORMATS[0];
+  }
+
+  selectReport(report: Report): void {
+    this.selectedReport = report;
+    this.previewReport(report.fileUrl, report.format);
+  }
+
+  previewReport(fileUrl: string, format: string) {
+    const container = document.getElementById('report-preview-container');
+    if (!container) return;
+
+    if (format === 'PDF') {
+      container.innerHTML = `<iframe src="${fileUrl}" width="100%" height="500px"></iframe>`;
+    } else if (format === 'CSV') {
+      fetch(fileUrl)
+        .then(res => res.text())
+        .then(data => {
+          const rows = data
+            .split('\n')
+            .map(r => `<tr>${r.split(',').map(c => `<td>${c}</td>`).join('')}</tr>`)
+            .join('');
+          container.innerHTML = `<table border="1" style="width:100%; border-collapse:collapse;">${rows}</table>`;
+        });
+    }
+  }
+
+  updateReport(report: Report): void {
+    if (!report) return;
+    const updatedData = {
+      reportType: this.reportTypeValue,
+      period: this.periodValue,
+      format: this.formatValue
+    };
+    this.reportsService.updateReport(report.id, updatedData).subscribe({
+      next: (res) => {
+        const index = this.recentReports.findIndex(r => r.id === report.id);
+        if (index > -1) this.recentReports[index] = res;
+        this.selectReport(res);
+      },
+      error: (err) => console.error(err)
+    });
+  }
+
+  deleteReport(report: Report): void {
+    if (!report) return;
+    this.reportsService.deleteReport(report.id).subscribe({
+      next: () => {
+        this.recentReports = this.recentReports.filter(r => r.id !== report.id);
+        if (this.selectedReport?.id === report.id) this.selectedReport = null;
+      },
+      error: (err) => console.error(err)
+    });
+  }
+
+  downloadReport(): void {
+    if (!this.selectedReport) return;
+    window.open(this.selectedReport.filePath || this.selectedReport.fileUrl, '_blank');
+  }
+
+  printReport(): void {
+    if (!this.selectedReport) return;
+    window.print();
+  }
+}

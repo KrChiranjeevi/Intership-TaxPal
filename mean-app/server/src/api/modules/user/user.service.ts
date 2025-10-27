@@ -1,9 +1,23 @@
 // src/modules/users/users.service.ts
 import { prisma } from '../../../config/prisma.client.js';
+import type { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import type { RegisterDto, LoginDto, RequestPasswordResetDto, ResetPasswordDto } from './user.model.js';
 
 // ------------------- USER CRUD -------------------
+
+export class UserService {
+  constructor(private prisma: PrismaClient) {}
+
+  async createUser(data: any) {
+    return this.prisma.user.create({ data });
+  }
+
+  async getUserByEmail(email: string) {
+    return this.prisma.user.findUnique({ where: { email } });
+  }
+}
+
 
 export async function createUser(data: RegisterDto) {
   const hashed = await bcrypt.hash(data.password, Number(process.env.BCRYPT_SALT_ROUNDS || 10));
@@ -38,6 +52,7 @@ export async function validateUser(data: LoginDto) {
 
   return user;
 }
+
 
 // ------------------- REFRESH TOKEN -------------------
 

@@ -1,21 +1,46 @@
-// // client/src/app/core/services/reports.service.ts
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
-// import { Injectable } from '@angular/core';
-// import { HttpClient } from '@angular/common/http';
-// import { environment } from '../../../environments/environment';
-// import { Observable } from 'rxjs';
+export interface Report {
+  filePath: string;
+  id: string;
+  name: string;
+  generated: string;
+  period: string;
+  format: string;
+  fileUrl: string;
+}
 
-// @Injectable({ providedIn: 'root' })
-// export class ReportsService {
-//   private api = environment.apiUrl + '/reports';
+@Injectable({ providedIn: 'root' })
+export class ReportsService {
+  private apiUrl = `${environment.apiUrl}/reports`;
 
-//   constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {}
 
-//   generateReport(reportOptions: any): Observable<any> {
-//     // Send report options (type, period, format) to the backend
-//     return this.http.post(`${this.api}/generate`, reportOptions, {
-//         // Set response type to text/blob for file downloads (like CSV/PDF)
-//         responseType: reportOptions.format === 'CSV' ? 'text' : 'json' 
-//     });
-//   }
-// }
+  private getAuthHeaders(): { headers: HttpHeaders } {
+    const token = localStorage.getItem('token');
+    return {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      })
+    };
+  }
+
+  getReports(accessToken?: any): Observable<Report[]> {
+    return this.http.get<Report[]>(this.apiUrl, this.getAuthHeaders());
+  }
+
+  createReport(data: Partial<Report>, accessToken?: any): Observable<Report> {
+    return this.http.post<Report>(this.apiUrl, data, this.getAuthHeaders());
+  }
+  updateReport(id: string, data: Partial<Report>): Observable<Report> {
+  return this.http.put<Report>(`${this.apiUrl}/${id}`, data, this.getAuthHeaders());
+  }
+  deleteReport(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`, this.getAuthHeaders());
+  }
+
+}

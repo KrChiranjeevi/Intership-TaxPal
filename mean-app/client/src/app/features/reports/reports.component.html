@@ -1,41 +1,99 @@
 <div class="reports-page">
-  <h1>Financial Reports</h1>
-  <p>Generate and download your financial reports.</p>
+  <header>
+    <h1>Financial Reports</h1>
+    <p>Generate and download your financial reports</p>
+  </header>
 
-  <div class="generate-form">
-    
-    <label for="reportType">Report Type:</label>
-    <select id="reportType" [(ngModel)]="reportType">
-      <option value="Income Statement">Income Statement</option>
-      <option value="Spending Breakdown">Spending Breakdown</option>
-    </select>
+  <!-- Generate Report Card -->
+  <div class="card generate-report-card">
+    <h2>Generate Report</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="reportType">Report Type</label>
+        <select id="reportType" [(ngModel)]="reportTypeValue">
+          <option *ngFor="let type of REPORT_TYPES" [value]="type">{{ type }}</option>
+        </select>
+      </div>
 
-    <label for="period">Period:</label>
-    <select id="period" [(ngModel)]="period">
-      <option value="Current Month">Current Month</option>
-      <option value="Last Quarter">Last Quarter</option>
-      <option value="Full Year">Full Year</option>
-    </select>
+      <div class="form-group">
+        <label for="period">Period</label>
+        <select id="period" [(ngModel)]="periodValue">
+          <option *ngFor="let p of PERIODS" [value]="p">{{ p }}</option>
+        </select>
+      </div>
 
-    <label for="format">Format:</label>
-    <select id="format" [(ngModel)]="format">
-      <option value="JSON">JSON</option>
-      <option value="CSV">CSV</option>
-      <option value="PDF" disabled>PDF (Not Implemented)</option>
-      <option value="EXCEL" disabled>EXCEL (Not Implemented)</option>
-    </select>
-    
-    <button (click)="generateReport()">Generate Report</button>
-  </div>
-  
-  <div class="recent-reports">
-    <h3>Recent Reports</h3>
-    <p *ngIf="!generatedReportData && !reportMessage">No recent reports found.</p>
-    <p *ngIf="reportMessage">{{ reportMessage }}</p>
-    
-    <div class="report-preview" *ngIf="generatedReportData">
-        <h4>Report Preview ({{ generatedReportData.reportName || 'Data' }})</h4>
-        <pre>{{ getReportDisplay() }}</pre>
+      <div class="form-group">
+        <label for="format">Format</label>
+        <select id="format" [(ngModel)]="formatValue">
+          <option *ngFor="let f of FORMATS" [value]="f">{{ f }}</option>
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button (click)="resetForm()" class="reset-btn">Reset</button>
+        <button (click)="generateReport()" class="generate-btn" [disabled]="loading">
+          {{ loading ? 'Generating...' : 'Generate Report' }}
+        </button>
+      </div>
     </div>
+  </div>
+
+  <!-- Recent Reports Card with Actions -->
+  <div class="card recent-reports-card">
+    <h2>Recent Reports</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Generated</th>
+          <th>Period</th>
+          <th>Format</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let report of recentReports">
+          <td>{{ report.name }}</td>
+          <td>{{ report.generated | date:'short' }}</td>
+          <td>{{ report.period }}</td>
+          <td>{{ report.format }}</td>
+          <td class="actions">
+            <button (click)="selectReport(report)">👁️ Preview</button>
+            <!--<button (click)="updateReport(report)">🔄 Update</button>-->
+            <button (click)="deleteReport(report)">🗑️ Delete</button>
+          </td>
+        </tr>
+        <tr *ngIf="recentReports.length === 0">
+          <td colspan="6" class="no-results">No results</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Report Preview Card -->
+  <div class="card report-preview-card">
+    <h2>Report Preview</h2>
+    <div class="preview-actions">
+      <button (click)="printReport()" [disabled]="!selectedReport">🖨️ Print</button>
+      <button (click)="downloadReport()" [disabled]="!selectedReport">⬇️ Download</button>
+    </div>
+
+    <div class="preview-content" *ngIf="selectedReport; else noPreview">
+      <p><strong>{{ selectedReport.name }}</strong></p>
+      <p>Generated on: {{ selectedReport.generated | date:'short' }}</p>
+      <p>Period: {{ selectedReport.period }}</p>
+      <p>Format: {{ selectedReport.format }}</p>
+      
+      <!-- Dynamic preview container -->
+      <div id="report-preview-container" style="width:100%; height:600px; overflow:auto; border:1px solid #ccc; margin-top:10px;"></div>
+    </div>
+
+    <ng-template #noPreview>
+      <div class="no-preview">
+        <img [src]="fileIconUrl" alt="File Icon" class="file-icon" />
+        <p>Select a report to preview</p>
+        <small>Generated reports will appear here for review before downloading</small>
+      </div>
+    </ng-template>
   </div>
 </div>

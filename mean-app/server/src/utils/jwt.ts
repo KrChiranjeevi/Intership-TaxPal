@@ -1,7 +1,4 @@
-// import jwt, { type SignOptions, type Secret } from 'jsonwebtoken';
-import * as jwt from 'jsonwebtoken';
-import type { SignOptions, Secret } from 'jsonwebtoken';
-
+import jwt, { type SignOptions, type Secret } from 'jsonwebtoken';
 
 const JWT_SECRET: Secret = process.env.JWT_SECRET || 'secret123';
 

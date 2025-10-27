@@ -4,19 +4,19 @@ import { authMiddleware } from '../../middlewares/auth.middleware.js';
 
 const router = Router();
 
-// Public route to perform a quick calculation
+// Public route: calculate tax without saving
 router.post('/calculate', taxController.calculateTaxHandler);
 
-// All subsequent routes require a user to be authenticated
+// Authenticated routes
 router.use(authMiddleware);
 
 // Save a new tax estimate
 router.post('/save', taxController.saveTaxEstimateHandler);
 
-// Get all estimates for the logged-in user
-router.get('/user', taxController.getUserTaxEstimatesHandler);
+// Get all estimates for logged-in user
+router.get('/estimates', taxController.getUserTaxEstimatesHandler);
 
-// Delete a specific tax estimate by its ID
+// Delete a specific tax estimate by ID
 router.delete('/:id', taxController.deleteTaxEstimateHandler);
 
 export default router;

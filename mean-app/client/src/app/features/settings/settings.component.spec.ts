@@ -3,6 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SettingsComponent } from './settings.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute } from '@angular/router';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+
 
 describe('SettingsComponent', () => {
   let component: SettingsComponent;
@@ -12,7 +14,8 @@ describe('SettingsComponent', () => {
     await TestBed.configureTestingModule({
       imports: [
         SettingsComponent,     // ✅ standalone import
-        RouterTestingModule    // ✅ provides ActivatedRoute + Router
+        RouterTestingModule,    // ✅ provides ActivatedRoute + Router
+        HttpClientTestingModule
       ],
       providers: [
         {
