@@ -35,7 +35,7 @@ export class TaxEstimatorComponent implements OnInit {
   estimatedTaxData = signal<EstimatedTaxData & { totalTax?: number; quarterlyPayment?: number } | null>(null);
 
   // Array for Tax Calendar (all calculated quarters)
-  estimatedTaxDataArray = signal<(EstimatedTaxData & { totalTax: number; quarterlyPayment: number; quarter: string })[]>([]);
+  estimatedTaxDataArray = signal<(EstimatedTaxData & { totalTax: number; quarterlyPayment: number; quarter: string;paid?: boolean })[]>([]);
 
   isCalculating = signal(false);
   errorMessage = signal('');
@@ -94,11 +94,11 @@ export class TaxEstimatorComponent implements OnInit {
 
           // Save/update Tax Calendar
           const updatedArray = [...this.estimatedTaxDataArray()];
-          const index = updatedArray.findIndex(e => e.quarter === inputs.quarter);
+          //const index = updatedArray.findIndex(e => e.quarter === inputs.quarter);
           const newEntry = { ...res, totalTax, quarterlyPayment, quarter: inputs.quarter };
-
-          if (index >= 0) updatedArray[index] = newEntry;
-          else updatedArray.push(newEntry);
+          updatedArray.push(newEntry);
+          //if (index >= 0) updatedArray[index] = newEntry;
+          //else updatedArray.push(newEntry);
 
           this.estimatedTaxDataArray.set(updatedArray);
           localStorage.setItem('taxEstimates', JSON.stringify(updatedArray));
@@ -111,4 +111,22 @@ export class TaxEstimatorComponent implements OnInit {
   getReminderForQuarter(quarter: string) {
     return this.estimatedTaxDataArray().find(e => e.quarter === quarter) ?? null;
   }
+  getQuarterRange(quarter: string) {
+    return this.quarters.find(q => q.name === quarter)?.range || '';
+  }
+
+  getDueDate(quarter: string) {
+    return this.quarters.find(q => q.name === quarter)?.dueDate || '';
+  }
+
+  setReminder(record: any) {
+    alert(`Reminder set for ${record.quarter} - Due on ${this.getDueDate(record.quarter)}.`);
+  }
+
+  markAsPaid(record: any) {
+    const updatedArray = this.estimatedTaxDataArray().filter(r => r !== record);
+    this.estimatedTaxDataArray.set(updatedArray);
+    localStorage.setItem('taxEstimates', JSON.stringify(updatedArray));
+  }
+  
 }

@@ -66,7 +66,9 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadTransactions();
-    this.loadLatestTaxEstimate();
+    const savedTax = localStorage.getItem('estimatedTaxDue');
+    if (savedTax) this.estimatedTaxDue = +savedTax;
+
   }
 
   onLogout() {
@@ -86,27 +88,7 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  loadLatestTaxEstimate() {
-    this.taxService.getAllEstimates().subscribe({
-      next: (res: any) => {
-        const estimates = Array.isArray(res) ? res : (res?.data ?? []);
-        if (estimates.length > 0) {
-          // API returns ordered by createdAt desc (controller does this) — take first as latest
-          const latest = estimates[0];
-          this.latestTaxEstimate = latest;
-          this.estimatedTaxDue = Number(latest.estimatedTax || 0);
-        } else {
-          this.latestTaxEstimate = null;
-          this.estimatedTaxDue = 0;
-        }
-      },
-      error: (err) => {
-        console.error('Error fetching tax estimates', err);
-        this.latestTaxEstimate = null;
-        this.estimatedTaxDue = 0;
-      }
-    });
-  }
+  
 
   calculateStats() {
     this.monthlyIncome = this.transactions
@@ -120,6 +102,9 @@ export class DashboardComponent implements OnInit {
     this.savingsRate = this.monthlyIncome
       ? +(((this.monthlyIncome - this.monthlyExpenses) / this.monthlyIncome) * 100).toFixed(2)
       : 0;
+    this.estimatedTaxDue = +((this.monthlyIncome - this.monthlyExpenses) * 0.15).toFixed(2);
+    localStorage.setItem('estimatedTaxDue', this.estimatedTaxDue.toString());
+
   }
 
   updateCharts() {
@@ -213,7 +198,6 @@ setTimeout(() => {
       next: () => {
         this.showIncome = false;
         this.loadTransactions();
-        this.loadLatestTaxEstimate();
       },
       error: (err) => {
         console.error('Error adding income', err);
@@ -229,7 +213,7 @@ setTimeout(() => {
       this.showExpense = false;
       this.loadTransactions();
       this.applyExpenseToBudget(payload);// <-- pass payload, not raw form data
-      this.loadLatestTaxEstimate(); 
+
     },
     error: (err) => {
       console.error('Error adding expense', err);

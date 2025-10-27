@@ -6,6 +6,7 @@ import { AuthGuard } from '@core/guard/auth.guard';
 import { MainLayoutComponent } from './layouts/main-layout.component';
 import { ForgotPasswordComponent } from './features/users/pages/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './features/users/pages/reset-password/reset-password.component';
+
 const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 
