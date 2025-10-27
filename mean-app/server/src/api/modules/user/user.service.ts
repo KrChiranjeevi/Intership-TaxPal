@@ -2,6 +2,7 @@
 import { prisma } from '../../../config/prisma.client.js';
 import bcrypt from 'bcrypt';
 import type { RegisterDto, LoginDto, RequestPasswordResetDto, ResetPasswordDto } from './user.model.js';
+import crypto from 'crypto';
 
 // ------------------- USER CRUD -------------------
 
@@ -61,25 +62,43 @@ export async function removeRefreshToken(token: string) {
 
 // ------------------- PASSWORD RESET -------------------
 
-// Temporary in-memory store
-const passwordResetTokens: Record<string, string> = {};
+// In-memory store: keyed by email -> { token, expiresAt }
+type ResetRecord = { token: string; expiresAt: number };
+const passwordResetTokens: Record<string, ResetRecord> = {};
 
-// Generate token
+/**
+ * Generates a short random token, stores it with an expiry, and returns it.
+ * Token expiry is 15 minutes by default.
+ */
 export async function requestPasswordReset(data: RequestPasswordResetDto) {
   const user = await prisma.user.findUnique({ where: { email: data.email } });
   if (!user) return null;
 
-  const resetToken = Math.random().toString(36).substring(2, 15);
-  passwordResetTokens[data.email] = resetToken; // store token
+  // create a cryptographically-strong token
+  const resetToken = cryptoRandomToken(24); // ~24 chars
+  const expiresInMs = (Number(process.env.PASSWORD_RESET_EXPIRES_MINUTES ?? 15) || 15) * 60 * 1000;
+  const expiresAt = Date.now() + expiresInMs;
+
+  passwordResetTokens[data.email] = { token: resetToken, expiresAt };
+
   return resetToken;
 }
 
-// Update password only if token matches
+/**
+ * Validate token and set new password. Token must match and not be expired.
+ */
 export async function saveNewPassword(data: ResetPasswordDto) {
   const user = await prisma.user.findUnique({ where: { email: data.email } });
   if (!user) return null;
 
-  if (passwordResetTokens[data.email] !== data.token) return null; // token verification
+  const record = passwordResetTokens[data.email];
+  if (!record) return null;
+  if (record.token !== data.token) return null;
+  if (Date.now() > record.expiresAt) {
+    // expired
+    delete passwordResetTokens[data.email];
+    return null;
+  }
 
   const hashed = await bcrypt.hash(data.newPassword, Number(process.env.BCRYPT_SALT_ROUNDS || 10));
   const updated = await prisma.user.update({
@@ -87,6 +106,13 @@ export async function saveNewPassword(data: ResetPasswordDto) {
     data: { password: hashed },
   });
 
-  delete passwordResetTokens[data.email]; // remove used token
+  // Remove token after use
+  delete passwordResetTokens[data.email];
   return updated;
+}
+
+/** Helper: crypto-quality random token as hex */
+function cryptoRandomToken(length = 24) {
+  const bytes = Math.ceil(length / 2);
+  return crypto.randomBytes(bytes).toString('hex').slice(0, length);
 }

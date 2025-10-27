@@ -105,11 +105,24 @@ export async function getProfileHandler(req: Request & { userId?: string }, res:
 export async function requestPasswordResetHandler(req: Request, res: Response) {
   try {
     const data: RequestPasswordResetDto = req.body;
+    if (!data?.email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
     const token = await requestPasswordReset(data);
     if (!token) return res.status(404).json({ success: false, message: 'User not found' });
 
-    // In production, send token via email
-    return res.json({ success: true, message: 'Password reset token generated', token });
+    // --- Mock email sending: log link to console ---
+    const frontendBase = process.env.FRONTEND_URL?.replace(/\/$/, '') || 'http://localhost:4200';
+    const resetPath = '/reset-password'; // make sure your frontend reset page listens for these query params
+    const link = `${frontendBase}${resetPath}?email=${encodeURIComponent(data.email)}&token=${encodeURIComponent(token)}`;
+    // --- Mock email content (with target="_self") ---
+    const htmlEmail = `<p>Click the link below to reset your password:</p>
+    <a href="${link}" target="_self">Reset Password</a>`;
+    console.log(`\n[Mock Email] Password reset link for ${data.email}:\n${link}\n`);
+    // (In real prod you'd send an email here)
+
+    return res.json({ success: true, message: 'Password reset link generated and logged to server console (mock email).',link });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, message: 'Server error' });
@@ -119,6 +132,10 @@ export async function requestPasswordResetHandler(req: Request, res: Response) {
 export async function resetPasswordHandler(req: Request, res: Response) {
   try {
     const data: ResetPasswordDto = req.body;
+    if (!data?.email || !data?.token || !data?.newPassword) {
+      return res.status(400).json({ success: false, message: 'Email, token and newPassword are required' });
+    }
+
     const updated = await saveNewPassword(data);
     if (!updated) return res.status(400).json({ success: false, message: 'Invalid or expired token' });
 

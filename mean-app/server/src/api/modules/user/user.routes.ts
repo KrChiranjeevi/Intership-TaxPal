@@ -25,7 +25,7 @@ router.post('/logout', logoutHandler);
 router.get('/me', authMiddleware, getProfileHandler);
 
 // Password reset
-router.post('/password-reset-request', requestPasswordResetHandler);
-router.post('/password-reset', resetPasswordHandler);
+router.post('/forgot-password', requestPasswordResetHandler);
+router.post('/reset-password', resetPasswordHandler);
 
 export default router;

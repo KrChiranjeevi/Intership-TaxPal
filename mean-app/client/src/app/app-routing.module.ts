@@ -4,12 +4,15 @@ import { LoginComponent } from './features/users/pages/login/login.component';
 import { SignupComponent } from './features/users/pages/signup/signup.component';
 import { AuthGuard } from '@core/guard/auth.guard';
 import { MainLayoutComponent } from './layouts/main-layout.component';
-
+import { ForgotPasswordComponent } from './features/users/pages/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './features/users/pages/reset-password/reset-password.component';
 const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
 
   {
     path: '',
