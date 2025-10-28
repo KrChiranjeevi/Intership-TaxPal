@@ -231,4 +231,94 @@
       }
     }
   }
+  /* --- Buttons for Tax Calendar --- */
+.btn-reminder,
+.btn-paid {
+  padding: 0.5rem 2rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Set Reminder button - Blue tone */
+.btn-reminder {
+  background: linear-gradient(90deg, #00d4ff, #0066ff);
+  color: #fff;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+  }
+}
+
+/* Mark as Paid button - Green tone */
+.btn-paid {
+  background: linear-gradient(90deg, #1b9d4b, #22c55e);
+  color: #fff;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+  }
+
+  &:disabled {
+    background: #4b5563;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+}
+
+/* Alignment within calendar card */
+.tax-estimator-container section.mt-12 .flex {
+  justify-content: center;
+  gap: 1rem;
+
+  button {
+    min-width: 130px;
+  }
+}
+/* === Tax Summary Card Styling === */
+/* === Enhanced Styling for Tax Summary Card === */
+aside .bg-blue-50 {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  text-align: center;
+}
+
+aside .bg-blue-50:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Headline styling */
+aside h2 {
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+}
+
+/* Summary list items */
+aside .space-y-4 div {
+  background-color: #1e2d4b;
+  justify-content: center !important;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+aside .space-y-4 div:hover {
+  background-color: #eaf2ff;
+  transform: scale(1.01);
+}
+
+/* Placeholder text */
+aside p.text-gray-500 {
+  font-style: italic;
+  opacity: 0.85;
+}
+
+
+
+  
 }

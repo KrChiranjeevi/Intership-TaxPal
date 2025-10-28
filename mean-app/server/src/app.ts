@@ -22,12 +22,25 @@ const app = express();
 // middleware
 app.use(cors({ origin: 'http://localhost:4200', credentials: true }));
 app.use(express.json());
+// ✅ Disable ETag globally (prevents 304 responses)
+app.disable('etag');
 
+// ✅ Add universal no-cache middleware (lightweight)
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
 // routes
 app.use('/api/auth', userRoutes);
 app.use('/api/transactions', transactionRoutes); 
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/budgets', budgetRoutes);
+// app.ts
+app.use('/api/budgets', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store'); // disable caching
+  next();
+}, budgetRoutes);
+
+//app.use('/api/budgets', budgetRoutes);
 app.use('/api/categories', categoriesRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use('/api/security', securityRouter);

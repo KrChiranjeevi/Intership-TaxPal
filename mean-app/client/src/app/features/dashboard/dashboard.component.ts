@@ -7,7 +7,9 @@ import { NgChartsModule, BaseChartDirective } from 'ng2-charts';
 import { AddIncomeComponent } from '../transactions/add-income/add-income.component';
 import { AddExpenseComponent } from '../transactions/add-expense/add-expense.component';
 import { TransactionService } from '@core/services/transaction.service';
+import { BudgetService } from '@core/services/budget.service';
 import { ChartConfiguration } from 'chart.js';
+import { TaxEstimatorService } from '@core/services/tax-estimator.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -26,6 +28,7 @@ export class DashboardComponent implements OnInit {
   monthlyIncome = 0;
   monthlyExpenses = 0;
   estimatedTaxDue = 0;
+  latestTaxEstimate: any = null;
   savingsRate = 0;
   transactions: any[] = [];
 
@@ -56,11 +59,16 @@ export class DashboardComponent implements OnInit {
   constructor(
     private txService: TransactionService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private budgetService: BudgetService,
+    private taxService: TaxEstimatorService,   
   ) {}
 
   ngOnInit(): void {
     this.loadTransactions();
+    const savedTax = localStorage.getItem('estimatedTaxDue');
+    if (savedTax) this.estimatedTaxDue = +savedTax;
+
   }
 
   onLogout() {
@@ -80,6 +88,8 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  
+
   calculateStats() {
     this.monthlyIncome = this.transactions
       .filter(t => t.type === 'income')
@@ -92,6 +102,9 @@ export class DashboardComponent implements OnInit {
     this.savingsRate = this.monthlyIncome
       ? +(((this.monthlyIncome - this.monthlyExpenses) / this.monthlyIncome) * 100).toFixed(2)
       : 0;
+    this.estimatedTaxDue = +((this.monthlyIncome - this.monthlyExpenses) * 0.15).toFixed(2);
+    localStorage.setItem('estimatedTaxDue', this.estimatedTaxDue.toString());
+
   }
 
   updateCharts() {
@@ -194,16 +207,45 @@ setTimeout(() => {
   }
 
   onExpenseAdded(data: any) {
-    const payload = { ...data, date: new Date(data.date).toISOString() };
-    this.txService.addExpense(payload).subscribe({
-      next: () => {
-        this.showExpense = false;
-        this.loadTransactions();
-      },
-      error: (err) => {
-        console.error('Error adding expense', err);
-        alert(err?.error?.message || 'Error adding expense');
+  const payload = { ...data, date: new Date(data.date).toISOString() };
+  this.txService.addExpense(payload).subscribe({
+    next: () => {
+      this.showExpense = false;
+      this.loadTransactions();
+      this.applyExpenseToBudget(payload);// <-- pass payload, not raw form data
+
+    },
+    error: (err) => {
+      console.error('Error adding expense', err);
+      alert(err?.error?.message || 'Error adding expense');
+    }
+  });
+}
+
+private applyExpenseToBudget(expense: any) {
+  const expenseDate = new Date(expense.date);
+  const monthStr = `${expenseDate.getFullYear()}-${('0'+(expenseDate.getMonth()+1)).slice(-2)}`;
+
+  this.budgetService.getAllBudgets().subscribe({
+    next: (res: any) => {
+      const budgets = Array.isArray(res) ? res : (res?.data ?? []);
+      const budgetForCategory = budgets.find(
+        (b: any) => b.category === expense.category && b.month?.startsWith(monthStr)
+      );
+
+      if (budgetForCategory) {
+        const newSpent = (Number(budgetForCategory.spent || 0)) + Number(expense.amount || 0);
+        this.budgetService.updateBudget(budgetForCategory.id, { ...budgetForCategory, spent: newSpent })
+          .subscribe({
+            next: () => console.log(`Budget updated for ${expense.category} in ${monthStr}`),
+            error: (err) => console.error('Error updating budget', err)
+          });
+      } else {
+        console.warn(`No budget found for ${expense.category} in ${monthStr}`);
       }
-    });
-  }
+    },
+    error: (err) => console.error('Error fetching budgets', err)
+  });
+}
+
 }

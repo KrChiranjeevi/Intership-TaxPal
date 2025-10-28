@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
 import * as reportsService from './reports.service.js';
 
-// Create a new report
+const ALLOWED_PERIODS = ['Current Month', 'Last Month', 'Year'];
+
 export async function createReport(req: Request, res: Response) {
   try {
     const { userId, reportType, period, format } = req.body;
@@ -10,13 +11,11 @@ export async function createReport(req: Request, res: Response) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    const report = await reportsService.createReport({
-      userId,
-      reportType,
-      period,
-      format,
-    });
+    if (!ALLOWED_PERIODS.includes(period)) {
+      return res.status(400).json({ message: `Period must be one of: ${ALLOWED_PERIODS.join(', ')}` });
+    }
 
+    const report = await reportsService.createReport({ userId, reportType, period, format });
     res.status(201).json(report);
   } catch (error) {
     console.error(error);
@@ -24,14 +23,10 @@ export async function createReport(req: Request, res: Response) {
   }
 }
 
-
-// Get all reports for the logged-in user
 export async function getReports(req: Request, res: Response) {
   try {
-    const userId = (req as any).user?.id; // using 'any' to bypass TS error for req.user
-    if (!userId) {
-      return res.status(400).json({ message: 'User ID is required' });
-    }
+    const userId = (req as any).user?.id;
+    if (!userId) return res.status(400).json({ message: 'User ID is required' });
 
     const reports = await reportsService.getReportsByUserId(userId);
     res.json(reports);
@@ -41,18 +36,13 @@ export async function getReports(req: Request, res: Response) {
   }
 }
 
-// Get a single report by ID
 export async function getReportById(req: Request, res: Response) {
   try {
     const id = req.params.id;
-    if (!id) {
-      return res.status(400).json({ message: 'Report ID is required' });
-    }
+    if (!id) return res.status(400).json({ message: 'Report ID is required' });
 
     const report = await reportsService.getReportById(id);
-    if (!report) {
-      return res.status(404).json({ message: 'Report not found' });
-    }
+    if (!report) return res.status(404).json({ message: 'Report not found' });
 
     res.json(report);
   } catch (error) {
@@ -61,13 +51,10 @@ export async function getReportById(req: Request, res: Response) {
   }
 }
 
-// Delete a report by ID
 export async function deleteReport(req: Request, res: Response) {
   try {
     const id = req.params.id;
-    if (!id) {
-      return res.status(400).json({ message: 'Report ID is required' });
-    }
+    if (!id) return res.status(400).json({ message: 'Report ID is required' });
 
     const report = await reportsService.deleteReport(id);
     res.json({ message: 'Report deleted', report });
@@ -77,15 +64,11 @@ export async function deleteReport(req: Request, res: Response) {
   }
 }
 
-// Update a report
 export async function updateReport(req: Request, res: Response) {
   try {
     const id = req.params.id;
     const data = req.body;
-
-    if (!id) {
-      return res.status(400).json({ message: 'Report ID is required' });
-    }
+    if (!id) return res.status(400).json({ message: 'Report ID is required' });
 
     const report = await reportsService.updateReport(id, data);
     res.json(report);

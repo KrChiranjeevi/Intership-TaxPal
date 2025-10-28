@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
+import { CategoriesService, Category } from '@core/services/categories.service';
 @Component({
   selector: 'app-add-expense',
   standalone: true,
@@ -21,7 +21,28 @@ export class AddExpenseComponent {
     notes: ''
   };
 
-  categories = ['Food', 'Rent', 'Utilities', 'Other'];
+  //categories = ['Food', 'Rent', 'Utilities', 'Other'];
+  categories: string[] = [];
+
+  constructor(private categoriesService: CategoriesService) {}
+
+  ngOnInit() {
+    this.loadExpenseCategories();
+  }
+
+  loadExpenseCategories() {
+    this.categoriesService.getCategories().subscribe({
+      next: (res: Category[]) => {
+        this.categories = res
+          .filter(c => c.type === 'expense')
+          .map(c => c.name);
+      },
+      error: (err) => {
+        console.error('Error fetching expense categories', err);
+        this.categories = [];
+      }
+    });
+  }
 
   onCancel() { this.close.emit(); }
 

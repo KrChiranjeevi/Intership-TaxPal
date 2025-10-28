@@ -55,6 +55,7 @@ model Budget {
   id          String   @id @default(uuid())
   category    String
   amount      Float
+  spent       Float    @default(0) // <-- add this
   month       DateTime
   description String?
   userId      String

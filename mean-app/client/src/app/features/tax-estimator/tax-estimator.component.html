@@ -39,7 +39,7 @@
                   class="w-full rounded-lg border-gray-300 p-3 focus:border-blue-500 focus:ring-blue-500"
                 >
                   <option value="" disabled>Select quarter</option>
-                  <<option *ngFor="let q of QUARTER_OPTIONS" [value]="q.code">{{ q.label }}</option>
+                  <option *ngFor="let q of QUARTER_OPTIONS" [value]="q.code">{{ q.label }}</option>
                 </select>
               </div>
             </div>
@@ -165,27 +165,31 @@
 </aside>
 
 <!-- Tax Calendar -->
-<section class="mt-12 bg-white rounded-xl shadow-xl p-6 border border-gray-200">
-  <h2 class="text-2xl font-semibold text-blue-800 mb-4 text-center">Tax Calendar</h2>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <ng-container *ngFor="let q of quarters">
-      <div *ngIf="getReminderForQuarter(q.name) as data" class="p-6 rounded-lg border shadow hover:bg-blue-50 transition">
-        <h3 class="text-lg font-semibold text-blue-700">{{ q.name }}</h3>
-        <p class="text-sm text-gray-600 mt-1">{{ q.range }}</p>
-        <p class="mt-3 text-blue-900 font-bold">Due Date: {{ q.dueDate }}</p>
+    <section class="mt-12 bg-white rounded-xl shadow-xl p-6 border border-gray-200">
+      <h2 class="text-2xl font-semibold text-blue-800 mb-4 text-center">Tax Calendar</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <ng-container *ngFor="let record of estimatedTaxDataArray(); let i = index">
+          <div class="p-6 rounded-lg border shadow hover:bg-blue-50 transition">
+            <h3 class="text-lg font-semibold text-blue-700">{{ record.quarter }}</h3>
+            <p class="text-sm text-gray-600 mt-1">{{ getQuarterRange(record.quarter) }}</p>
+            <p class="mt-3 text-blue-900 font-bold">Due Date: {{ getDueDate(record.quarter) }}</p>
 
-        <p class="mt-2 text-gray-800">
-          Your {{ q.name }} payment of 
-          <span class="font-semibold">{{ data.quarterlyPayment | currency }}</span> 
-          is due on {{ q.dueDate }}.
-        </p>
+            <p class="mt-2 text-gray-800">
+              Your {{ record.quarter }} payment of 
+              <span class="font-semibold">{{ record.quarterlyPayment | currency }}</span>
+              is due on {{ getDueDate(record.quarter) }}.
+            </p>
+
+            <!-- Buttons -->
+            <div class="flex justify-center gap-3 mt-4">
+              <button class="btn-reminder" (click)="setReminder(record)">Set Reminder</button>
+              <button class="btn-paid"  (click)="markAsPaid(record)">
+                Mark as Paid
+              </button>
+            </div>
+          </div>
+        </ng-container>
       </div>
-    </ng-container>
-  </div>
-</section>
-
-
-
-
+    </section>
   </div>
 </div>

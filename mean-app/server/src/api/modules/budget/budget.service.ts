@@ -3,14 +3,17 @@ import type { Budget } from './budget.model.js';
 
 const prisma = new PrismaClient();
 
-// Helper type to match Prisma's expected input
-type BudgetCreateInput = Omit<Budget, 'id' | 'createdAt' | 'updatedAt'> & {
-  description?: string | null; // optional for Prisma
-};
-
 // Create a new budget
-export async function createBudget(budgetData: BudgetCreateInput): Promise<Budget> {
-  return prisma.budget.create({ data: budgetData });
+export async function createBudget(budgetData: Omit<Budget, 'id' | 'createdAt' | 'updatedAt'> & { description?: string | null; spent?: number }): Promise<Budget> {
+  return prisma.budget.create({
+    data: {
+      ...budgetData,
+      month: new Date(budgetData.month),
+      description: budgetData.description ?? null,
+      amount: Number(budgetData.amount),
+      spent: Number(budgetData.spent ?? 0),
+    },
+  });
 }
 
 // Get all budgets for a specific user
@@ -19,10 +22,21 @@ export async function getBudgetsByUserId(userId: string): Promise<Budget[]> {
 }
 
 // Update an existing budget
-export async function updateBudget(id: string, budgetData: Partial<Budget>): Promise<Budget> {
-  // Convert undefined description to null if needed
-  const data = { ...budgetData, description: budgetData.description ?? null };
-  return prisma.budget.update({ where: { id }, data });
+export async function updateBudget(id: string, budgetData: Partial<Omit<Budget, 'id' | 'userId' | 'createdAt' | 'updatedAt'>> & { description?: string | null }): Promise<Budget> {
+  const data: any = {};
+
+  if (budgetData.category !== undefined) data.category = budgetData.category;
+  if (budgetData.amount !== undefined) data.amount = Number(budgetData.amount);
+  if (budgetData.spent !== undefined) data.spent = Number(budgetData.spent);
+  if (budgetData.month !== undefined) data.month = new Date(budgetData.month);
+  data.description = budgetData.description ?? null;
+
+  try {
+    return await prisma.budget.update({ where: { id }, data });
+  } catch (err) {
+    console.error(`Error updating budget with id=${id}:`, err);
+    throw err; // let controller return 500
+  }
 }
 
 // Delete a budget
