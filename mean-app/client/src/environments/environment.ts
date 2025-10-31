@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:4000/api' // backend server
+  apiUrl: 'https://taxpal-full-stack-backend.onrender.com' // backend server
 };
