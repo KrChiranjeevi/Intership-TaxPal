@@ -3,7 +3,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 
-
 import userRoutes from './api/modules/user/user.routes.js';
 import transactionRoutes from './api/modules/transactions/transaction.routes.js';
 import dashboardRoutes from './api/modules/dashboard/dashboard.routes.js';
@@ -14,52 +13,59 @@ import securityRouter from './api/modules/security/security.routes.js';
 import taxEstimatorRoutes from './api/modules/tax/taxEstimator.routes.js';
 import reportsRoutes from './api/modules/reports/reports.routes.js';
 
-
 dotenv.config();
 
 const app = express();
 
-// middleware
-app.use(cors({ origin: 'http://localhost:4200', credentials: true }));
+// ✅ CORS setup for both localhost (dev) and Render (prod)
+app.use(cors({
+  origin: [
+    'http://localhost:4200',
+    'https://taxpal-full-stack-frontend.onrender.com'
+  ],
+  credentials: true
+}));
+
 app.use(express.json());
-// ✅ Disable ETag globally (prevents 304 responses)
 app.disable('etag');
 
-// ✅ Add universal no-cache middleware (lightweight)
+// ✅ Universal no-cache middleware
 app.use((req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');
   next();
 });
-// routes
+
+// ✅ Routes
 app.use('/api/auth', userRoutes);
-app.use('/api/transactions', transactionRoutes); 
+app.use('/api/transactions', transactionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-// app.ts
+
 app.use('/api/budgets', (req, res, next) => {
-  res.setHeader('Cache-Control', 'no-store'); // disable caching
+  res.setHeader('Cache-Control', 'no-store');
   next();
 }, budgetRoutes);
 
-//app.use('/api/budgets', budgetRoutes);
 app.use('/api/categories', categoriesRouter);
-app.use("/api/notifications", notificationsRouter);
+app.use('/api/notifications', notificationsRouter);
 app.use('/api/security', securityRouter);
 app.use('/api/tax-estimator', taxEstimatorRoutes);
 app.use('/api/reports', reportsRoutes);
+
+// ✅ Static reports
 app.use('/generated_reports', express.static(path.join(process.cwd(), 'generated_reports'), {
-  setHeaders: (res, path) => {
-    if (path.endsWith('.pdf')) {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.pdf')) {
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Cache-Control', 'no-store'); // <-- Disable caching
+      res.setHeader('Cache-Control', 'no-store');
     }
-    if (path.endsWith('.csv')) {
+    if (filePath.endsWith('.csv')) {
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Cache-Control', 'no-store');
     }
   }
 }));
 
-
+// ✅ Health check endpoint
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'Server is running 🚀' });
 });
