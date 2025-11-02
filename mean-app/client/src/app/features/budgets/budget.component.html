@@ -34,6 +34,7 @@
       <thead>
         <tr>
           <th>Category</th>
+          <th>Month</th>
           <th>Budget</th>
           <th>Spent</th>
           <th>Remaining</th>
@@ -44,6 +45,7 @@
       <tbody>
         <tr *ngFor="let b of budgets">
           <td>{{ b.category }}</td>
+          <td>{{ b.month | date:'MMM yyyy' }}</td>
           <td>${{ b.amount }}</td>
           <td>${{ b.spent ?? 0 }}</td>
           <td>${{ (b.amount || 0) - (b.spent || 0) }}</td>
@@ -53,7 +55,7 @@
             </div>
           </td>
           <td>
-            <span class="status good">Good</span>
+            <span [style.color]="b.rowHealth.color">{{ b.rowHealth.status }}</span>
           </td>
         </tr>
       </tbody>

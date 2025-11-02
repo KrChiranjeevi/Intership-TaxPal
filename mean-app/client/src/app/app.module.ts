@@ -11,7 +11,7 @@ import { CoreModule } from '@core/core.module';
 import { SharedModule } from '@shared/shared.module';
 import { FeaturesModule } from '@features/features.module';
 import { LayoutsModule } from '@layouts/layouts.module';
-
+import { UsersModule } from '@features/users/users.module';
 import { AuthInterceptor } from '@core/interceptors/auth.interceptor';
 
 @NgModule({
@@ -27,6 +27,7 @@ import { AuthInterceptor } from '@core/interceptors/auth.interceptor';
     SharedModule,
     FeaturesModule,
     LayoutsModule,
+    UsersModule,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },

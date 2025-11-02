@@ -7,7 +7,9 @@ import { NgChartsModule, BaseChartDirective } from 'ng2-charts';
 import { AddIncomeComponent } from '../transactions/add-income/add-income.component';
 import { AddExpenseComponent } from '../transactions/add-expense/add-expense.component';
 import { TransactionService } from '@core/services/transaction.service';
+import { BudgetService } from '@core/services/budget.service';
 import { ChartConfiguration } from 'chart.js';
+import { TaxEstimatorService } from '@core/services/tax-estimator.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -26,6 +28,7 @@ export class DashboardComponent implements OnInit {
   monthlyIncome = 0;
   monthlyExpenses = 0;
   estimatedTaxDue = 0;
+  latestTaxEstimate: any = null;
   savingsRate = 0;
   transactions: any[] = [];
 
@@ -56,11 +59,16 @@ export class DashboardComponent implements OnInit {
   constructor(
     private txService: TransactionService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private budgetService: BudgetService,
+    private taxService: TaxEstimatorService,   
   ) {}
 
   ngOnInit(): void {
     this.loadTransactions();
+    const savedTax = localStorage.getItem('estimatedTaxDue');
+    if (savedTax) this.estimatedTaxDue = +savedTax;
+
   }
 
   onLogout() {
@@ -80,6 +88,8 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  
+
   calculateStats() {
     this.monthlyIncome = this.transactions
       .filter(t => t.type === 'income')
@@ -92,6 +102,9 @@ export class DashboardComponent implements OnInit {
     this.savingsRate = this.monthlyIncome
       ? +(((this.monthlyIncome - this.monthlyExpenses) / this.monthlyIncome) * 100).toFixed(2)
       : 0;
+    this.estimatedTaxDue = +((this.monthlyIncome - this.monthlyExpenses) * 0.15).toFixed(2);
+    localStorage.setItem('estimatedTaxDue', this.estimatedTaxDue.toString());
+
   }
 
   updateCharts() {

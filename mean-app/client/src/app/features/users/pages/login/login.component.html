@@ -11,7 +11,7 @@
 
     <div class="form">
       <label for="password">
-        Password <a href="#" class="forgot">Forgot password?</a>
+        Password <a routerLink="/forgot-password" class="forgot">Forgot password?</a>
       </label>
       <input type="password" formControlName="password" placeholder="Enter your password" required autocomplete="new-password">
       <img class="icon" src="lock.svg" alt="">
@@ -21,7 +21,7 @@
   </form>
 
   <div class="demo">
-    <p>Demo account: <b>demo / password</b></p>
+    <!--<p>Demo account: <b>demo / password</b></p>-->
     <p>Don’t have an account? <a routerLink="/signup">Sign up</a></p>
   </div>
 <!-- 

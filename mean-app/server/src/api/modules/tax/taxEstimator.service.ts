@@ -58,7 +58,7 @@ export async function saveTaxEstimate(userId: string, data: TaxEstimateDto): Pro
     },
   });
 
-  return newEstimate as TaxEstimate;
+  return { ...newEstimate, userId } as TaxEstimate;
 }
 
 /**

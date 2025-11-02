@@ -18,7 +18,8 @@ export async function createBudget(req: AuthRequest, res: Response): Promise<voi
       amount: Number(amount),
       month: new Date(String(month)),
       description: description ?? '',
-      userId: req.user.id, // ✅ taken from token
+      userId: req.user.id,
+      spent: 0
     });
 
     res.status(201).json(newBudget);
