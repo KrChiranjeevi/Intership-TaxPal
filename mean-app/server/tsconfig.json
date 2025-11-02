@@ -1,29 +1,38 @@
 {
   "compilerOptions": {
-    "rootDir": "./src",
+    // "rootDir": "./src",
     "baseUrl": "./src",
     "paths": { "*": ["*"] },
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "target": "ESNext",
+    // "module": "NodeNext",
+    // "moduleResolution": "NodeNext",
+    // "target": "ESNext",
     "lib": ["ESNext"],
-    "esModuleInterop": true,
+    // "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "outDir": "dist",
+    // "outDir": "./dist",
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-    "strict": true,
+    // "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "skipLibCheck": true,
     "isolatedModules": true,
+     "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
     "verbatimModuleSyntax": true,
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    "allowJs": true
   },
   "ts-node": {
     "esm": true
   },
-  "include": ["src"]
+   "include": ["src/**/*"],
+  "exclude": ["node_modules"]
 }

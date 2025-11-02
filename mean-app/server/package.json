@@ -11,13 +11,13 @@
     "dev": "ts-node-esm src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-"test": "set NODE_OPTIONS=--experimental-vm-modules && jest --runInBand"
+    "test": "set NODE_OPTIONS=--experimental-vm-modules && jest --runInBand"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^6.17.1",
+    "@prisma/client": "latest",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
@@ -34,7 +34,7 @@
     "@types/bcrypt": "^6.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3",
+    "@types/express": "^5.0.5",
     "@types/jest": "^30.0.0",
     "@types/json2csv": "^5.0.7",
     "@types/jsonwebtoken": "^9.0.10",
