@@ -111,26 +111,4 @@ export class TaxEstimatorComponent implements OnInit {
   getReminderForQuarter(quarter: string) {
     return this.estimatedTaxDataArray().find(e => e.quarter === quarter) ?? null;
   }
-<<<<<<< HEAD
 }
-=======
-  getQuarterRange(quarter: string) {
-    return this.quarters.find(q => q.name === quarter)?.range || '';
-  }
-
-  getDueDate(quarter: string) {
-    return this.quarters.find(q => q.name === quarter)?.dueDate || '';
-  }
-
-  setReminder(record: any) {
-    alert(`Reminder set for ${record.quarter} - Due on ${this.getDueDate(record.quarter)}.`);
-  }
-
-  markAsPaid(record: any) {
-    const updatedArray = this.estimatedTaxDataArray().filter(r => r !== record);
-    this.estimatedTaxDataArray.set(updatedArray);
-    localStorage.setItem('taxEstimates', JSON.stringify(updatedArray));
-  }
-  
-}
->>>>>>> origin/main-group-B

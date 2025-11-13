@@ -31,7 +31,7 @@ export class ForgotPasswordComponent {
 
     const { email } = this.forgotForm.value;
 
-    this.authService.forgotPassword(email).subscribe({
+    (this.authService as any).forgotPassword(email).subscribe({
       next: (res) => {
         console.log('Reset link sent:', res.link); // Mock email link printed here
         this.successMessage = 'Password reset link has been sent to your email (check console).';
