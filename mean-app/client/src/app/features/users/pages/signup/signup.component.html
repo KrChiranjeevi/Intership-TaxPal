@@ -1,54 +1,113 @@
- <div class="box-container">
-  <h2>Create an Account</h2>
-  <p>Enter your information to create your TaxPal account</p>
-
-  <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
-    <div class="forms">
-      <label for="username">Username</label>
-      <input type="text" formControlName="username" placeholder="Choose a username" required autocomplete="off">
+<div class="login-layout">
+  <!-- Left Brand Panel -->
+  <aside class="brand-panel">
+    <div class="brand-logo">
+      <div class="logo-icon">
+        <span class="material-icons-round">account_balance</span>
+      </div>
+      <span class="logo-text">TaxPal</span>
     </div>
 
-    <div class="forms">
-      <label for="password">Password</label>
-      <input type="password" formControlName="password" placeholder="Choose a password" required autocomplete="new-password">
+    <h1 class="brand-headline">Get Started<br>for Free.</h1>
+    <p class="brand-desc">
+      Create your TaxPal account and take full control of your finances. No credit card required.
+    </p>
+
+    <div class="brand-features">
+      <div class="feature-item">
+        <span class="material-icons-round">check_circle</span>
+        Instant account creation
+      </div>
+      <div class="feature-item">
+        <span class="material-icons-round">check_circle</span>
+        Bank-grade security
+      </div>
+      <div class="feature-item">
+        <span class="material-icons-round">check_circle</span>
+        Free to use, no hidden fees
+      </div>
+      <div class="feature-item">
+        <span class="material-icons-round">check_circle</span>
+        Cancel anytime
+      </div>
+    </div>
+  </aside>
+
+  <!-- Right Form Panel -->
+  <div class="form-panel">
+    <div class="form-header">
+      <h2>Create your account</h2>
+      <p>Fill in your details to get started with TaxPal</p>
     </div>
 
-    <div class="forms">
-      <label>Full Name</label>
-      <input type="text" formControlName="name" placeholder="Enter your Full Name" required autocomplete="off">
+    <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+
+      <div class="field-group">
+        <label>Username</label>
+        <div class="input-wrap">
+          <span class="input-icon material-icons-round">alternate_email</span>
+          <input type="text" formControlName="username" placeholder="Choose a username" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label>Full Name</label>
+        <div class="input-wrap">
+          <span class="input-icon material-icons-round">person</span>
+          <input type="text" formControlName="name" placeholder="Your full name" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label>Email Address</label>
+        <div class="input-wrap">
+          <span class="input-icon material-icons-round">mail</span>
+          <input type="email" formControlName="email" placeholder="yourname@email.com" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <span class="input-icon material-icons-round">lock</span>
+          <input type="password" formControlName="password" placeholder="Create a strong password" autocomplete="new-password">
+        </div>
+      </div>
+
+      <div class="fields-row">
+        <div class="field-group">
+          <label>Country</label>
+          <div class="input-wrap">
+            <span class="input-icon material-icons-round">public</span>
+            <select formControlName="country" style="padding-left:40px">
+              <option value="">Select country</option>
+              <option>India</option>
+              <option>USA</option>
+              <option>Russia</option>
+              <option>UK</option>
+              <option>France</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Income Bracket</label>
+          <div class="input-wrap">
+            <span class="input-icon material-icons-round">attach_money</span>
+            <select formControlName="incomeBracket" style="padding-left:40px">
+              <option value="">Optional</option>
+              <option>Low</option>
+              <option>Middle</option>
+              <option>High</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button class="submit-btn" type="submit">Create Account</button>
+    </form>
+
+    <div class="form-footer">
+      Already have an account? <a routerLink="/login">Sign in</a>
     </div>
-
-    <div class="forms">
-      <label>Email</label>
-      <input type="email" formControlName="email" placeholder="Choose your email address" required autocomplete="off">
-    </div>
-
-    <div class="forms">
-      <label>Country</label>
-      <select class="select" formControlName="country">
-        <option value="">Select your country</option>
-        <option>India</option>
-        <option>USA</option>
-        <option>Russia</option>
-        <option>UK</option>
-        <option>France</option>
-      </select>
-    </div>
-
-    <div class="forms">
-      <label>Income Bracket (optional)</label>
-      <select class="select" formControlName="incomeBracket">
-        <option value="">Select your income bracket</option>
-        <option>Low</option>
-        <option>Middle</option>
-        <option>High</option>
-      </select>
-    </div>
-
-    <button class="btn" type="submit">Create Account</button>
-  </form>
-
-  <footer>
-    <p>Already have an account? <a routerLink="/login">Sign in</a></p>
-  </footer>
+  </div>
 </div>

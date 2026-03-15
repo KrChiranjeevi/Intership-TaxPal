@@ -1,22 +1,65 @@
-<div class="dashboard">
+<div class="app-shell">
   <!-- Sidebar -->
-  <aside class="sidebar">
-    <h1 class="logo">TaxPal</h1>
-    <ul class="menu">
-      <li routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</li>
-      <li>Transactions</li>
-      <li routerLink="/budget" routerLinkActive="active">Budget</li>
-      <li routerLink="/tax-estimation" routerLinkActive="active">Tax Estimation</li>
-      <li routerLink="/reports" routerLinkActive="active">Reports</li>
-    </ul>
-    <div class="bottom-links">
-      <p routerLink="/settings" routerLinkActive="active" class="settings">⚙️ Settings</p>
-      <div class="logout" (click)="onLogout()">↩ Logout</div>
+  <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
+    <!-- Logo -->
+    <div class="sidebar-brand">
+      <div class="brand-icon">
+        <span class="material-icons-round">account_balance</span>
+      </div>
+      <span class="brand-name">TaxPal</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <ul class="nav-list">
+        <li class="nav-item" routerLink="/dashboard" routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }" (click)="closeModals()">
+          <span class="nav-icon material-icons-round">dashboard</span>
+          <span class="nav-label">Dashboard</span>
+        </li>
+        <li class="nav-item" routerLink="/transactions" routerLinkActive="active" (click)="closeModals()">
+          <span class="nav-icon material-icons-round">credit_card</span>
+          <span class="nav-label">Transactions</span>
+        </li>
+        <li class="nav-item" routerLink="/budget" routerLinkActive="active" (click)="closeModals()">
+          <span class="nav-icon material-icons-round">pie_chart_outline</span>
+          <span class="nav-label">Budget</span>
+        </li>
+        <li class="nav-item" routerLink="/tax-estimator" routerLinkActive="active" (click)="closeModals()">
+          <span class="nav-icon material-icons-round">receipt_long</span>
+          <span class="nav-label">Tax Estimation</span>
+        </li>
+        <li class="nav-item" routerLink="/reports" routerLinkActive="active" (click)="closeModals()">
+          <span class="nav-icon material-icons-round">description</span>
+          <span class="nav-label">Reports</span>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Sidebar Footer / User Profile -->
+    <div class="sidebar-footer">
+      <div class="user-profile">
+        <div class="user-avatar">{{ userInitials }}</div>
+        <div class="user-info">
+          <span class="user-name">{{ userName }}</span>
+          <span class="user-role">Premium User</span>
+        </div>
+      </div>
+      <div class="footer-actions">
+        <button class="footer-btn action-btn">
+          <span class="material-icons-round">settings</span>
+          <span>Settings</span>
+        </button>
+        <button class="footer-btn logout-btn" (click)="onLogout()">
+          <span class="material-icons-round">logout</span>
+          <span>Logout</span>
+        </button>
+      </div>
     </div>
   </aside>
 
-  <!-- Main content -->
-  <main class="content">
+  <!-- Main content area -->
+  <main class="main-content">
     <router-outlet></router-outlet>
   </main>
 </div>

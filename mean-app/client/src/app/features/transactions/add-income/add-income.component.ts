@@ -34,13 +34,17 @@ export class AddIncomeComponent {
   loadIncomeCategories() {
     this.categoriesService.getCategories().subscribe({
       next: (res: Category[]) => {
-        this.categories = res
+        const incomeCategories = res
           .filter(c => c.type === 'income')
           .map(c => c.name);
+        // Use defaults if user has no categories set up yet
+        this.categories = incomeCategories.length > 0 ? incomeCategories : [
+          'Salary', 'Freelance', 'Business', 'Investment', 'Rental Income', 'Other'
+        ];
       },
       error: (err) => {
         console.error('Error fetching income categories', err);
-        this.categories = [];
+        this.categories = ['Salary', 'Freelance', 'Business', 'Investment', 'Other'];
       }
     });
   }

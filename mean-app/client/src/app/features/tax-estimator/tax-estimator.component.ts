@@ -111,4 +111,41 @@ export class TaxEstimatorComponent implements OnInit {
   getReminderForQuarter(quarter: string) {
     return this.estimatedTaxDataArray().find(e => e.quarter === quarter) ?? null;
   }
+
+  /** Return human-readable date range for a quarter */
+  getQuarterRange(quarter: string): string {
+    const ranges: Record<string, string> = {
+      Q1: 'Jan 1 – Mar 31',
+      Q2: 'Apr 1 – Jun 30',
+      Q3: 'Jul 1 – Sep 30',
+      Q4: 'Oct 1 – Dec 31',
+    };
+    return ranges[quarter] ?? quarter;
+  }
+
+  /** Return IRS-style due date for a quarter */
+  getDueDate(quarter: string): string {
+    const dueDates: Record<string, string> = {
+      Q1: 'April 15',
+      Q2: 'June 15',
+      Q3: 'September 15',
+      Q4: 'January 15 (next year)',
+    };
+    return dueDates[quarter] ?? 'N/A';
+  }
+
+  /** Set a browser reminder alert for a tax payment */
+  setReminder(record: any): void {
+    alert(`Reminder set for ${record.quarter}: Payment of ${record.quarterlyPayment?.toFixed(2)} is due on ${this.getDueDate(record.quarter)}.`);
+  }
+
+  /** Mark a quarter estimate as paid */
+  markAsPaid(record: any): void {
+    const updated = this.estimatedTaxDataArray().map(e =>
+      e.quarter === record.quarter ? { ...e, paid: true } : e
+    );
+    this.estimatedTaxDataArray.set(updated);
+    localStorage.setItem('taxEstimates', JSON.stringify(updated));
+    alert(`${record.quarter} marked as paid!`);
+  }
 }

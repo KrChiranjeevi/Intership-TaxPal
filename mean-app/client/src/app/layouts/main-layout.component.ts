@@ -1,7 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterModule, RouterOutlet } from '@angular/router';
-import { Router } from '@angular/router'; // import Router
-
+import { Router } from '@angular/router';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
@@ -9,13 +8,34 @@ import { Router } from '@angular/router'; // import Router
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.scss']
 })
-export class MainLayoutComponent {
+export class MainLayoutComponent implements OnInit {
+  sidebarCollapsed = false;
+  userName = 'User';
+  userInitials = 'U';
 
-  // inject Router via constructor
   constructor(private router: Router) {}
 
-  onLogout() {
-    localStorage.removeItem('token'); // remove your auth token
-    this.router.navigate(['/login']);  // navigate to login page
+  ngOnInit() {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        this.userName = user.name || user.username || user.email || 'User';
+        this.userInitials = this.userName.substring(0, 2).toUpperCase();
+      } catch { 
+        this.userName = 'User'; 
+        this.userInitials = 'U';
+      }
+    }
   }
+
+
+
+  onLogout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    this.router.navigate(['/login']);
+  }
+
+  closeModals() {}
 }

@@ -39,4 +39,8 @@ export class TransactionService {
       this.getAuthHeaders()
     );
   }
+
+  deleteTransaction(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.api}/${id}`, this.getAuthHeaders());
+  }
 }

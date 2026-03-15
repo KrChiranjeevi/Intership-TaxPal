@@ -7,7 +7,7 @@ import { MainLayoutComponent } from './layouts/main-layout.component';
 import { ForgotPasswordComponent } from './features/users/pages/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './features/users/pages/reset-password/reset-password.component';
 
-const routes: Routes = [
+export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 
   { path: 'login', component: LoginComponent },
@@ -21,10 +21,11 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     children: [
       { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+      { path: 'transactions', loadComponent: () => import('./features/transactions/transactions.component').then(m => m.TransactionsComponent) },
       { path: 'income', loadComponent: () => import('./features/transactions/add-income/add-income.component').then(m => m.AddIncomeComponent) },
       { path: 'expense', loadComponent: () => import('./features/transactions/add-expense/add-expense.component').then(m => m.AddExpenseComponent) },
       { path: 'budget', loadComponent: () => import('./features/budgets/budget.component').then(m => m.BudgetComponent) },
-      { path: 'tax-estimation', loadComponent: () => import('./features/tax-estimator/tax-estimator.component').then(m => m.TaxEstimatorComponent) },
+      { path: 'tax-estimator', loadComponent: () => import('./features/tax-estimator/tax-estimator.component').then(m => m.TaxEstimatorComponent) },
       { path: 'reports', loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent) },
       {
         path: 'settings',

@@ -33,9 +33,9 @@ export class AuthService {
       }
     })
   );
-      return { subscribe: (fn: any) => fn({ success: true }) };
-
 }
+
+
 
 
 register(data: any) {

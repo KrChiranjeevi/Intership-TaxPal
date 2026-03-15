@@ -1,0 +1,185 @@
+.transactions-page {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .tx-header {
+    margin-bottom: 2rem;
+
+    .page-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+    .page-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+  }
+
+  .tx-card-container {
+    width: 100%;
+
+    .tx-card-glass {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+
+      .tx-list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.02);
+
+        .list-title {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: var(--text-primary);
+        }
+
+        .list-count {
+          font-size: 0.85rem;
+          color: var(--text-secondary);
+          background: rgba(255, 255, 255, 0.05);
+          padding: 4px 10px;
+          border-radius: var(--radius-full);
+        }
+      }
+
+      .tx-list-body {
+        padding: 0.5rem 0;
+
+        .tx-empty-state {
+          padding: 4rem 2rem;
+          text-align: center;
+          color: var(--text-secondary);
+
+          .empty-icon {
+            font-size: 48px;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            opacity: 0.5;
+          }
+          p {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+          }
+          .empty-sub {
+            font-size: 0.9rem;
+          }
+        }
+
+        .tx-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1rem 1.5rem;
+          border-bottom: 1px solid var(--border);
+          transition: background var(--transition-fast);
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.02);
+            
+            .tx-actions {
+              opacity: 1;
+            }
+          }
+
+          .tx-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+
+            .tx-icon-wrap {
+              width: 44px;
+              height: 44px;
+              border-radius: var(--radius-full);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+
+              &.tx-income {
+                background: var(--success-glow);
+                color: var(--success);
+              }
+
+              &.tx-expense {
+                background: var(--danger-glow);
+                color: var(--danger);
+              }
+            }
+
+            .tx-details {
+              h4 {
+                font-size: 1rem;
+                font-weight: 500;
+                color: var(--text-primary);
+                margin: 0 0 2px 0;
+              }
+              .tx-meta {
+                font-size: 0.85rem;
+                color: var(--text-secondary);
+              }
+            }
+          }
+
+          .tx-right {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+
+            .tx-amount {
+              font-size: 1.1rem;
+              font-weight: 600;
+              font-variant-numeric: tabular-nums;
+
+              &.amount-income { color: var(--success); }
+              &.amount-expense { color: var(--text-primary); } // standard text color for expense in list
+            }
+
+            .tx-actions {
+              opacity: 0;
+              transition: opacity var(--transition-fast);
+              width: 36px;
+              display: flex;
+              justify-content: flex-end;
+
+              .action-btn {
+                background: none;
+                border: none;
+                color: var(--text-muted);
+                cursor: pointer;
+                padding: 6px;
+                border-radius: var(--radius-sm);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all var(--transition-fast);
+
+                &:hover {
+                  background: var(--danger-glow);
+                  color: var(--danger);
+                }
+
+                .material-icons-round {
+                  font-size: 20px;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

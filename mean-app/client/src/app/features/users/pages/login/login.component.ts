@@ -1,5 +1,3 @@
-/// login.component.ts
-
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -16,6 +14,7 @@ import { AuthService } from '@core/services/auth.service';
 export class LoginComponent {
   loginForm: FormGroup;
   loading = false;
+  errorMessage = '';
 
   constructor(
     private fb: FormBuilder,
@@ -29,19 +28,23 @@ export class LoginComponent {
   }
 
   onSubmit() {
-  if (!this.loginForm.valid) return alert('Please fill out all fields');
-
-  const { email, password } = this.loginForm.value;
-  this.authService.login({ email, password }).subscribe({
-    next: () => {
-      alert(`Welcome, ${email}!`);
-      this.router.navigate(['/dashboard']);
-    },
-    error: (err) => {
-      console.error('Login error:', err);
-      alert('Invalid email or password');
+    this.errorMessage = '';
+    if (!this.loginForm.valid) {
+      this.errorMessage = 'Please fill out all fields correctly.';
+      return;
     }
-  });
-}
-
-}
+    this.loading = true;
+    const { email, password } = this.loginForm.value;
+    this.authService.login({ email, password }).subscribe({
+      next: () => {
+        this.loading = false;
+        this.router.navigate(['/dashboard']);
+      },
+      error: (err) => {
+        this.loading = false;
+        this.errorMessage = 'Invalid email or password. Please try again.';
+        console.error('Login error:', err);
+      }
+    });
+  }
+}

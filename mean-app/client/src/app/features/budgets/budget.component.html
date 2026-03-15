@@ -1,95 +1,140 @@
 <div class="budget-page">
+
+  <!-- Header -->
   <header class="budget-header">
     <div>
-      <h2>Budget Management</h2>
-      <p>Track and manage your monthly budgets</p>
+      <h1 class="budget-title">Budget Management</h1>
+      <p class="budget-subtitle">Set and track your monthly spending limits</p>
     </div>
-    <button class="create-btn" (click)="openForm()">+ Create Budget</button>
+    <button class="create-btn" (click)="openForm()">
+      <span class="material-icons-round">add</span>
+      Create Budget
+    </button>
   </header>
 
-  <!-- Top Summary Cards -->
-  <section class="summary-cards">
-    <div class="card">
-      <h4>Total Budget</h4>
-      <p>${{ totalBudget }}/mo</p>
-    </div>
-    <div class="card">
-      <h4>Currently Spent</h4>
-      <p>${{ totalSpent }}</p>
-    </div>
-    <div class="card">
-      <h4>Remaining</h4>
-      <p>${{ remaining }}</p>
-    </div>
-    <div class="card">
-      <h4>Budget Health</h4>
-      <p [style.color]="budgetHealth.color">{{ budgetHealth.status }}</p>
-    </div>
-  </section>
-
-  <!-- Budget Breakdown Table -->
-  <section class="budget-table" *ngIf="budgets?.length; else noBudgets">
-    <h3>Budget Breakdown</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Category</th>
-          <th>Month</th>
-          <th>Budget</th>
-          <th>Spent</th>
-          <th>Remaining</th>
-          <th>Progress</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let b of budgets">
-          <td>{{ b.category }}</td>
-          <td>{{ b.month | date:'MMM yyyy' }}</td>
-          <td>${{ b.amount }}</td>
-          <td>${{ b.spent ?? 0 }}</td>
-          <td>${{ (b.amount || 0) - (b.spent || 0) }}</td>
-          <td>
-            <div class="progress">
-              <div class="progress-bar" [style.width.%]="(b.amount ? ((b.spent || 0) / b.amount) * 100 : 0)"></div>
-            </div>
-          </td>
-          <td>
-            <span [style.color]="b.rowHealth.color">{{ b.rowHealth.status }}</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
-
-  <ng-template #noBudgets>
-    <p style="color:#aaa">No budgets yet. Click "Create Budget" to add one.</p>
-  </ng-template>
-
-  <!-- Create Budget Modal -->
-  <div class="modal" *ngIf="showCreateForm">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <h3>Create New Budget</h3>
-
-      <label>Category</label>
-      <input type="text" [(ngModel)]="newBudget.category" placeholder="Enter category" />
-
-      <label>Budget Amount</label>
-      <input type="number" [(ngModel)]="newBudget.amount" placeholder="0.00" />
-
-      <label>Month</label>
-      <!-- month picker -->
-      <input type="month" [(ngModel)]="newBudget.month" />
-
-      <label>Description (Optional)</label>
-      <textarea [(ngModel)]="newBudget.description" placeholder="Add details..."></textarea>
-
-      <div class="modal-actions">
-        <button class="cancel" (click)="cancelForm()">Cancel</button>
-        <button class="save" (click)="saveBudget()">Create Budget</button>
+  <!-- Summary Cards -->
+  <section class="budget-stats">
+    <div class="b-stat total-budget animate-fade-up delay-1">
+      <div class="b-stat-icon blue">
+        <span class="material-icons-round">account_balance_wallet</span>
+      </div>
+      <div class="b-stat-info">
+        <div class="b-stat-label">Total Budget</div>
+        <div class="b-stat-value">${{ totalBudget }}<small>/mo</small></div>
       </div>
     </div>
-    <!-- click outside to close -->
-    <div class="modal-backdrop" (click)="cancelForm()"></div>
+
+    <div class="b-stat spent animate-fade-up delay-2">
+      <div class="b-stat-icon red">
+        <span class="material-icons-round">paid</span>
+      </div>
+      <div class="b-stat-info">
+        <div class="b-stat-label">Currently Spent</div>
+        <div class="b-stat-value">${{ totalSpent }}</div>
+      </div>
+    </div>
+
+    <div class="b-stat remaining animate-fade-up delay-3">
+      <div class="b-stat-icon green">
+        <span class="material-icons-round">savings</span>
+      </div>
+      <div class="b-stat-info">
+        <div class="b-stat-label">Remaining</div>
+        <div class="b-stat-value">${{ remaining }}</div>
+      </div>
+    </div>
+
+    <div class="b-stat health animate-fade-up delay-4">
+      <div class="b-stat-icon purple">
+        <span class="material-icons-round">health_and_safety</span>
+      </div>
+      <div class="b-stat-info">
+        <div class="b-stat-label">Budget Health</div>
+        <div class="b-stat-health" [class]="budgetHealth.css ?? 'good'">{{ budgetHealth.status }}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Budget Breakdown -->
+  <section class="budget-list-section">
+    <div class="section-head">
+      <span class="material-icons-round">list_alt</span>
+      <h3>Budget Breakdown</h3>
+    </div>
+
+    <ng-container *ngIf="budgets?.length; else noBudgets">
+      <div class="budget-item" *ngFor="let b of budgets">
+        <div class="item-top">
+          <div class="item-name-wrap">
+            <div class="item-icon">
+              <span class="material-icons-round">folder</span>
+            </div>
+            <div>
+              <div class="item-name">{{ b.category }}</div>
+              <div class="item-category">{{ b.month | date:'MMMM yyyy' }}</div>
+            </div>
+          </div>
+          <div class="item-amounts">
+            <div class="spent-amount">${{ b.spent ?? 0 }}</div>
+            <div class="budget-amount">of ${{ b.amount }}</div>
+          </div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar">
+            <div class="progress-fill"
+                 [class.fill-normal]="(b.spent / b.amount) < 0.75"
+                 [class.fill-warning]="(b.spent / b.amount) >= 0.75 && (b.spent / b.amount) < 1"
+                 [class.fill-danger]="(b.spent / b.amount) >= 1"
+                 [style.width.%]="b.amount ? (b.spent / b.amount) * 100 : 0">
+            </div>
+          </div>
+          <div class="progress-labels">
+            <span [style.color]="b.rowHealth?.color">{{ b.rowHealth?.status }}</span>
+            <span>{{ b.amount ? ((b.spent / b.amount) * 100).toFixed(0) : 0 }}% used</span>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-template #noBudgets>
+      <div class="budget-empty">
+        <span class="material-icons-round">account_balance</span>
+        <p>No budgets yet</p>
+        <small>Click "Create Budget" to add your first monthly budget</small>
+      </div>
+    </ng-template>
+  </section>
+
+  <!-- Create Budget Modal -->
+  <div class="budget-modal-backdrop" *ngIf="showCreateForm">
+    <div class="budget-modal">
+      <div class="modal-header">
+        <div class="modal-icon">
+          <span class="material-icons-round">add_circle</span>
+        </div>
+        <h3>Create New Budget</h3>
+      </div>
+
+      <label>Category</label>
+      <input type="text" [(ngModel)]="newBudget.category" placeholder="e.g. Groceries, Transport">
+
+      <label>Budget Amount ($)</label>
+      <input type="number" [(ngModel)]="newBudget.amount" placeholder="0.00">
+
+      <label>Month</label>
+      <input type="month" [(ngModel)]="newBudget.month">
+
+      <label>Description (Optional)</label>
+      <input type="text" [(ngModel)]="newBudget.description" placeholder="Add a note...">
+
+      <div class="modal-actions">
+        <button class="cancel-btn" (click)="cancelForm()">Cancel</button>
+        <button class="save-btn" (click)="saveBudget()">
+          <span class="material-icons-round" style="font-size:16px">check</span>
+          Create Budget
+        </button>
+      </div>
+    </div>
   </div>
+
 </div>

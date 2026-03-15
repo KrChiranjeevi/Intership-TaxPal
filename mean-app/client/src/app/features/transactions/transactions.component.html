@@ -1,0 +1,49 @@
+<div class="transactions-page">
+  <header class="tx-header animate-fade-up">
+    <div class="header-left">
+      <h1 class="page-title">Transactions</h1>
+      <p class="page-subtitle">A detailed overview of your recent income and expenses.</p>
+    </div>
+  </header>
+
+  <div class="tx-card-container animate-fade-up delay-1">
+    <div class="tx-card-glass">
+      <div class="tx-list-header">
+        <h3 class="list-title">All Transactions</h3>
+        <span class="list-count">{{ transactions.length }} total</span>
+      </div>
+
+      <div class="tx-list-body">
+        <div class="tx-empty-state" *ngIf="!transactions.length">
+          <span class="material-icons-round empty-icon">receipt_long</span>
+          <p>No transactions found.</p>
+          <span class="empty-sub">Your financial activities will appear here securely.</span>
+        </div>
+
+        <div class="tx-row animate-fade-up" *ngFor="let t of transactions; let i = index" [style.animation-delay]="(i * 0.05) + 's'">
+          <div class="tx-left">
+            <div class="tx-icon-wrap" [class.tx-income]="t.type === 'income'" [class.tx-expense]="t.type === 'expense'">
+              <span class="material-icons-round">
+                {{ t.type === 'income' ? 'arrow_upward' : 'arrow_downward' }}
+              </span>
+            </div>
+            <div class="tx-details">
+              <h4>{{ t.name }}</h4>
+              <span class="tx-meta">{{ t.category }} &bull; {{ t.date | date:'mediumDate' }}</span>
+            </div>
+          </div>
+          <div class="tx-right">
+            <span class="tx-amount" [class.amount-income]="t.type === 'income'" [class.amount-expense]="t.type === 'expense'">
+              {{ t.type === 'income' ? '+' : '-' }}${{ t.amount | number:'1.2-2' }}
+            </span>
+            <div class="tx-actions">
+              <button class="action-btn delete-btn" (click)="deleteTransaction(t._id)">
+                <span class="material-icons-round">delete_outline</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

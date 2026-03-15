@@ -1,25 +1,25 @@
-<div class="settings-container">
-  <h2>Settings</h2>
-  <p class="description">Manage your account settings and preferences</p>
+<div class="settings-page">
+  <div class="settings-header">
+    <h1>Settings</h1>
+    <p>Manage your account settings and preferences</p>
+  </div>
 
-  <!-- horizontal nav -->
   <nav class="settings-nav">
-    <p routerLink="profile" routerLinkActive="active" class="nav-item">
-      <span class="icon">👤</span> Profile
-    </p>
-    <p routerLink="categories" routerLinkActive="active" class="nav-item">
-      <span class="icon">📂</span> Categories
-    </p>
-    <p routerLink="notifications" routerLinkActive="active" class="nav-item">
-      <span class="icon">🔔</span> Notifications
-    </p>
-    <p routerLink="security" routerLinkActive="active" class="nav-item">
-      <span class="icon">🔒</span> Security
-    </p>
+    <a routerLink="profile" routerLinkActive="active" class="nav-item">
+      <span class="icon material-icons-round">person</span> Profile
+    </a>
+    <a routerLink="categories" routerLinkActive="active" class="nav-item">
+      <span class="icon material-icons-round">category</span> Categories
+    </a>
+    <a routerLink="notifications" routerLinkActive="active" class="nav-item">
+      <span class="icon material-icons-round">notifications</span> Notifications
+    </a>
+    <a routerLink="security" routerLinkActive="active" class="nav-item">
+      <span class="icon material-icons-round">security</span> Security
+    </a>
   </nav>
 
-  <!-- page content -->
-  <div class="settings-content">
+  <div class="settings-content-area">
     <router-outlet></router-outlet>
   </div>
 </div>

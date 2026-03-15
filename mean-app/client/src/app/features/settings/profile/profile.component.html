@@ -1,34 +1,56 @@
-<div class="profile-card">
-  <h3><span class="icon">👤</span> Profile Information</h3>
+<div class="settings-panel profile-card animate-fade-up">
+  <div class="panel-header">
+    <div class="header-icon material-icons-round">person</div>
+    <div class="header-text">
+      <h3>Profile Information</h3>
+      <p>Update your personal details below.</p>
+    </div>
+  </div>
 
-  <form (ngSubmit)="saveChanges()">
+  <form (ngSubmit)="saveChanges()" class="settings-form">
     <div class="form-row">
       <div class="form-group">
         <label for="firstName">First Name</label>
-        <input type="text" id="firstName" [(ngModel)]="user.name" name="name" />
+        <div class="input-wrap">
+          <span class="material-icons-round input-icon">badge</span>
+          <input type="text" id="firstName" [(ngModel)]="user.name" name="name" placeholder="John" />
+        </div>
       </div>
       <div class="form-group">
-        <label for="lastName">Last Name</label>
-        <input type="text" id="lastName" [(ngModel)]="user.username" name="username" />
+        <label for="lastName">Last Name (Username)</label>
+        <div class="input-wrap">
+          <span class="material-icons-round input-icon">account_circle</span>
+          <input type="text" id="lastName" [(ngModel)]="user.username" name="username" placeholder="Doe" />
+        </div>
       </div>
     </div>
 
     <div class="form-row">
       <div class="form-group full-width">
-        <label for="email">Email</label>
-        <input type="email" id="email" [(ngModel)]="user.email" name="email" />
+        <label for="email">Email Address</label>
+        <div class="input-wrap">
+          <span class="material-icons-round input-icon">email</span>
+          <input type="email" id="email" [(ngModel)]="user.email" name="email" placeholder="john@example.com" />
+        </div>
       </div>
     </div>
 
     <div class="form-row">
       <div class="form-group full-width">
         <label for="phone">Phone Number</label>
-        <input type="tel" id="phone" [(ngModel)]="user.phone" name="phone" />
+        <div class="input-wrap">
+          <span class="material-icons-round input-icon">phone</span>
+          <input type="tel" id="phone" [(ngModel)]="user.phone" name="phone" placeholder="+1 (555) 000-0000" />
+        </div>
       </div>
     </div>
 
-    <button type="submit" class="save-btn">Save Changes</button>
+    <div class="form-actions">
+      <button type="submit" class="btn-primary custom-save-btn">
+        <span class="material-icons-round">save</span>
+        Save Changes
+      </button>
+      <span class="status-msg" *ngIf="message" [class.success]="message.includes('success')">{{ message }}</span>
+    </div>
   </form>
-
-  <p *ngIf="message">{{ message }}</p>
 </div>

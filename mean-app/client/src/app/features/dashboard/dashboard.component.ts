@@ -1,5 +1,5 @@
 // src/app/features/dashboard/dashboard.component.ts
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, ViewChild, OnInit, AfterViewInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { CommonModule } from '@angular/common';
@@ -18,12 +18,13 @@ import { TaxEstimatorService } from '@core/services/tax-estimator.service';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, AfterViewInit {
   @ViewChild('barChart') barChart?: BaseChartDirective;
   @ViewChild('pieChart') pieChart?: BaseChartDirective;
 
   showIncome = false;
   showExpense = false;
+  userName = 'User';
 
   monthlyIncome = 0;
   monthlyExpenses = 0;
@@ -34,27 +35,45 @@ export class DashboardComponent implements OnInit {
 
   public barChartOptions: ChartConfiguration['options'] = {
     responsive: true,
-    plugins: { legend: { display: true, position: 'top' } },
-    scales: { x: { beginAtZero: true }, y: { beginAtZero: true } }
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { 
+      x: { 
+        beginAtZero: true,
+        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+        border: { display: false },
+        ticks: { color: '#6b7280' }
+      }, 
+      y: { 
+        beginAtZero: true,
+        grid: { color: 'rgba(255, 255, 255, 0.05)', drawTicks: false },
+        border: { display: false },
+        ticks: { color: '#6b7280', padding: 10 }
+      } 
+    }
   };
 
   public barChartData: ChartConfiguration<'bar'>['data'] = {
     labels: [],
     datasets: [
-      { data: [], label: 'Income' },
-      { data: [], label: 'Expense' }
+      { data: [], label: 'Income', backgroundColor: '#00d2ff', borderRadius: 4, barPercentage: 0.6 },
+      { data: [], label: 'Expense', backgroundColor: '#ff5252', borderRadius: 4, barPercentage: 0.6 }
     ]
   };
 
-  public pieChartOptions: ChartConfiguration['options'] = {
+  public pieChartOptions: ChartConfiguration<'doughnut'>['options'] = {
     responsive: true,
-    plugins: { legend: { position: 'center' } }
+    maintainAspectRatio: false,
+    cutout: '72%',
+    plugins: { legend: { display: false } }
   };
 
-  public pieChartData: ChartConfiguration<'pie'>['data'] = {
+  public pieChartData: ChartConfiguration<'doughnut'>['data'] = {
     labels: [],
     datasets: [{ data: [] }]
   };
+
+  pieLegendItems: Array<{label: string, percentage: string, color: string}> = [];
 
   constructor(
     private txService: TransactionService,
@@ -69,6 +88,17 @@ export class DashboardComponent implements OnInit {
     const savedTax = localStorage.getItem('estimatedTaxDue');
     if (savedTax) this.estimatedTaxDue = +savedTax;
 
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        this.userName = user.name || user.username || user.email || 'User';
+      } catch { this.userName = 'User'; }
+    }
+  }
+
+  ngAfterViewInit(): void {
+    // Relying on CSS animations (defined in styles.scss) instead of GSAP for more stable visibility
   }
 
   onLogout() {
@@ -141,11 +171,18 @@ const sumsByCategory = expenseTx.reduce((acc: Record<string, number>, t) => {
 
 const labels = Object.keys(sumsByCategory);
 const data = labels.map(l => sumsByCategory[l]);
+const totalExpense = data.reduce((a,b) => a+b, 0);
 
 const backgroundColors = [
-  '#4CAF50', '#F44336', '#2196F3', '#FF9800', '#9C27B0',
+  '#00e676', '#00d2ff', '#a855f7', '#ff5252', '#ffca28',
   '#00BCD4', '#8BC34A', '#FFC107', '#E91E63', '#3F51B5'
 ];
+
+this.pieLegendItems = labels.map((label, idx) => ({
+  label,
+  percentage: ((sumsByCategory[label] / totalExpense) * 100).toFixed(0),
+  color: backgroundColors[idx % backgroundColors.length]
+}));
 
 this.pieChartData = labels.length
   ? {
@@ -154,7 +191,7 @@ this.pieChartData = labels.length
         {
           data,
           backgroundColor: backgroundColors.slice(0, labels.length),
-          borderColor: '#fff',
+          borderColor: '#181d27', // matching card background
           borderWidth: 2
         }
       ]
@@ -164,14 +201,14 @@ this.pieChartData = labels.length
       datasets: [{ data: [1], backgroundColor: ['#ccc'] }]
     };
 
-// 🩵 Ensure the chart type is PIE (runtime check without type error)
+// 🩵 Ensure the chart type is DOUGHNUT (runtime check without type error)
 if (this.pieChart?.chart) {
   const chartInstance = this.pieChart.chart;
-  // If chart type is not pie, rebuild it correctly
-  if ((chartInstance as any).config.type !== 'pie') {
+  // If chart type is not doughnut, rebuild it correctly
+  if ((chartInstance as any).config.type !== 'doughnut') {
     (chartInstance as any).destroy();
     this.pieChart.chart = new (window as any).Chart(chartInstance.canvas, {
-      type: 'pie',
+      type: 'doughnut',
       data: this.pieChartData,
       options: this.pieChartOptions
     });

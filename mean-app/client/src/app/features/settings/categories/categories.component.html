@@ -1,33 +1,48 @@
-<div class="categories-container">
-  
-  <h3><span class="icon">📂</span> Category Management</h3>
+<div class="settings-panel categories-page animate-fade-up">
+  <div class="panel-header">
+    <div class="header-icon material-icons-round">category</div>
+    <div class="header-text">
+      <h3>Category Management</h3>
+      <p>Organize your financial tracking tags.</p>
+    </div>
+  </div>
 
   <!-- Horizontal sub-nav -->
   <nav class="categories-nav">
-    <p (click)="switchTab('expense')" [class.active]="activeTab === 'expense'" class="nav-item">
-      Expense Categories
-    </p>
-    <p (click)="switchTab('income')" [class.active]="activeTab === 'income'" class="nav-item">
-      Income Categories
-    </p>
+    <button (click)="switchTab('expense')" [class.active]="activeTab === 'expense'" class="subnav-btn">
+      <span class="material-icons-round">arrow_downward</span> Expense Categories
+    </button>
+    <button (click)="switchTab('income')" [class.active]="activeTab === 'income'" class="subnav-btn">
+      <span class="material-icons-round">arrow_upward</span> Income Categories
+    </button>
   </nav>
 
   <!-- Category list -->
-  <div class="category-list">
-    <div 
-      class="category-card" 
-      *ngFor="let category of categories; let i = index">
-      <span class="dot" [style.background]="category.color"></span>
-      <span class="name">{{ category.name }}</span>
+  <div class="category-list-glass">
+    <div class="cat-row animate-fade-up" *ngFor="let category of categories; let i = index" [style.animation-delay]="(i * 0.05) + 's'">
+      <div class="cat-left">
+        <span class="cat-dot" [style.background]="category.color"></span>
+        <span class="cat-name">{{ category.name }}</span>
+      </div>
 
-      <span class="actions">
-        <button (click)="editCategory(i)">✏️</button>
-        <button (click)="deleteCategory(i)">🗑️</button>
-      </span>
+      <div class="cat-actions">
+        <button class="action-btn edit-btn" (click)="editCategory(i)" title="Edit">
+          <span class="material-icons-round">edit</span>
+        </button>
+        <button class="action-btn delete-btn" (click)="deleteCategory(i)" title="Delete">
+          <span class="material-icons-round">delete_outline</span>
+        </button>
+      </div>
     </div>
 
-    <div class="add-category-btn" (click)="addCategory()">
-      + Add New Category
+    <div class="cat-empty-state" *ngIf="!categories.length">
+      <span class="material-icons-round empty-icon">folder_off</span>
+      <p>No categories found.</p>
     </div>
+
+    <button class="add-category-btn btn-ghost" (click)="addCategory()">
+      <span class="material-icons-round">add</span>
+      Add New {{ activeTab === 'expense' ? 'Expense' : 'Income' }} Category
+    </button>
   </div>
 </div>

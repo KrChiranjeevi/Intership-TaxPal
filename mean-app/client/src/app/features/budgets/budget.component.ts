@@ -27,7 +27,7 @@ export class BudgetComponent implements OnInit {
   totalBudget = 0;
   totalSpent = 0;
   remaining = 0;
-  budgetHealth = { status: 'Unknown', color: '#aaa' };
+  budgetHealth = { status: 'Good', color: '#10b981', css: 'good' };
 
   constructor(private budgetService: BudgetService) {}
 
@@ -102,20 +102,19 @@ export class BudgetComponent implements OnInit {
   // Overall dashboard health
   const ratio = this.totalBudget > 0 ? (this.totalSpent / this.totalBudget) : 0;
   if (ratio < 0.6) {
-    this.budgetHealth = { status: 'Good', color: '#4CAF50' };
+    this.budgetHealth = { status: 'Good', color: '#10b981', css: 'good' };
   } else if (ratio < 0.9) {
-    this.budgetHealth = { status: 'Warning', color: '#FFB300' };
+    this.budgetHealth = { status: 'Warning', color: '#f59e0b', css: 'warning' };
   } else {
-    this.budgetHealth = { status: 'Critical', color: '#F44336' };
+    this.budgetHealth = { status: 'Critical', color: '#f43f5e', css: 'critical' };
   }
 
-  // **Per-budget row health**
+  // Per-budget row health
   this.budgets = this.budgets.map(b => {
     const bRatio = b.amount ? (Number(b.spent || 0) / b.amount) : 0;
-    let rowHealth = { status: 'Unknown', color: '#aaa' };
-    if (bRatio < 0.6) rowHealth = { status: 'Good', color: '#4CAF50' };
-    else if (bRatio < 0.9) rowHealth = { status: 'Warning', color: '#FFB300' };
-    else rowHealth = { status: 'Critical', color: '#F44336' };
+    let rowHealth = { status: 'Good', color: '#10b981', css: 'good' };
+    if (bRatio >= 0.9) rowHealth = { status: 'Critical', color: '#f43f5e', css: 'critical' };
+    else if (bRatio >= 0.6) rowHealth = { status: 'Warning', color: '#f59e0b', css: 'warning' };
     return { ...b, rowHealth };
   });
 }

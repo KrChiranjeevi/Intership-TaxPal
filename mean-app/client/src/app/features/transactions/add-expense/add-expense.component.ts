@@ -33,13 +33,17 @@ export class AddExpenseComponent {
   loadExpenseCategories() {
     this.categoriesService.getCategories().subscribe({
       next: (res: Category[]) => {
-        this.categories = res
+        const expenseCategories = res
           .filter(c => c.type === 'expense')
           .map(c => c.name);
+        // Use defaults if user has no categories set up yet
+        this.categories = expenseCategories.length > 0 ? expenseCategories : [
+          'Food', 'Rent', 'Transport', 'Utilities', 'Healthcare', 'Entertainment', 'Shopping', 'Other'
+        ];
       },
       error: (err) => {
         console.error('Error fetching expense categories', err);
-        this.categories = [];
+        this.categories = ['Food', 'Rent', 'Transport', 'Utilities', 'Other'];
       }
     });
   }
