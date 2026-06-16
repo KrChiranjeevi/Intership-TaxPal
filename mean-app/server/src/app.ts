@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 
 import userRoutes from './api/modules/user/user.routes.js';
 import transactionRoutes from './api/modules/transactions/transaction.routes.js';
@@ -38,6 +39,11 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.disable('etag');
+
+const reportsDir = process.env.VERCEL
+  ? path.join('/tmp', 'generated_reports')
+  : path.join(process.cwd(), 'generated_reports');
+app.use('/generated_reports', express.static(reportsDir));
 
 // ✅ Universal no-cache middleware
 app.use((req, res, next) => {

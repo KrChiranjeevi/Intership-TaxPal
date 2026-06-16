@@ -58,7 +58,9 @@ async function fetchTransactions(userId: string, type?: 'income' | 'expense', pe
 }
 
 async function generateFile(reportType: string, transactions: Transaction[], period: string, format: 'PDF' | 'CSV', id: string): Promise<string> {
-  const folder = path.join(process.cwd(), 'generated_reports');
+  const folder = process.env.VERCEL
+    ? path.join('/tmp', 'generated_reports')
+    : path.join(process.cwd(), 'generated_reports');
   await fs.ensureDir(folder);
 
   const fileName = `${reportType}-${period}-${id}.${format.toLowerCase()}`;

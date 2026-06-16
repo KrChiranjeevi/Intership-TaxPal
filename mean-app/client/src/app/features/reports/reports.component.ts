@@ -93,7 +93,7 @@ export class ReportsComponent implements OnInit {
   if (!container) return;
 
   // Add your backend base URL
-  const backendBaseUrl = 'http://localhost:5000';
+  const backendBaseUrl = window.location.origin.includes('localhost:4200') ? 'http://localhost:5000' : window.location.origin;
   const timestamp = new Date().getTime();
   if (format === 'PDF') {
   
@@ -141,7 +141,7 @@ export class ReportsComponent implements OnInit {
   downloadReport(): void {
   if (!this.selectedReport) return;
 
-  const backendBaseUrl = 'http://localhost:5000';
+  const backendBaseUrl = window.location.origin.includes('localhost:4200') ? 'http://localhost:5000' : window.location.origin;
   const fileUrl = `${backendBaseUrl}${encodeURI(this.selectedReport.filePath)}`;
 
   // Open in new tab for browser default download behavior
