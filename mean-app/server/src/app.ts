@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
+import dotenv from 'dotenv';
 
 import userRoutes from './api/modules/user/user.routes.js';
 import transactionRoutes from './api/modules/transactions/transaction.routes.js';
@@ -26,8 +26,8 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (e.g. mobile apps, curl, server-to-server) or Vercel origins
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
       callback(null, true);
     } else {
       callback(new Error(`CORS: origin ${origin} not allowed`));
@@ -40,10 +40,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.disable('etag');
 
-const reportsDir = process.env.VERCEL
-  ? path.join('/tmp', 'generated_reports')
-  : path.join(process.cwd(), 'generated_reports');
+const reportsDir = path.join(process.cwd(), 'generated_reports');
 app.use('/generated_reports', express.static(reportsDir));
+
 
 // ✅ Universal no-cache middleware
 app.use((req, res, next) => {

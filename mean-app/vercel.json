@@ -19,10 +19,6 @@
       "dest": "/api/index.ts"
     },
     {
-      "src": "/generated_reports/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
       "handle": "filesystem"
     },
     {

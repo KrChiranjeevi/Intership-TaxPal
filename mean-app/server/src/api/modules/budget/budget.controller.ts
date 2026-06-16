@@ -55,7 +55,7 @@ export async function updateBudget(req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
-    const updatedBudget = await budgetService.updateBudget(id, req.body as Partial<Budget>);
+    const updatedBudget = await budgetService.updateBudget(id, req.body as any);
     res.status(200).json(updatedBudget);
   } catch (error) {
     console.error(error);

@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReportsService, Report } from '@core/services/reports.service';
 import { REPORT_TYPES, PERIODS, FORMATS, FILE_ICON_URL } from '@core/constants/reports.constants';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-reports',
@@ -92,8 +93,10 @@ export class ReportsComponent implements OnInit {
   const container = document.getElementById('report-preview-container');
   if (!container) return;
 
-  // Add your backend base URL
-  const backendBaseUrl = window.location.origin.includes('localhost:4200') ? 'http://localhost:5000' : window.location.origin;
+  // Add your backend base URL dynamically resolved from environment.apiUrl
+  const backendBaseUrl = environment.apiUrl.endsWith('/api')
+    ? environment.apiUrl.slice(0, -4)
+    : environment.apiUrl;
   const timestamp = new Date().getTime();
   if (format === 'PDF') {
   
@@ -141,7 +144,9 @@ export class ReportsComponent implements OnInit {
   downloadReport(): void {
   if (!this.selectedReport) return;
 
-  const backendBaseUrl = window.location.origin.includes('localhost:4200') ? 'http://localhost:5000' : window.location.origin;
+  const backendBaseUrl = environment.apiUrl.endsWith('/api')
+    ? environment.apiUrl.slice(0, -4)
+    : environment.apiUrl;
   const fileUrl = `${backendBaseUrl}${encodeURI(this.selectedReport.filePath)}`;
 
   // Open in new tab for browser default download behavior
