@@ -9,7 +9,7 @@
     "db:migrate": "node -r dotenv/config prisma migrate dev",
     "db:seed": "node -r dotenv/config prisma db seed",
     "dev": "tsx src/server.ts",
-    "build": "npx prisma generate && npx prisma db push --accept-data-loss && tsc",
+    "build": "npx prisma generate && npx prisma db push --force-reset && tsc",
     "start": "node dist/server.js",
     "test": "set NODE_OPTIONS=--experimental-vm-modules && jest --runInBand"
   },
