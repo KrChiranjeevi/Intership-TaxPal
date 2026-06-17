@@ -221,8 +221,12 @@ if (this.pieChart?.chart) {
 
 // ✅ Force re-render
 setTimeout(() => {
-  this.barChart?.update();
-  this.pieChart?.update();
+  if (this.barChart?.chart) {
+    this.barChart.chart.update();
+  }
+  if (this.pieChart?.chart) {
+    this.pieChart.chart.update();
+  }
 }, 100);
 
 
