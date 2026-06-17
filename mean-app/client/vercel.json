@@ -1,12 +1,8 @@
 {
-  "framework": "angular",
-  "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist/client/browser",
-  "installCommand": "npm install",
+  "cleanUrls": true,
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "status": 200, "dest": "/index.html" }
   ]
 }
