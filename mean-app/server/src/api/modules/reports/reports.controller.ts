@@ -4,8 +4,44 @@ import * as reportsService from './reports.service.js';
 import path from 'path';
 import fs from 'fs';
 
-const ALLOWED_PERIODS = ['Current Month', 'Last Month', 'Year'];
+const ALLOWED_PERIODS = ['Current Month', 'Last Month', 'Quarter', 'Year', 'Custom'];
 const ALLOWED_FORMATS = ['PDF', 'CSV'];
+
+export async function getReportPreview(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const { period, startDate, endDate, type, category } = req.query;
+
+    const filters = {
+      period: period ? String(period) : undefined,
+      startDate: startDate ? String(startDate) : undefined,
+      endDate: endDate ? String(endDate) : undefined,
+      type: type ? (String(type) as 'all' | 'income' | 'expense') : undefined,
+      category: category ? String(category) : undefined
+    };
+
+    if (filters.type && !['all', 'income', 'expense'].includes(filters.type)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid transaction type filter. Allowed: 'all', 'income', 'expense'"
+      });
+    }
+
+    const preview = await reportsService.getReportPreview(userId, filters);
+    return res.json({ success: true, ...preview });
+  } catch (error: any) {
+    console.error('Report preview error:', error);
+    const statusCode = error.message?.includes('Invalid') || error.message?.includes('required') ? 400 : 500;
+    return res.status(statusCode).json({
+      success: false,
+      message: error.message || 'Failed to generate report preview'
+    });
+  }
+}
 
 export async function createReport(req: AuthRequest, res: Response) {
   try {
@@ -14,25 +50,48 @@ export async function createReport(req: AuthRequest, res: Response) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const { reportType, period, format } = req.body;
+    const {
+      reportType = 'Financial Report',
+      period = 'Current Month',
+      format,
+      startDate,
+      endDate,
+      type,
+      category
+    } = req.body;
 
-    if (!reportType || !period || !format) {
-      return res.status(400).json({ success: false, message: 'All fields (reportType, period, format) are required' });
-    }
-
-    if (!ALLOWED_PERIODS.includes(period)) {
-      return res.status(400).json({ success: false, message: `Period must be one of: ${ALLOWED_PERIODS.join(', ')}` });
+    if (!format) {
+      return res.status(400).json({ success: false, message: 'Format (PDF or CSV) is required' });
     }
 
     if (!ALLOWED_FORMATS.includes(format)) {
       return res.status(400).json({ success: false, message: `Format must be one of: ${ALLOWED_FORMATS.join(', ')}` });
     }
 
-    const report = await reportsService.createReport({ userId, reportType, period, format });
+    if (period && !ALLOWED_PERIODS.includes(period)) {
+      return res.status(400).json({ success: false, message: `Period must be one of: ${ALLOWED_PERIODS.join(', ')}` });
+    }
+
+    if (type && !['all', 'income', 'expense'].includes(type)) {
+      return res.status(400).json({ success: false, message: "Type must be one of: 'all', 'income', 'expense'" });
+    }
+
+    const report = await reportsService.createReport({
+      userId,
+      reportType,
+      period,
+      format,
+      startDate,
+      endDate,
+      type,
+      category
+    });
+
     res.status(201).json(report);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create report error:', error);
-    res.status(500).json({ success: false, message: 'Failed to create report' });
+    const statusCode = error.message?.includes('Invalid') || error.message?.includes('required') ? 400 : 500;
+    res.status(statusCode).json({ success: false, message: error.message || 'Failed to create report' });
   }
 }
 

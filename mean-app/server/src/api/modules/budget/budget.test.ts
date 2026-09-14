@@ -80,9 +80,9 @@ describe('Phase 5 - Step 1: Budget Module Tests (All 10 Scenarios)', () => {
       const result = await getBudgetsByUserId(mockUserId);
 
       expect(result.length).toBe(1);
-      expect(result[0].spent).toBe(300);
-      expect(result[0].remaining).toBe(700);
-      expect(result[0].percentageUsed).toBe(30);
+      expect(result[0]?.spent).toBe(300);
+      expect(result[0]?.remaining).toBe(700);
+      expect(result[0]?.percentageUsed).toBe(30);
     });
   });
 

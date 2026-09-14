@@ -1,99 +1,417 @@
 <div class="reports-page">
-  <header>
-    <h1>Financial Reports</h1>
-    <p>Generate and download your financial reports</p>
+  <header class="rp-header">
+    <div class="header-content">
+      <h1>Financial Reports & Exports</h1>
+      <p>Analyze summary metrics, filter transactions, and export high-resolution PDF and CSV reports</p>
+    </div>
   </header>
 
-  <!-- Generate Report Card -->
-  <div class="card generate-report-card">
-    <h2>Generate Report</h2>
-    <div class="form-grid">
-      <div class="form-group">
-        <label for="reportType">Report Type</label>
-        <select id="reportType" [(ngModel)]="reportTypeValue">
-          <option *ngFor="let type of REPORT_TYPES" [value]="type">{{ type }}</option>
-        </select>
-      </div>
+  <!-- Feedback Alert Banners -->
+  <div class="alert alert-success" *ngIf="actionMessage">
+    <span class="alert-icon">✓</span>
+    <span>{{ actionMessage }}</span>
+    <button class="alert-close" (click)="actionMessage = null">✕</button>
+  </div>
+  <div class="alert alert-danger" *ngIf="actionError || previewError">
+    <span class="alert-icon">⚠</span>
+    <span>{{ actionError || previewError }}</span>
+    <button class="alert-close" (click)="actionError = null; previewError = null">✕</button>
+  </div>
 
-      <div class="form-group">
-        <label for="period">Period</label>
-        <select id="period" [(ngModel)]="periodValue">
+  <!-- Filter & Generate Section -->
+  <div class="rp-card filter-card">
+    <div class="card-header">
+      <div class="card-icon">
+        <span class="material-icons-round">filter_alt</span>
+      </div>
+      <div>
+        <h2>Report Parameters & Filters</h2>
+        <span class="card-subtitle">Configure date ranges and transaction filters to generate customized reports</span>
+      </div>
+    </div>
+
+    <div class="report-form-grid">
+      <!-- Period Selection -->
+      <div class="form-field">
+        <label for="periodSelect">Report Period</label>
+        <select id="periodSelect" [(ngModel)]="periodValue" (ngModelChange)="onFilterChange()">
           <option *ngFor="let p of PERIODS" [value]="p">{{ p }}</option>
         </select>
       </div>
 
-      <div class="form-group">
-        <label for="format">Format</label>
-        <select id="format" [(ngModel)]="formatValue">
-          <option *ngFor="let f of FORMATS" [value]="f">{{ f }}</option>
+      <!-- Custom Start Date (conditional) -->
+      <div class="form-field" *ngIf="periodValue === 'Custom'">
+        <label for="startDate">Start Date</label>
+        <input
+          type="date"
+          id="startDate"
+          [(ngModel)]="startDate"
+          (ngModelChange)="onFilterChange()"
+        />
+      </div>
+
+      <!-- Custom End Date (conditional) -->
+      <div class="form-field" *ngIf="periodValue === 'Custom'">
+        <label for="endDate">End Date</label>
+        <input
+          type="date"
+          id="endDate"
+          [(ngModel)]="endDate"
+          (ngModelChange)="onFilterChange()"
+        />
+      </div>
+
+      <!-- Transaction Type Filter -->
+      <div class="form-field">
+        <label for="typeSelect">Transaction Type</label>
+        <select id="typeSelect" [(ngModel)]="transactionTypeValue" (ngModelChange)="onFilterChange()">
+          <option *ngFor="let t of TRANSACTION_TYPES" [value]="t.value">{{ t.label }}</option>
         </select>
       </div>
 
-      <div class="form-actions">
-        <button (click)="resetForm()" class="reset-btn">Reset</button>
-        <button (click)="generateReport()" class="generate-btn" [disabled]="loading">
-          {{ loading ? 'Generating...' : 'Generate Report' }}
+      <!-- Category Filter -->
+      <div class="form-field">
+        <label for="categoryInput">Category</label>
+        <input
+          type="text"
+          id="categoryInput"
+          placeholder="Filter by category (e.g. Food)"
+          [(ngModel)]="categoryValue"
+          (ngModelChange)="onFilterChange()"
+        />
+      </div>
+
+      <!-- Export Format -->
+      <div class="form-field">
+        <label for="formatSelect">Export Format</label>
+        <select id="formatSelect" [(ngModel)]="formatValue">
+          <option *ngFor="let f of FORMATS" [value]="f">{{ f }} Document</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Actions toolbar -->
+    <div class="report-form-actions">
+      <button type="button" class="btn-reset" (click)="resetFilters()">
+        <span class="material-icons-round">refresh</span>
+        Reset Filters
+      </button>
+
+      <div class="btn-group">
+        <button
+          type="button"
+          class="btn-quick-export"
+          (click)="quickExport('CSV')"
+          [disabled]="generateLoading"
+        >
+          <span class="material-icons-round">table_view</span>
+          Export CSV
+        </button>
+        <button
+          type="button"
+          class="btn-quick-export"
+          (click)="quickExport('PDF')"
+          [disabled]="generateLoading"
+        >
+          <span class="material-icons-round">picture_as_pdf</span>
+          Export PDF
+        </button>
+        <button
+          type="button"
+          class="btn-generate"
+          (click)="generateReport()"
+          [disabled]="generateLoading"
+        >
+          <span class="material-icons-round">save</span>
+          {{ generateLoading ? 'Generating...' : 'Save & Generate' }}
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Recent Reports Card with Actions -->
-  <div class="card recent-reports-card">
-    <h2>Recent Reports</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Generated</th>
-          <th>Period</th>
-          <th>Format</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let report of recentReports">
-          <td>{{ report.name }}</td>
-          <td>{{ report.createdAt | date:'short' }}</td>
-          <td>{{ report.period }}</td>
-          <td>{{ report.format }}</td>
-          <td class="actions">
-            <button (click)="selectReport(report)">👁️ Preview</button>
-            <!--<button (click)="updateReport(report)">🔄 Update</button>-->
-            <button (click)="deleteReport(report)">🗑️ Delete</button>
-          </td>
-        </tr>
-        <tr *ngIf="recentReports.length === 0">
-          <td colspan="6" class="no-results">No results</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Report Preview Card -->
-  <div class="card report-preview-card">
-    <h2>Report Preview</h2>
-    <div class="preview-actions">
-      <button (click)="printReport()" [disabled]="!selectedReport">🖨️ Print</button>
-      <button (click)="downloadReport()" [disabled]="!selectedReport">⬇️ Download</button>
-    </div>
-
-    <div class="preview-content" *ngIf="selectedReport; else noPreview">
-      <p><strong>{{ selectedReport.name }}</strong></p>
-      <p>Generated on: {{ selectedReport.createdAt | date:'short' }}</p>
-      <p>Period: {{ selectedReport.period }}</p>
-      <p>Format: {{ selectedReport.format }}</p>
-      
-      <!-- Dynamic preview container -->
-      <div id="report-preview-container" style="width:100%; height:600px; overflow:auto; border:1px solid #ccc; margin-top:10px;"></div>
-    </div>
-
-    <ng-template #noPreview>
-      <div class="no-preview">
-        <img [src]="fileIconUrl" alt="File Icon" class="file-icon" />
-        <p>Select a report to preview</p>
-        <small>Generated reports will appear here for review before downloading</small>
+  <!-- Financial Summary Metrics Cards -->
+  <div class="summary-section" *ngIf="summary">
+    <div class="metric-card metric-income">
+      <div class="metric-icon">
+        <span class="material-icons-round">arrow_downward</span>
       </div>
-    </ng-template>
+      <div class="metric-info">
+        <span class="metric-label">Total Income</span>
+        <span class="metric-value">{{ summary.totalIncome | currency:'USD':'symbol':'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="metric-card metric-expense">
+      <div class="metric-icon">
+        <span class="material-icons-round">arrow_upward</span>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Total Expenses</span>
+        <span class="metric-value">{{ summary.totalExpenses | currency:'USD':'symbol':'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="metric-card metric-savings" [ngClass]="{ 'negative-savings': summary.netSavings < 0 }">
+      <div class="metric-icon">
+        <span class="material-icons-round">account_balance_wallet</span>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Net Savings</span>
+        <span class="metric-value">{{ summary.netSavings | currency:'USD':'symbol':'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="metric-card metric-count">
+      <div class="metric-icon">
+        <span class="material-icons-round">receipt_long</span>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Transactions</span>
+        <span class="metric-value">{{ summary.transactionCount }}</span>
+      </div>
+    </div>
+
+    <div class="metric-card metric-largest">
+      <div class="metric-icon">
+        <span class="material-icons-round">local_fire_department</span>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Largest Expense</span>
+        <span class="metric-value">{{ summary.largestExpense | currency:'USD':'symbol':'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="metric-card metric-top-cat">
+      <div class="metric-icon">
+        <span class="material-icons-round">pie_chart</span>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Top Category</span>
+        <span class="metric-value category-text">{{ summary.topSpendingCategory }}</span>
+      </div>
+    </div>
   </div>
-</div>
+
+  <!-- Live Transactions Preview Table -->
+  <div class="rp-card preview-table-card">
+    <div class="card-header">
+      <div class="card-icon">
+        <span class="material-icons-round">visibility</span>
+      </div>
+      <div class="header-titles">
+        <h2>Report Data Preview</h2>
+        <span class="card-subtitle">
+          Showing matching transactions for: <strong>{{ periodValue }}</strong>
+          <span *ngIf="previewTransactions.length">({{ previewTransactions.length }} records)</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div class="preview-loading-state" *ngIf="previewLoading">
+      <div class="spinner"></div>
+      <p>Updating preview with selected filters...</p>
+    </div>
+
+    <!-- Table content -->
+    <div class="table-responsive" *ngIf="!previewLoading">
+      <table class="rp-table" *ngIf="previewTransactions.length > 0; else noPreviewTransactions">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Type</th>
+            <th class="text-right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of previewTransactions">
+            <td class="col-date">{{ t.date | date:'mediumDate' }}</td>
+            <td class="col-desc">{{ t.description }}</td>
+            <td>
+              <span class="category-badge">{{ t.category }}</span>
+            </td>
+            <td>
+              <span
+                class="type-badge"
+                [ngClass]="t.type.toLowerCase() === 'income' ? 'type-income' : 'type-expense'"
+              >
+                {{ t.type }}
+              </span>
+            </td>
+            <td
+              class="col-amount text-right"
+              [ngClass]="t.type.toLowerCase() === 'income' ? 'amount-income' : 'amount-expense'"
+            >
+              {{ t.type.toLowerCase() === 'income' ? '+' : '-' }}{{ t.amount | currency:'USD':'symbol':'1.2-2' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <ng-template #noPreviewTransactions>
+        <div class="empty-state">
+          <span class="material-icons-round empty-icon">receipt_long</span>
+          <h3>No Transactions Found</h3>
+          <p>There are no transactions matching your selected period and filter parameters.</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Generated Reports Archive Table -->
+  <div class="rp-card archive-card">
+    <div class="card-header">
+      <div class="card-icon">
+        <span class="material-icons-round">folder_special</span>
+      </div>
+      <div>
+        <h2>Generated Reports Archive</h2>
+        <span class="card-subtitle">Access, review, or re-download your previously generated financial statements</span>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="rp-table" *ngIf="recentReports.length > 0; else noReports">
+        <thead>
+          <tr>
+            <th>Report Name</th>
+            <th>Generated Date</th>
+            <th>Period Covered</th>
+            <th>Format</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of recentReports">
+            <td class="report-name-cell">
+              <span class="format-indicator" [ngClass]="'format-' + r.format.toLowerCase()">
+                {{ r.format }}
+              </span>
+              <span>{{ r.name || 'Financial Statement' }}</span>
+            </td>
+            <td>{{ r.createdAt | date:'medium' }}</td>
+            <td>
+              <span class="period-pill">{{ r.period }}</span>
+            </td>
+            <td>
+              <span class="format-tag">{{ r.format }}</span>
+            </td>
+            <td class="actions-cell text-right">
+              <button
+                type="button"
+                class="action-btn preview-btn"
+                (click)="selectReport(r)"
+                title="Preview File"
+              >
+                <span class="material-icons-round">visibility</span>
+                Preview
+              </button>
+              <button
+                type="button"
+                class="action-btn download-btn"
+                (click)="downloadReport(r)"
+                title="Download File"
+              >
+                <span class="material-icons-round">download</span>
+                Download
+              </button>
+              <button
+                type="button"
+                class="action-btn delete-btn"
+                (click)="requestDelete(r)"
+                title="Delete Report"
+              >
+                <span class="material-icons-round">delete_outline</span>
+                Delete
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <ng-template #noReports>
+        <div class="empty-state">
+          <img [src]="fileIconUrl" alt="Reports" class="empty-archive-icon" />
+          <h3>No Generated Reports Yet</h3>
+          <p>Select your filters above and click "Save & Generate" to produce your first report.</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Document Viewer Pane (Safe rendering without innerHTML / document.write) -->
+  <div class="rp-card viewer-card" *ngIf="selectedReport">
+    <div class="card-header viewer-header">
+      <div class="viewer-title">
+        <span class="material-icons-round">description</span>
+        <div>
+          <h2>{{ selectedReport.name }}</h2>
+          <span class="card-subtitle">
+            Format: <strong>{{ selectedReport.format }}</strong> • Period: {{ selectedReport.period }}
+          </span>
+        </div>
+      </div>
+      <div class="viewer-actions">
+        <button type="button" class="btn-tool" (click)="printReport()">
+          <span class="material-icons-round">print</span>
+          Print
+        </button>
+        <button type="button" class="btn-tool" (click)="downloadReport(selectedReport)">
+          <span class="material-icons-round">download</span>
+          Download
+        </button>
+        <button type="button" class="btn-tool btn-close-viewer" (click)="selectedReport = null">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Viewer Body -->
+    <div class="viewer-body">
+      <div class="viewer-loading" *ngIf="reportPreviewLoading">
+        <div class="spinner"></div>
+        <p>Streaming report document from server...</p>
+      </div>
+
+      <!-- Safe PDF Preview via DomSanitizer iframe -->
+      <div class="pdf-viewer-container" *ngIf="!reportPreviewLoading && selectedReportSafeUrl">
+        <iframe
+          [src]="selectedReportSafeUrl"
+          title="PDF Report Preview"
+          class="pdf-iframe"
+        ></iframe>
+      </div>
+
+      <!-- Safe CSV Preview via sanitized text binding -->
+      <div class="csv-viewer-container" *ngIf="!reportPreviewLoading && selectedReportCsvData">
+        <pre class="csv-pre">{{ selectedReportCsvData }}</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- In-App Delete Confirmation Modal -->
+  <div class="modal-backdrop" *ngIf="reportToDelete">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Confirm Report Deletion</h3>
+      </div>
+      <div class="modal-body">
+        <p>
+          Are you sure you want to delete report
+          <strong>"{{ reportToDelete.name }}"</strong>?
+        </p>
+        <p class="modal-warning">This will permanently remove the generated file from the server.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-modal-cancel" (click)="cancelDelete()" [disabled]="deleteLoading">
+          Cancel
+        </button>
+        <button type="button" class="btn-modal-delete" (click)="confirmDelete()" [disabled]="deleteLoading">
+          {{ deleteLoading ? 'Deleting...' : 'Delete Permanently' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -11,6 +11,9 @@ router.use(authMiddleware);
 // Create a new report
 router.post("/", reportsController.createReport);
 
+// Get real-time report summary and preview with filters
+router.get("/preview", reportsController.getReportPreview);
+
 // Get all reports for logged-in user
 router.get("/", reportsController.getReports);
 
