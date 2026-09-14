@@ -33,3 +33,28 @@ export interface AiModelResponse {
   category: string;
   confidence: number;
 }
+
+export interface AggregatedFinancialMetrics {
+  period: string;
+  income: number;
+  expenses: number;
+  savings: number;
+  savingsRate: number;
+  topExpenseCategory: string;
+  topExpenseAmount: number;
+  budgetUsage: number;
+  overBudgetCategories: number;
+}
+
+export interface FinancialSummaryAiResponse {
+  summary: string;
+  insights: string[];
+  priority: 'low' | 'medium' | 'high';
+}
+
+export interface FinancialSummaryResponse {
+  success: boolean;
+  data: FinancialSummaryAiResponse;
+  fallback?: boolean | undefined;
+  message?: string | undefined;
+}

@@ -579,3 +579,196 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* ==========================================================================
+   AI Financial Health Summary Card
+   ========================================================================== */
+.db-ai-section {
+  margin-bottom: 24px;
+}
+
+.ai-health-card {
+  background: var(--bg-surface, #1e293b);
+  border: 1px solid var(--border, #334155);
+  border-radius: var(--radius-lg, 12px);
+  padding: 20px 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: all var(--transition-base, 0.2s ease);
+
+  &:hover {
+    border-color: rgba(0, 210, 255, 0.3);
+  }
+
+  .ai-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+    .ai-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .ai-icon-badge {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(0, 210, 255, 0.15), rgba(168, 85, 247, 0.15));
+        border: 1px solid rgba(0, 210, 255, 0.25);
+        color: #00d2ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .material-icons-round {
+          font-size: 20px;
+        }
+      }
+
+      .ai-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-primary, #f8fafc);
+        margin: 0;
+      }
+
+      .ai-subtitle {
+        font-size: 12px;
+        color: var(--text-muted, #94a3b8);
+      }
+    }
+
+    .ai-header-right {
+      display: flex;
+      align-items: center;
+
+      .ai-priority-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 600;
+
+        .priority-dot {
+          font-size: 10px;
+        }
+
+        &.priority-low {
+          background: rgba(16, 185, 129, 0.12);
+          color: #10b981;
+          border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        &.priority-medium {
+          background: rgba(245, 158, 11, 0.12);
+          color: #f59e0b;
+          border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        &.priority-high {
+          background: rgba(239, 68, 68, 0.12);
+          color: #ef4444;
+          border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+      }
+    }
+  }
+
+  .ai-card-body {
+    .ai-loading-state {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 0;
+      color: var(--text-muted, #94a3b8);
+      font-size: 13.5px;
+
+      .spin-anim {
+        animation: spin 1.2s linear infinite;
+        font-size: 18px;
+        color: #00d2ff;
+      }
+    }
+
+    .ai-fallback-state {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      color: var(--text-muted, #94a3b8);
+      font-size: 13px;
+
+      .material-icons-round {
+        font-size: 18px;
+        color: #f59e0b;
+      }
+    }
+
+    .ai-content {
+      .ai-summary-text {
+        font-size: 14.5px;
+        line-height: 1.6;
+        color: var(--text-secondary, #cbd5e1);
+        margin-bottom: 16px;
+      }
+
+      .ai-insights-list {
+        margin-bottom: 14px;
+
+        .insights-heading {
+          font-size: 12px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: var(--text-muted, #94a3b8);
+          margin-bottom: 8px;
+        }
+
+        ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+
+          li {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 13.5px;
+            color: var(--text-primary, #f8fafc);
+            line-height: 1.45;
+
+            .insight-icon {
+              font-size: 16px;
+              color: #10b981;
+              flex-shrink: 0;
+              margin-top: 2px;
+            }
+          }
+        }
+      }
+
+      .ai-disclaimer {
+        display: flex;
+        align-items: center;
+        font-size: 11.5px;
+        color: var(--text-muted, #64748b);
+        margin: 0;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.04);
+      }
+    }
+  }
+}

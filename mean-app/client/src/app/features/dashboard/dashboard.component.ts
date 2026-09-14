@@ -8,6 +8,7 @@ import { AddIncomeComponent } from '../transactions/add-income/add-income.compon
 import { AddExpenseComponent } from '../transactions/add-expense/add-expense.component';
 import { TransactionService } from '@core/services/transaction.service';
 import { DashboardService, DashboardData, DashboardTransaction, DashboardPeriod } from '@core/services/dashboard.service';
+import { AiService, FinancialHealthSummary } from '@core/services/ai.service';
 import { ChartConfiguration } from 'chart.js';
 
 @Component({
@@ -43,6 +44,12 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   estimatedTaxDue = 0;
   savingsRate = 0;
   transactions: DashboardTransaction[] = [];
+
+  // AI Financial Health Summary State
+  aiSummary: FinancialHealthSummary | null = null;
+  isAiLoading = false;
+  aiErrorMessage: string | null = null;
+  private aiCache = new Map<string, FinancialHealthSummary>();
 
   public barChartOptions: ChartConfiguration['options'] = {
     responsive: true,
@@ -90,6 +97,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     private dashboardService: DashboardService,
     private txService: TransactionService,
     private authService: AuthService,
+    private aiService: AiService,
     private router: Router
   ) {}
 
@@ -141,6 +149,34 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     }
   }
 
+  loadAiSummary(period: DashboardPeriod = this.selectedPeriod): void {
+    const cached = this.aiCache.get(period);
+    if (cached) {
+      this.aiSummary = cached;
+      this.isAiLoading = false;
+      this.aiErrorMessage = null;
+      return;
+    }
+
+    this.isAiLoading = true;
+    this.aiErrorMessage = null;
+    this.aiService.getFinancialSummary(period).subscribe({
+      next: (res) => {
+        this.isAiLoading = false;
+        if (res && res.data) {
+          this.aiSummary = res.data;
+          this.aiCache.set(period, res.data);
+        } else {
+          this.aiErrorMessage = 'Financial insights are temporarily unavailable.';
+        }
+      },
+      error: () => {
+        this.isAiLoading = false;
+        this.aiErrorMessage = 'Financial insights are temporarily unavailable.';
+      }
+    });
+  }
+
   loadDashboardData(period: DashboardPeriod = this.selectedPeriod, isInitial: boolean = false): void {
     if (isInitial) {
       this.loading = true;
@@ -148,6 +184,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       this.isPeriodLoading = true;
     }
     this.errorMessage = null;
+
+    // Trigger AI summary in parallel without blocking main dashboard loading
+    this.loadAiSummary(period);
 
     this.dashboardService.getDashboardSummary(period).subscribe({
       next: (res) => {
@@ -258,6 +297,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     this.txService.addIncome(payload).subscribe({
       next: () => {
         this.showIncome = false;
+        this.aiCache.clear();
         this.loadDashboardData();
       },
       error: (err) => {
@@ -272,6 +312,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     this.txService.addExpense(payload).subscribe({
       next: () => {
         this.showExpense = false;
+        this.aiCache.clear();
         this.loadDashboardData();
       },
       error: (err) => {

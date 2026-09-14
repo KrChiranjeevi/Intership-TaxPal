@@ -184,6 +184,68 @@
         </div>
       </section>
 
+      <!-- AI Financial Health Summary Card -->
+      <section class="db-ai-section animate-fade-up delay-2">
+        <div class="ai-health-card">
+          <div class="ai-card-header">
+            <div class="ai-header-left">
+              <div class="ai-icon-badge">
+                <span class="material-icons-round">auto_awesome</span>
+              </div>
+              <div>
+                <h3 class="ai-title">AI Financial Health</h3>
+                <span class="ai-subtitle">{{ periodLabel }} analysis</span>
+              </div>
+            </div>
+
+            <!-- Priority Badge -->
+            <div class="ai-header-right" *ngIf="aiSummary && !isAiLoading && !aiErrorMessage">
+              <span
+                class="ai-priority-badge"
+                [ngClass]="'priority-' + aiSummary.priority">
+                <span class="material-icons-round priority-dot">fiber_manual_record</span>
+                {{ aiSummary.priority | titlecase }} Priority
+              </span>
+            </div>
+          </div>
+
+          <div class="ai-card-body">
+            <!-- Loading State -->
+            <div class="ai-loading-state" *ngIf="isAiLoading">
+              <span class="material-icons-round spin-anim">autorenew</span>
+              <span>Analyzing your finances...</span>
+            </div>
+
+            <!-- Error / Fallback State -->
+            <div class="ai-fallback-state" *ngIf="!isAiLoading && aiErrorMessage">
+              <span class="material-icons-round">info</span>
+              <span>{{ aiErrorMessage }}</span>
+            </div>
+
+            <!-- Active AI Summary Content -->
+            <div class="ai-content" *ngIf="!isAiLoading && !aiErrorMessage && aiSummary">
+              <p class="ai-summary-text">{{ aiSummary.summary }}</p>
+
+              <div class="ai-insights-list" *ngIf="aiSummary.insights && aiSummary.insights.length > 0">
+                <h4 class="insights-heading">Key Insights</h4>
+                <ul>
+                  <li *ngFor="let insight of aiSummary.insights">
+                    <span class="material-icons-round insight-icon">check_circle</span>
+                    <span>{{ insight }}</span>
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Disclaimer -->
+              <p class="ai-disclaimer">
+                <span class="material-icons-round" style="font-size: 13px; vertical-align: -1px; margin-right: 3px;">verified_user</span>
+                AI-generated insights are informational and may not always be accurate.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Charts Row -->
       <section class="db-charts animate-fade-up delay-3" [class.content-loading]="isPeriodLoading">
         <!-- Bar Chart with Period Selector -->

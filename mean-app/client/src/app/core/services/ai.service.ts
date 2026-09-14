@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -9,6 +9,19 @@ export interface AiCategorizationResponse {
   confidence: number;
   message?: string;
   fallback?: boolean;
+}
+
+export interface FinancialHealthSummary {
+  summary: string;
+  insights: string[];
+  priority: 'low' | 'medium' | 'high';
+}
+
+export interface FinancialHealthSummaryResponse {
+  success: boolean;
+  data: FinancialHealthSummary;
+  fallback?: boolean;
+  message?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -38,6 +51,16 @@ export class AiService {
       `${this.apiUrl}/categorize-transaction`,
       payload,
       this.getAuthHeaders()
+    );
+  }
+
+  getFinancialSummary(period: string = 'monthly'): Observable<FinancialHealthSummaryResponse> {
+    const params = new HttpParams().set('period', period);
+    const { headers } = this.getAuthHeaders();
+
+    return this.http.get<FinancialHealthSummaryResponse>(
+      `${this.apiUrl}/financial-summary`,
+      { headers, params }
     );
   }
 }
