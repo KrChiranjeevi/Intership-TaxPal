@@ -352,7 +352,20 @@
 
         <!-- Description -->
         <div class="form-group">
-          <label for="edit-desc" class="form-label">Description <span class="required">*</span></label>
+          <div class="label-with-ai-action">
+            <label for="edit-desc" class="form-label">Description <span class="required">*</span></label>
+            <button
+              type="button"
+              class="btn-edit-ai-suggest"
+              (click)="suggestEditCategory()"
+              [disabled]="isSuggestingEditCategory || !editingTransaction.description?.trim()"
+              title="Get AI category suggestion based on description"
+            >
+              <span class="ai-sparkle">✨</span>
+              <span *ngIf="!isSuggestingEditCategory">AI Suggest</span>
+              <span *ngIf="isSuggestingEditCategory">Suggesting...</span>
+            </button>
+          </div>
           <input
             id="edit-desc"
             type="text"
@@ -360,6 +373,27 @@
             [(ngModel)]="editingTransaction.description"
             placeholder="e.g. Grocery shopping or Salary"
           />
+        </div>
+
+        <!-- AI Suggestion in Edit Modal -->
+        <div class="ai-edit-suggestion" *ngIf="editAiSuggestion">
+          <div class="ai-suggestion-text">
+            <span class="ai-badge">AI Suggestion:</span>
+            <strong class="ai-cat">{{ editAiSuggestion.category }}</strong>
+            <span class="ai-confidence">({{ (editAiSuggestion.confidence * 100) | number:'1.0-0' }}% match)</span>
+          </div>
+          <div class="ai-suggestion-actions">
+            <button type="button" class="btn-use-ai" (click)="applyEditAiSuggestion(editAiSuggestion.category)">
+              Use {{ editAiSuggestion.category }}
+            </button>
+            <button type="button" class="btn-dismiss-ai" (click)="dismissEditAiSuggestion()" title="Dismiss">✕</button>
+          </div>
+        </div>
+
+        <!-- AI Notice if unavailable -->
+        <div class="ai-edit-notice" *ngIf="editAiMessage">
+          <span class="material-icons-round notice-icon">info</span>
+          <span>{{ editAiMessage }}</span>
         </div>
 
         <!-- Amount -->

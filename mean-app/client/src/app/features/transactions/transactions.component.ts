@@ -11,6 +11,7 @@ import {
   TransactionSummary
 } from '@core/services/transaction.service';
 import { CategoriesService, Category } from '@core/services/categories.service';
+import { AiService } from '@core/services/ai.service';
 
 @Component({
   selector: 'app-transactions',
@@ -69,6 +70,11 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   editModalError = '';
   isSubmittingEdit = false;
 
+  // AI Suggestion State for Edit Modal
+  isSuggestingEditCategory = false;
+  editAiSuggestion: { category: string; confidence: number } | null = null;
+  editAiMessage = '';
+
   // Delete Modal State
   isDeleteModalOpen = false;
   deletingTransactionId: string | null = null;
@@ -77,7 +83,8 @@ export class TransactionsComponent implements OnInit, OnDestroy {
 
   constructor(
     private txService: TransactionService,
-    private categoriesService: CategoriesService
+    private categoriesService: CategoriesService,
+    private aiService: AiService
   ) {}
 
   ngOnInit(): void {
@@ -283,6 +290,9 @@ export class TransactionsComponent implements OnInit, OnDestroy {
       notes: tx.notes || ''
     };
     this.editModalError = '';
+    this.isSuggestingEditCategory = false;
+    this.editAiSuggestion = null;
+    this.editAiMessage = '';
     this.isEditModalOpen = true;
   }
 
@@ -290,6 +300,64 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     this.isEditModalOpen = false;
     this.editingTransaction = null;
     this.editModalError = '';
+    this.isSuggestingEditCategory = false;
+    this.editAiSuggestion = null;
+    this.editAiMessage = '';
+  }
+
+  suggestEditCategory(): void {
+    if (!this.editingTransaction?.description?.trim()) {
+      this.editAiMessage = 'Please enter a description first to get an AI category suggestion.';
+      return;
+    }
+
+    this.isSuggestingEditCategory = true;
+    this.editAiMessage = '';
+    this.editAiSuggestion = null;
+
+    this.aiService
+      .suggestCategory(
+        this.editingTransaction.description.trim(),
+        this.editingTransaction.amount ?? undefined,
+        this.editingTransaction.type
+      )
+      .subscribe({
+        next: (res) => {
+          this.isSuggestingEditCategory = false;
+          if (res.success && res.category) {
+            this.editAiSuggestion = {
+              category: res.category,
+              confidence: res.confidence
+            };
+            if (!this.availableCategories.includes(res.category)) {
+              this.availableCategories.push(res.category);
+            }
+          } else {
+            this.editAiMessage =
+              res.message ||
+              'Category suggestion is currently unavailable. You can select a category manually.';
+          }
+        },
+        error: (err) => {
+          this.isSuggestingEditCategory = false;
+          this.editAiMessage =
+            err.error?.message ||
+            'Category suggestion is currently unavailable. You can select a category manually.';
+        }
+      });
+  }
+
+  applyEditAiSuggestion(category: string): void {
+    if (this.editingTransaction) {
+      this.editingTransaction.category = category;
+    }
+    this.editAiSuggestion = null;
+    this.editAiMessage = '';
+  }
+
+  dismissEditAiSuggestion(): void {
+    this.editAiSuggestion = null;
+    this.editAiMessage = '';
   }
 
   submitEdit(): void {

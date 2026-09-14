@@ -8,11 +8,49 @@
     <p class="subtext">Add details about your expense to track better</p>
 
     <form (ngSubmit)="onSubmit()" class="form">
-      <label>Description</label>
-      <input type="text" [(ngModel)]="expenseData.description" name="description" placeholder="e.g. Design Project" required>
+      <div class="form-error-banner" *ngIf="formError">
+        {{ formError }}
+      </div>
+
+      <div class="form-field-header">
+        <label>Description</label>
+        <button
+          type="button"
+          class="btn-ai-action"
+          (click)="suggestCategory()"
+          [disabled]="isSuggestingCategory || !expenseData.description.trim()"
+          title="Get AI category suggestion based on description"
+        >
+          <span class="ai-sparkle">✨</span>
+          <span *ngIf="!isSuggestingCategory">AI Suggest</span>
+          <span *ngIf="isSuggestingCategory">Suggesting...</span>
+        </button>
+      </div>
+      <input type="text" [(ngModel)]="expenseData.description" name="description" placeholder="e.g. Grocery shopping, Uber, Netflix" required>
+
+      <!-- AI Category Suggestion Pill -->
+      <div class="ai-suggestion-badge" *ngIf="aiSuggestion">
+        <div class="ai-badge-left">
+          <span class="ai-badge-tag">AI Suggestion:</span>
+          <strong class="ai-cat-name">{{ aiSuggestion.category }}</strong>
+          <span class="ai-match">({{ (aiSuggestion.confidence * 100) | number:'1.0-0' }}% match)</span>
+        </div>
+        <div class="ai-badge-actions">
+          <button type="button" class="btn-apply-suggestion" (click)="applySuggestion(aiSuggestion.category)">
+            Use {{ aiSuggestion.category }}
+          </button>
+          <button type="button" class="btn-dismiss-suggestion" (click)="dismissSuggestion()" title="Dismiss">✕</button>
+        </div>
+      </div>
+
+      <!-- AI Feedback Message (fallback or unavailable) -->
+      <div class="ai-info-message" *ngIf="aiMessage">
+        <span class="material-icons-round info-icon">info</span>
+        <span>{{ aiMessage }}</span>
+      </div>
 
       <label>Amount</label>
-      <input type="number" [(ngModel)]="expenseData.amount" name="amount" placeholder="$ 0.00" required>
+      <input type="number" [(ngModel)]="expenseData.amount" name="amount" placeholder="$ 0.00" step="0.01" min="0.01" required>
 
       <label>Category</label>
       <select [(ngModel)]="expenseData.category" name="category" required>
