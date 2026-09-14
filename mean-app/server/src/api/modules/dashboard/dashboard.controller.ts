@@ -10,7 +10,7 @@ export const dashboardController = {
         return res.status(401).json({ success: false, message: "Unauthorized" });
       }
 
-      const period = (req.query.period as "daily" | "weekly" | "monthly") || "monthly";
+      const period = (req.query.period as "monthly" | "quarterly" | "yearly") || "monthly";
       const year = req.query.year ? Number(req.query.year) : undefined;
       const month = req.query.month ? Number(req.query.month) : undefined;
 

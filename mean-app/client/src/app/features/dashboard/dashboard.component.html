@@ -8,7 +8,7 @@
       <p class="db-subtitle">
         Welcome back,
         <span class="db-username">{{ userName }}</span>
-        &nbsp;— Here's your financial summary for this month.
+        &nbsp;— {{ periodSubtitle }}
       </p>
     </div>
     <div class="db-header-actions">
@@ -37,7 +37,7 @@
     (submitForm)="onExpenseAdded($event)">
   </app-add-expense>
 
-  <!-- Loading State -->
+  <!-- Loading State (Initial page load) -->
   <div class="db-state-card loading-card animate-fade-up" *ngIf="loading">
     <div class="state-spinner">
       <span class="material-icons-round spin-anim">refresh</span>
@@ -53,13 +53,13 @@
     </div>
     <h3>Unable to load dashboard data</h3>
     <p>{{ errorMessage }}</p>
-    <button class="retry-btn" (click)="loadDashboardData()">
+    <button class="retry-btn" (click)="loadDashboardData(selectedPeriod, true)">
       <span class="material-icons-round">refresh</span>
       Retry
     </button>
   </div>
 
-  <!-- Empty State (No transactions at all) -->
+  <!-- Global Empty State (No transactions in account at all) -->
   <div class="db-state-card empty-card animate-fade-up" *ngIf="!loading && !errorMessage && isDashboardEmpty">
     <div class="empty-icon-wrap">
       <span class="material-icons-round">account_balance_wallet</span>
@@ -78,126 +78,201 @@
     </div>
   </div>
 
-  <!-- Dashboard Main Content (When data is available) -->
+  <!-- Dashboard Main Content (When user has transactions) -->
   <ng-container *ngIf="!loading && !errorMessage && !isDashboardEmpty">
-    <!-- Stats Cards -->
-    <section class="db-stats">
-      <!-- Monthly Income -->
-      <div class="stat-card income-card animate-fade-up delay-1">
-        <div class="stat-card-header">
-          <p class="stat-label">Monthly Income</p>
-          <div class="stat-icon-wrap income-icon">
-            <span class="material-icons-round">arrow_upward</span>
-          </div>
-        </div>
-        <div class="stat-card-body">
-          <h3 class="stat-value">${{ monthlyIncome | number:'1.2-2' }}</h3>
-          <p class="stat-subtext text-success">This month's earnings</p>
-        </div>
-      </div>
 
-      <!-- Monthly Expenses -->
-      <div class="stat-card expense-card animate-fade-up delay-2">
-        <div class="stat-card-header">
-          <p class="stat-label">Monthly Expenses</p>
-          <div class="stat-icon-wrap expense-icon">
-            <span class="material-icons-round">arrow_downward</span>
-          </div>
-        </div>
-        <div class="stat-card-body">
-          <h3 class="stat-value">${{ monthlyExpenses | number:'1.2-2' }}</h3>
-          <p class="stat-subtext" [class.text-danger]="monthlyExpenses > 0">This month's spending</p>
-        </div>
+    <!-- Period-Specific Empty State (Account has transactions, but this specific period is empty) -->
+    <div class="db-state-card empty-card period-empty-card animate-fade-up" *ngIf="isPeriodEmpty">
+      <div class="empty-icon-wrap">
+        <span class="material-icons-round">event_busy</span>
       </div>
-
-      <!-- Estimated Tax Due -->
-      <div class="stat-card tax-card animate-fade-up delay-3">
-        <div class="stat-card-header">
-          <p class="stat-label">Estimated Tax Due</p>
-          <div class="stat-icon-wrap tax-icon">
-            <span class="material-icons-round" style="font-size: 12px;">circle</span>
-          </div>
+      <h3>No financial activity for this period</h3>
+      <p>Add an income or expense to see your financial insights for {{ periodLabel }}.</p>
+      <div class="empty-actions">
+        <div class="period-pill-tabs" style="margin-right: 8px;">
+          <button
+            type="button"
+            class="period-pill-btn"
+            [class.active]="selectedPeriod === 'monthly'"
+            (click)="onPeriodChange('monthly')">
+            Monthly
+          </button>
+          <button
+            type="button"
+            class="period-pill-btn"
+            [class.active]="selectedPeriod === 'quarterly'"
+            (click)="onPeriodChange('quarterly')">
+            Quarterly
+          </button>
+          <button
+            type="button"
+            class="period-pill-btn"
+            [class.active]="selectedPeriod === 'yearly'"
+            (click)="onPeriodChange('yearly')">
+            Yearly
+          </button>
         </div>
-        <div class="stat-card-body">
-          <h3 class="stat-value">${{ estimatedTaxDue | number:'1.2-2' }}</h3>
-          <p class="stat-subtext text-success">15% of net savings</p>
-        </div>
+        <button class="btn-success" (click)="showIncome=true">
+          <span class="material-icons-round" style="font-size: 16px;">add</span>
+          Add Income
+        </button>
+        <button class="btn-danger" (click)="showExpense=true">
+          <span class="material-icons-round" style="font-size: 16px;">add</span>
+          Add Expense
+        </button>
       </div>
+    </div>
 
-      <!-- Savings Rate -->
-      <div class="stat-card savings-card animate-fade-up delay-4">
-        <div class="stat-card-header">
-          <p class="stat-label">Savings Rate</p>
-          <div class="stat-icon-wrap savings-icon">
-            <span class="material-icons-round">sync</span>
-          </div>
-        </div>
-        <div class="stat-card-body">
-          <h3 class="stat-value">{{ savingsRate | number:'1.1-1' }}%</h3>
-          <p class="stat-subtext text-success">Net income retained</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Charts Row -->
-    <section class="db-charts animate-fade-up delay-3">
-      <!-- Bar Chart -->
-      <div class="chart-card chart-bar">
-        <div class="chart-header">
-          <div class="chart-title-wrap">
-            <span class="material-icons-round chart-icon">bar_chart</span>
-            <h3>Income vs Expenses</h3>
-          </div>
-          <span class="chart-sub">Monthly Overview</span>
-        </div>
-        <div class="chart-body">
-          <canvas
-            baseChart
-            #barChart
-            [data]="barChartData"
-            [options]="barChartOptions"
-            chartType="bar">
-          </canvas>
-        </div>
-      </div>
-
-      <!-- Doughnut Chart -->
-      <div class="chart-card chart-pie">
-        <div class="chart-header">
-          <div class="chart-title-wrap">
-            <span class="material-icons-round chart-icon">donut_large</span>
-            <h3>Expense Breakdown</h3>
-          </div>
-          <span class="chart-sub">By Category</span>
-        </div>
-        <div class="chart-body chart-pie-body">
-          <div class="pie-canvas-wrap">
-            <canvas
-              baseChart
-              #pieChart
-              [data]="pieChartData"
-              [options]="pieChartOptions"
-              chartType="doughnut">
-            </canvas>
-          </div>
-          
-          <div class="custom-legend" *ngIf="pieLegendItems && pieLegendItems.length > 0">
-            <div class="legend-item" *ngFor="let item of pieLegendItems">
-              <div class="legend-left">
-                <span class="legend-color" [style.backgroundColor]="item.color"></span>
-                <span class="legend-label">{{item.label}}</span>
-              </div>
-              <span class="legend-value">{{item.percentage}}%</span>
+    <!-- Stats & Charts (When selected period has activity) -->
+    <ng-container *ngIf="!isPeriodEmpty">
+      <!-- Stats Cards -->
+      <section class="db-stats" [class.content-loading]="isPeriodLoading">
+        <!-- Income Card -->
+        <div class="stat-card income-card animate-fade-up delay-1">
+          <div class="stat-card-header">
+            <p class="stat-label">{{ incomeCardTitle }}</p>
+            <div class="stat-icon-wrap income-icon">
+              <span class="material-icons-round">arrow_upward</span>
             </div>
           </div>
-
-          <p *ngIf="!pieLegendItems.length" class="chart-empty">
-            <span class="material-icons-round">info</span>
-            No expenses this month
-          </p>
+          <div class="stat-card-body">
+            <h3 class="stat-value">${{ monthlyIncome | number:'1.2-2' }}</h3>
+            <p class="stat-subtext text-success">{{ periodLabel }}'s earnings</p>
+          </div>
         </div>
-      </div>
-    </section>
+
+        <!-- Expenses Card -->
+        <div class="stat-card expense-card animate-fade-up delay-2">
+          <div class="stat-card-header">
+            <p class="stat-label">{{ expenseCardTitle }}</p>
+            <div class="stat-icon-wrap expense-icon">
+              <span class="material-icons-round">arrow_downward</span>
+            </div>
+          </div>
+          <div class="stat-card-body">
+            <h3 class="stat-value">${{ monthlyExpenses | number:'1.2-2' }}</h3>
+            <p class="stat-subtext" [class.text-danger]="monthlyExpenses > 0">{{ periodLabel }}'s spending</p>
+          </div>
+        </div>
+
+        <!-- Estimated Tax Due Card -->
+        <div class="stat-card tax-card animate-fade-up delay-3">
+          <div class="stat-card-header">
+            <p class="stat-label">Estimated Tax Due</p>
+            <div class="stat-icon-wrap tax-icon">
+              <span class="material-icons-round" style="font-size: 12px;">circle</span>
+            </div>
+          </div>
+          <div class="stat-card-body">
+            <h3 class="stat-value">${{ estimatedTaxDue | number:'1.2-2' }}</h3>
+            <p class="stat-subtext text-success">15% of net savings</p>
+          </div>
+        </div>
+
+        <!-- Savings Rate Card -->
+        <div class="stat-card savings-card animate-fade-up delay-4">
+          <div class="stat-card-header">
+            <p class="stat-label">Savings Rate</p>
+            <div class="stat-icon-wrap savings-icon">
+              <span class="material-icons-round">sync</span>
+            </div>
+          </div>
+          <div class="stat-card-body">
+            <h3 class="stat-value">{{ savingsRate | number:'1.1-1' }}%</h3>
+            <p class="stat-subtext text-success">Net income retained</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Charts Row -->
+      <section class="db-charts animate-fade-up delay-3" [class.content-loading]="isPeriodLoading">
+        <!-- Bar Chart with Period Selector -->
+        <div class="chart-card chart-bar">
+          <div class="chart-header">
+            <div class="chart-title-wrap">
+              <span class="material-icons-round chart-icon">bar_chart</span>
+              <h3>Income vs Expenses</h3>
+            </div>
+            <!-- Functional Period Selector replacing static 'Monthly Overview' pill -->
+            <div class="period-pill-tabs" role="tablist">
+              <button
+                type="button"
+                role="tab"
+                class="period-pill-btn"
+                [class.active]="selectedPeriod === 'monthly'"
+                (click)="onPeriodChange('monthly')"
+                [disabled]="isPeriodLoading">
+                Monthly
+              </button>
+              <button
+                type="button"
+                role="tab"
+                class="period-pill-btn"
+                [class.active]="selectedPeriod === 'quarterly'"
+                (click)="onPeriodChange('quarterly')"
+                [disabled]="isPeriodLoading">
+                Quarterly
+              </button>
+              <button
+                type="button"
+                role="tab"
+                class="period-pill-btn"
+                [class.active]="selectedPeriod === 'yearly'"
+                (click)="onPeriodChange('yearly')"
+                [disabled]="isPeriodLoading">
+                Yearly
+              </button>
+            </div>
+          </div>
+          <div class="chart-body">
+            <canvas
+              baseChart
+              #barChart
+              [data]="barChartData"
+              [options]="barChartOptions"
+              chartType="bar">
+            </canvas>
+          </div>
+        </div>
+
+        <!-- Doughnut Chart -->
+        <div class="chart-card chart-pie">
+          <div class="chart-header">
+            <div class="chart-title-wrap">
+              <span class="material-icons-round chart-icon">donut_large</span>
+              <h3>Expense Breakdown</h3>
+            </div>
+            <span class="chart-sub">{{ periodLabel }}</span>
+          </div>
+          <div class="chart-body chart-pie-body">
+            <div class="pie-canvas-wrap">
+              <canvas
+                baseChart
+                #pieChart
+                [data]="pieChartData"
+                [options]="pieChartOptions"
+                chartType="doughnut">
+              </canvas>
+            </div>
+            
+            <div class="custom-legend" *ngIf="pieLegendItems && pieLegendItems.length > 0">
+              <div class="legend-item" *ngFor="let item of pieLegendItems">
+                <div class="legend-left">
+                  <span class="legend-color" [style.backgroundColor]="item.color"></span>
+                  <span class="legend-label">{{item.label}}</span>
+                </div>
+                <span class="legend-value">{{item.percentage}}%</span>
+              </div>
+            </div>
+
+            <p *ngIf="!pieLegendItems.length" class="chart-empty">
+              <span class="material-icons-round">info</span>
+              No expenses for {{ periodLabel }}
+            </p>
+          </div>
+        </div>
+      </section>
+    </ng-container>
 
     <!-- Recent Transactions -->
     <section class="db-transactions animate-fade-up delay-4">

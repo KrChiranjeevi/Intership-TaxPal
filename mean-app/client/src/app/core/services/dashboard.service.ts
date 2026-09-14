@@ -3,13 +3,19 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+export type DashboardPeriod = 'monthly' | 'quarterly' | 'yearly';
+
 export interface DashboardSummary {
   monthlyIncome: number;
+  periodIncome: number;
   monthlyExpenses: number;
+  periodExpenses: number;
   netBalance: number;
   estimatedTax: number;
   savingsRate: number;
   totalTransactions: number;
+  period?: DashboardPeriod;
+  periodLabel?: string;
 }
 
 export interface MonthlyChartPoint {
@@ -39,7 +45,10 @@ export interface DashboardData {
   incomeVsExpenses: MonthlyChartPoint[];
   expenseBreakdown: CategoryExpense[];
   recentTransactions: DashboardTransaction[];
+  periodTotalTransactions?: number;
   allTimeTotalTransactions: number;
+  period?: DashboardPeriod;
+  periodLabel?: string;
   totalIncome?: number;
   totalExpenses?: number;
   netBalance?: number;
@@ -61,12 +70,12 @@ export class DashboardService {
 
   constructor(private http: HttpClient) {}
 
-  getDashboardSummary(period?: string, year?: number, month?: number): Observable<DashboardResponse> {
-    let params = new HttpParams();
-    if (period) params = params.set('period', period);
+  getDashboardSummary(period: DashboardPeriod = 'monthly', year?: number, month?: number): Observable<DashboardResponse> {
+    let params = new HttpParams().set('period', period);
     if (year) params = params.set('year', year.toString());
     if (month) params = params.set('month', month.toString());
 
     return this.http.get<DashboardResponse>(this.apiUrl, { params });
   }
 }
+

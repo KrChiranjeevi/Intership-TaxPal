@@ -7,7 +7,7 @@ import { NgChartsModule, BaseChartDirective } from 'ng2-charts';
 import { AddIncomeComponent } from '../transactions/add-income/add-income.component';
 import { AddExpenseComponent } from '../transactions/add-expense/add-expense.component';
 import { TransactionService } from '@core/services/transaction.service';
-import { DashboardService, DashboardData, DashboardTransaction } from '@core/services/dashboard.service';
+import { DashboardService, DashboardData, DashboardTransaction, DashboardPeriod } from '@core/services/dashboard.service';
 import { ChartConfiguration } from 'chart.js';
 
 @Component({
@@ -26,9 +26,17 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   userName = 'User';
 
   loading = true;
+  isPeriodLoading = false;
   errorMessage: string | null = null;
   isDashboardEmpty = false;
+  isPeriodEmpty = false;
   dashboardData: DashboardData | null = null;
+
+  selectedPeriod: DashboardPeriod = 'monthly';
+  periodLabel = 'This Month';
+  periodSubtitle = "Here's your financial summary for this month.";
+  incomeCardTitle = 'Monthly Income';
+  expenseCardTitle = 'Monthly Expenses';
 
   monthlyIncome = 0;
   monthlyExpenses = 0;
@@ -96,7 +104,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       }
     }
 
-    this.loadDashboardData();
+    this.loadDashboardData('monthly', true);
   }
 
   ngAfterViewInit(): void {
@@ -108,21 +116,60 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/login']);
   }
 
-  loadDashboardData(): void {
-    this.loading = true;
+  onPeriodChange(period: DashboardPeriod): void {
+    if (this.selectedPeriod === period && !this.errorMessage) {
+      return; // Prevent duplicate API requests if user selects the same period
+    }
+    this.selectedPeriod = period;
+    this.updatePeriodLabels(period);
+    this.loadDashboardData(period, false);
+  }
+
+  private updatePeriodLabels(period: DashboardPeriod): void {
+    if (period === 'quarterly') {
+      this.incomeCardTitle = 'Quarterly Income';
+      this.expenseCardTitle = 'Quarterly Expenses';
+      this.periodSubtitle = "Here's your financial summary for this quarter.";
+    } else if (period === 'yearly') {
+      this.incomeCardTitle = 'Annual Income';
+      this.expenseCardTitle = 'Annual Expenses';
+      this.periodSubtitle = "Here's your financial summary for this year.";
+    } else {
+      this.incomeCardTitle = 'Monthly Income';
+      this.expenseCardTitle = 'Monthly Expenses';
+      this.periodSubtitle = "Here's your financial summary for this month.";
+    }
+  }
+
+  loadDashboardData(period: DashboardPeriod = this.selectedPeriod, isInitial: boolean = false): void {
+    if (isInitial) {
+      this.loading = true;
+    } else {
+      this.isPeriodLoading = true;
+    }
     this.errorMessage = null;
 
-    this.dashboardService.getDashboardSummary('monthly').subscribe({
+    this.dashboardService.getDashboardSummary(period).subscribe({
       next: (res) => {
         this.loading = false;
+        this.isPeriodLoading = false;
         if (res && res.success && res.data) {
           this.dashboardData = res.data;
+          this.periodLabel = res.data.periodLabel || (period === 'quarterly' ? 'This Quarter' : period === 'yearly' ? 'This Year' : 'This Month');
+
+          // Check if user has zero transactions overall
           this.isDashboardEmpty = res.data.allTimeTotalTransactions === 0;
+
+          // Check if selected period specifically has zero financial activity
+          const periodTxCount = res.data.periodTotalTransactions ?? res.data.summary?.totalTransactions ?? 0;
+          const periodInc = res.data.summary?.periodIncome ?? res.data.summary?.monthlyIncome ?? 0;
+          const periodExp = res.data.summary?.periodExpenses ?? res.data.summary?.monthlyExpenses ?? 0;
+          this.isPeriodEmpty = !this.isDashboardEmpty && (periodTxCount === 0 && periodInc === 0 && periodExp === 0);
 
           // 1. Populate summary values from backend
           const summary = res.data.summary;
-          this.monthlyIncome = summary?.monthlyIncome ?? res.data.totalIncome ?? 0;
-          this.monthlyExpenses = summary?.monthlyExpenses ?? res.data.totalExpenses ?? 0;
+          this.monthlyIncome = summary?.periodIncome ?? summary?.monthlyIncome ?? res.data.totalIncome ?? 0;
+          this.monthlyExpenses = summary?.periodExpenses ?? summary?.monthlyExpenses ?? res.data.totalExpenses ?? 0;
           this.estimatedTaxDue = summary?.estimatedTax ?? res.data.estimatedTax ?? 0;
           this.savingsRate = summary?.savingsRate ?? 0;
 
@@ -137,6 +184,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       },
       error: (err) => {
         this.loading = false;
+        this.isPeriodLoading = false;
         console.error('Error fetching dashboard data:', err?.message || err);
         this.errorMessage = 'Unable to load dashboard data. Please try again.';
       }

@@ -231,6 +231,52 @@
       border-radius: var(--radius-full);
       border: 1px solid var(--border);
     }
+
+    .period-pill-tabs {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      padding: 2px;
+      gap: 2px;
+
+      .period-pill-btn {
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--text-muted);
+        font-family: var(--font-sans);
+        font-size: 11.5px;
+        font-weight: 600;
+        padding: 4px 12px;
+        border-radius: var(--radius-full);
+        cursor: pointer;
+        transition: all var(--transition-base);
+
+        &:hover:not(.active) {
+          color: var(--text-primary);
+          background: rgba(255, 255, 255, 0.06);
+        }
+
+        &.active {
+          background: var(--primary-light);
+          color: #0f172a;
+          box-shadow: 0 2px 8px rgba(0, 210, 255, 0.25);
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+
+  .content-loading {
+    opacity: 0.6;
+    transition: opacity 0.2s ease-in-out;
+    pointer-events: none;
   }
 
   .chart-body {

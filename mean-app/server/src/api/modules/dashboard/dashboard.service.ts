@@ -5,13 +5,19 @@ const MONTH_NAMES = [
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
 
+export type DashboardPeriod = 'monthly' | 'quarterly' | 'yearly';
+
 export interface DashboardSummary {
   monthlyIncome: number;
+  periodIncome: number;
   monthlyExpenses: number;
+  periodExpenses: number;
   netBalance: number;
   estimatedTax: number;
   savingsRate: number;
   totalTransactions: number;
+  period: DashboardPeriod;
+  periodLabel: string;
 }
 
 export interface MonthlyChartPoint {
@@ -46,29 +52,42 @@ export async function getDashboardSummary(
   const currentYear = year && !isNaN(year) ? year : now.getFullYear();
   const currentMonthIndex = month !== undefined && !isNaN(month) ? month - 1 : now.getMonth();
 
-  // 1. Calculate boundaries for the current selected month / period
+  // Normalize period (default: monthly)
+  let validPeriod: DashboardPeriod = 'monthly';
+  if (period === 'quarterly' || period === 'yearly') {
+    validPeriod = period;
+  }
+
+  // 1. Calculate boundaries and label for the selected period
   let startDate: Date;
   let endDate: Date;
+  let periodLabel: string;
+  let chartMonthIndices: number[] = [];
 
-  if (period === "daily") {
-    startDate = new Date(currentYear, currentMonthIndex, now.getDate(), 0, 0, 0, 0);
-    endDate = new Date(currentYear, currentMonthIndex, now.getDate(), 23, 59, 59, 999);
-  } else if (period === "weekly") {
-    const day = now.getDay();
-    startDate = new Date(now);
-    startDate.setDate(now.getDate() - day);
-    startDate.setHours(0, 0, 0, 0);
-    endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 6);
-    endDate.setHours(23, 59, 59, 999);
+  if (validPeriod === 'yearly') {
+    startDate = new Date(currentYear, 0, 1, 0, 0, 0, 0);
+    endDate = new Date(currentYear, 12, 0, 23, 59, 59, 999);
+    periodLabel = `${currentYear} (Full Year)`;
+    chartMonthIndices = Array.from({ length: 12 }, (_, i) => i);
+  } else if (validPeriod === 'quarterly') {
+    const quarterIndex = Math.floor(currentMonthIndex / 3); // 0 (Q1), 1 (Q2), 2 (Q3), 3 (Q4)
+    const quarterStartMonth = quarterIndex * 3;
+    const quarterEndMonth = quarterStartMonth + 2;
+
+    startDate = new Date(currentYear, quarterStartMonth, 1, 0, 0, 0, 0);
+    endDate = new Date(currentYear, quarterEndMonth + 1, 0, 23, 59, 59, 999);
+    periodLabel = `Q${quarterIndex + 1} ${currentYear} (${MONTH_NAMES[quarterStartMonth]} - ${MONTH_NAMES[quarterEndMonth]})`;
+    chartMonthIndices = [quarterStartMonth, quarterStartMonth + 1, quarterEndMonth];
   } else {
     // default: monthly
     startDate = new Date(currentYear, currentMonthIndex, 1, 0, 0, 0, 0);
     endDate = new Date(currentYear, currentMonthIndex + 1, 0, 23, 59, 59, 999);
+    periodLabel = `${MONTH_NAMES[currentMonthIndex]} ${currentYear}`;
+    chartMonthIndices = Array.from({ length: 12 }, (_, i) => i);
   }
 
-  // 2. Fetch transactions for the current period (for cards & category breakdown)
-  const currentPeriodTransactions = await prisma.transaction.findMany({
+  // 2. Fetch transactions within the selected period (for stats & category breakdown)
+  const periodTransactions = await prisma.transaction.findMany({
     where: {
       userId,
       date: { gte: startDate, lte: endDate },
@@ -76,11 +95,11 @@ export async function getDashboardSummary(
     orderBy: { date: 'desc' },
   });
 
-  const totalIncome = currentPeriodTransactions
+  const totalIncome = periodTransactions
     .filter(t => t.type === "income")
     .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
-  const totalExpenses = currentPeriodTransactions
+  const totalExpenses = periodTransactions
     .filter(t => t.type === "expense")
     .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
@@ -90,9 +109,9 @@ export async function getDashboardSummary(
     ? Number(Math.max(0, ((netBalance / totalIncome) * 100)).toFixed(1))
     : 0;
 
-  // 3. Category breakdown for expenses in this period
+  // 3. Category breakdown for expenses in this selected period
   const categoryMap = new Map<string, number>();
-  for (const tx of currentPeriodTransactions) {
+  for (const tx of periodTransactions) {
     if (tx.type === 'expense') {
       const cat = tx.category?.trim() || 'Uncategorized';
       categoryMap.set(cat, (categoryMap.get(cat) || 0) + Number(tx.amount || 0));
@@ -110,17 +129,17 @@ export async function getDashboardSummary(
       percentage,
     });
   });
-  // Sort category breakdown descending by amount
   expenseBreakdown.sort((a, b) => b.amount - a.amount);
 
-  // 4. Calculate 12-month Income vs Expenses for the current year
-  const yearStart = new Date(currentYear, 0, 1, 0, 0, 0, 0);
-  const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59, 999);
+  // 4. Calculate Income vs Expenses chart data tailored to the period
+  // For yearly and monthly, we query the full current year; for quarterly, we query the quarter range
+  const chartStart = validPeriod === 'quarterly' ? startDate : new Date(currentYear, 0, 1, 0, 0, 0, 0);
+  const chartEnd = validPeriod === 'quarterly' ? endDate : new Date(currentYear, 12, 0, 23, 59, 59, 999);
 
-  const yearTransactions = await prisma.transaction.findMany({
+  const chartTransactions = await prisma.transaction.findMany({
     where: {
       userId,
-      date: { gte: yearStart, lte: yearEnd },
+      date: { gte: chartStart, lte: chartEnd },
     },
     select: {
       type: true,
@@ -132,7 +151,7 @@ export async function getDashboardSummary(
   const monthlyIncomeArr = Array(12).fill(0);
   const monthlyExpenseArr = Array(12).fill(0);
 
-  for (const tx of yearTransactions) {
+  for (const tx of chartTransactions) {
     const txDate = new Date(tx.date);
     const m = txDate.getMonth();
     if (m >= 0 && m < 12) {
@@ -144,10 +163,10 @@ export async function getDashboardSummary(
     }
   }
 
-  const incomeVsExpenses: MonthlyChartPoint[] = MONTH_NAMES.map((monthName, index) => ({
-    month: monthName,
-    income: Number(monthlyIncomeArr[index].toFixed(2)),
-    expense: Number(monthlyExpenseArr[index].toFixed(2)),
+  const incomeVsExpenses: MonthlyChartPoint[] = chartMonthIndices.map((monthIndex) => ({
+    month: MONTH_NAMES[monthIndex] ?? `M${monthIndex + 1}`,
+    income: Number(monthlyIncomeArr[monthIndex]?.toFixed(2) ?? 0),
+    expense: Number(monthlyExpenseArr[monthIndex]?.toFixed(2) ?? 0),
   }));
 
   // 5. Fetch recent transactions for the user
@@ -167,23 +186,32 @@ export async function getDashboardSummary(
     date: t.date.toISOString(),
   }));
 
-  // 6. All-time transaction count to determine empty state
+  // 6. Counts to determine global empty state vs period empty state
   const allTimeTotalTransactions = await prisma.transaction.count({
     where: { userId },
   });
 
+  const periodTotalTransactions = periodTransactions.length;
+
   return {
     summary: {
       monthlyIncome: Number(totalIncome.toFixed(2)),
+      periodIncome: Number(totalIncome.toFixed(2)),
       monthlyExpenses: Number(totalExpenses.toFixed(2)),
+      periodExpenses: Number(totalExpenses.toFixed(2)),
       netBalance: Number(netBalance.toFixed(2)),
       estimatedTax: Number(estimatedTax.toFixed(2)),
       savingsRate,
-      totalTransactions: currentPeriodTransactions.length,
+      totalTransactions: periodTotalTransactions,
+      period: validPeriod,
+      periodLabel,
     },
+    period: validPeriod,
+    periodLabel,
     incomeVsExpenses,
     expenseBreakdown,
     recentTransactions,
+    periodTotalTransactions,
     allTimeTotalTransactions,
 
     // Backwards-compatible fields
