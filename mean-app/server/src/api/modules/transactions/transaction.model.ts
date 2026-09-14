@@ -122,20 +122,22 @@ export const getAllTransactions = async (
     take: limit,
   });
 
-  // Calculate summary metrics across the filtered dataset
-  const matchingSummaryRows = await prisma.transaction.findMany({
+  // Calculate summary metrics across the filtered dataset using database aggregation
+  const summaryAgg = await prisma.transaction.groupBy({
+    by: ["type"],
     where,
-    select: { type: true, amount: true },
+    _sum: { amount: true },
   });
 
-  const totalIncome = matchingSummaryRows
-    .filter((t) => t.type === "income")
-    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
-
-  const totalExpense = matchingSummaryRows
-    .filter((t) => t.type === "expense")
-    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
-
+  let totalIncome = 0;
+  let totalExpense = 0;
+  for (const row of summaryAgg) {
+    if (row.type === "income") {
+      totalIncome = Number(row._sum.amount || 0);
+    } else if (row.type === "expense") {
+      totalExpense = Number(row._sum.amount || 0);
+    }
+  }
   const net = totalIncome - totalExpense;
 
   return {

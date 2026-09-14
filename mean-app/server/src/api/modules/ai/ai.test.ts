@@ -832,8 +832,8 @@ describe('Phase 7 Step 3: AI Tax-Saving & Deduction Suggestions Tests', () => {
 
     const result = await aiService.suggestTaxDeductions({ income: 60000, homeOffice: 0 });
     expect(result.length).toBe(1);
-    expect(result[0].title).toBe('Home Office');
-    expect(result[0].priority).toBe('low');
+    expect(result[0]!.title).toBe('Home Office');
+    expect(result[0]!.priority).toBe('low');
   });
 
   // 4. Maximum 3 suggestions
@@ -892,7 +892,7 @@ describe('Phase 7 Step 3: AI Tax-Saving & Deduction Suggestions Tests', () => {
     });
 
     const result = await aiService.suggestTaxDeductions({ income: 45000 });
-    expect(result[0].priority).toBe('low');
+    expect(result[0]!.priority).toBe('low');
   });
 
   // 6. Malformed AI response

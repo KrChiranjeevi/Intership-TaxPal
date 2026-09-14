@@ -70,6 +70,9 @@ model Transaction {
 
   @@index([userId])
   @@index([reportId])
+  @@index([userId, date])
+  @@index([userId, type])
+  @@index([userId, category])
 }
 
 model Budget {
@@ -85,6 +88,7 @@ model Budget {
   user        User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
+  @@index([userId, month])
 }
 
 model Category {
@@ -134,6 +138,7 @@ model TaxEstimate {
   updatedAt            DateTime @updatedAt
 
   @@index([userId])
+  @@index([userId, year])
 }
 
 model Report {

@@ -43,8 +43,8 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.disable('etag');
 
 // ✅ Universal no-cache middleware
@@ -71,7 +71,13 @@ app.get("/", (_req, res) => {
 
 // Health route
 app.get('/api/health', (_req, res) => {
-  res.json({ success: true, message: 'Server is running 🚀' });
+  res.status(200).json({
+    status: 'ok',
+    service: 'taxpal-api',
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor(process.uptime()),
+    success: true,
+  });
 });
 
 // 404 Handler
@@ -83,9 +89,15 @@ app.use((_req, res) => {
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Server error caught:', err?.message || err);
   const status = err.status || err.statusCode || 500;
+  const isProduction = process.env.NODE_ENV === 'production';
+  const message =
+    status === 500 && isProduction
+      ? 'Internal server error'
+      : err.message || 'Internal server error';
+
   res.status(status).json({
     success: false,
-    message: err.message || 'Internal server error',
+    message,
   });
 });
 

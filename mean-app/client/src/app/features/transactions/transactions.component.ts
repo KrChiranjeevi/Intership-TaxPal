@@ -55,6 +55,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   // Debounced search subject
   private searchSubject = new Subject<string>();
   private searchSubscription?: Subscription;
+  private loadTxSubscription?: Subscription;
 
   // Edit Modal State
   isEditModalOpen = false;
@@ -107,6 +108,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.searchSubscription?.unsubscribe();
+    this.loadTxSubscription?.unsubscribe();
   }
 
   /**
@@ -176,7 +178,8 @@ export class TransactionsComponent implements OnInit, OnDestroy {
       endDate: this.endDate || undefined
     };
 
-    this.txService.getTransactions(filters).subscribe({
+    this.loadTxSubscription?.unsubscribe();
+    this.loadTxSubscription = this.txService.getTransactions(filters).subscribe({
       next: (res) => {
         this.isLoading = false;
         if (res.success && res.data) {

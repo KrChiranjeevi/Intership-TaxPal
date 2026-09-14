@@ -16,7 +16,7 @@ interface Category {
 @Component({
   selector: 'app-categories',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, FormsModule, HttpClientModule, CategoryDialogComponent],
+  imports: [CommonModule, MatDialogModule, FormsModule, HttpClientModule],
   templateUrl: './categories.component.html',
   styleUrls: ['./categories.component.scss']
 })
