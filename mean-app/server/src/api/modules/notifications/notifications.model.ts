@@ -1,7 +1,4 @@
-// src/api/modules/notifications/notifications.model.ts
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../../../config/prisma.client.js";
 
 export interface NotificationSettingsInput {
   emailNotifications?: boolean;

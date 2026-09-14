@@ -48,24 +48,16 @@ register(data: any) {
 
 saveToken(token: string) { localStorage.setItem('token', token); }
   getToken(): string | null { return localStorage.getItem('token'); }
-  logout() { localStorage.removeItem('token'); }
-
-  // ------------------- NEW -------------------
-  private getAuthHeaders(): { headers: HttpHeaders } {
-    const token = this.getToken();
-    return {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      }),
-    };
+  logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   }
 
-  getProfile(): Observable<UserProfile> {
-    return this.http.get<UserProfile>(`${environment.apiUrl}/users/profile`, this.getAuthHeaders());
+  getProfile(): Observable<{ success: boolean; data: UserProfile }> {
+    return this.http.get<{ success: boolean; data: UserProfile }>(`${this.api}/profile`);
   }
 
-  updateProfile(data: Partial<UserProfile>): Observable<UserProfile> {
-    return this.http.put<UserProfile>(`${environment.apiUrl}/users/profile`, data, this.getAuthHeaders());
+  updateProfile(data: Partial<UserProfile>): Observable<{ success: boolean; data: UserProfile; message?: string }> {
+    return this.http.put<{ success: boolean; data: UserProfile; message?: string }>(`${this.api}/profile`, data);
   }
 }

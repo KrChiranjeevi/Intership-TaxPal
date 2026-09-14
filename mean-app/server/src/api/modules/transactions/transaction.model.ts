@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../../../config/prisma.client.js";
 
 // Define allowed transaction types
 export type TransactionType = "income" | "expense";

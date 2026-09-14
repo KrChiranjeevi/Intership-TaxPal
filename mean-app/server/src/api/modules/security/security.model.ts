@@ -1,8 +1,5 @@
-// src/modules/security/security.model.ts
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
-
-const prisma = new PrismaClient();
+import { prisma } from '../../../config/prisma.client.js';
+import bcrypt from 'bcrypt';
 
 // -------------------------
 // MODEL FUNCTIONS

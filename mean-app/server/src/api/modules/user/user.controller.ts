@@ -1,10 +1,12 @@
 // src/modules/users/users.controller.ts
 import type { Request, Response } from 'express';
+import type { AuthRequest } from '../../middlewares/auth.middleware.js';
 import type { RegisterDto, LoginDto, RequestPasswordResetDto, ResetPasswordDto } from './user.model.js';
 import {
   createUser,
   validateUser,
   findUserById,
+  updateUserProfile,
   saveRefreshToken,
   removeRefreshToken,
   findUserByRefreshToken,
@@ -86,11 +88,12 @@ export async function logoutHandler(req: Request, res: Response) {
 }
 
 // ------------------- GET PROFILE -------------------
-export async function getProfileHandler(req: Request & { userId?: string }, res: Response) {
+export async function getProfileHandler(req: AuthRequest, res: Response) {
   try {
-    if (!req.userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
-    const user = await findUserById(req.userId);
+    const user = await findUserById(userId);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
     const { password, ...rest } = user;
@@ -98,6 +101,22 @@ export async function getProfileHandler(req: Request & { userId?: string }, res:
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, message: 'Server error' });
+  }
+}
+
+// ------------------- UPDATE PROFILE -------------------
+export async function updateProfileHandler(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const { name, username, country, incomeBracket } = req.body;
+    const updated = await updateUserProfile(userId, { name, username, country, incomeBracket });
+
+    return res.json({ success: true, data: updated, message: 'Profile updated successfully' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: 'Failed to update profile' });
   }
 }
 

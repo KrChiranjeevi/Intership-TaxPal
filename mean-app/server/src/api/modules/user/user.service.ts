@@ -44,6 +44,23 @@ export async function findUserById(id: string) {
   return prisma.user.findUnique({ where: { id } });
 }
 
+export async function updateUserProfile(
+  id: string,
+  data: { name?: string; username?: string; country?: string; incomeBracket?: string }
+) {
+  const user = await prisma.user.update({
+    where: { id },
+    data: {
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.username !== undefined && { username: data.username }),
+      ...(data.country !== undefined && { country: data.country }),
+      ...(data.incomeBracket !== undefined && { incomeBracket: data.incomeBracket }),
+    },
+  });
+  const { password, ...rest } = user;
+  return rest;
+}
+
 export async function validateUser(data: LoginDto) {
   const user = await prisma.user.findUnique({ where: { email: data.email } });
   if (!user) return null;

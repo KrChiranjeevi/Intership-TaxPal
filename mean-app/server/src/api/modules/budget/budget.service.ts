@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../config/prisma.client.js';
 import type { Budget } from './budget.model.js';
-
-const prisma = new PrismaClient();
 
 // Create a new budget
 export async function createBudget(budgetData: Omit<Budget, 'id' | 'createdAt' | 'updatedAt'> & { description?: string | null; spent?: number }): Promise<Budget> {

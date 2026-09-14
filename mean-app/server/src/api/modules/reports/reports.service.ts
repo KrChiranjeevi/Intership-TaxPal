@@ -1,11 +1,10 @@
-import { PrismaClient, type Report, type Transaction } from '@prisma/client';
+import { type Report, type Transaction } from '@prisma/client';
 import PDFDocument from 'pdfkit';
 import { parse } from 'json2csv';
 import fs from 'fs-extra';
 import path from 'path';
 import crypto from 'crypto';
-
-const prisma = new PrismaClient();
+import { prisma } from '../../../config/prisma.client.js';
 
 export interface ReportInput {
   userId: string;

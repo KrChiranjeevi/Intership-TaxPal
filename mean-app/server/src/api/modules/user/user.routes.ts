@@ -6,6 +6,7 @@ import {
   refreshTokenHandler,
   logoutHandler,
   getProfileHandler,
+  updateProfileHandler,
   requestPasswordResetHandler,
   resetPasswordHandler,
 } from './user.controller.js';
@@ -21,8 +22,10 @@ router.post('/login', loginHandler);
 router.post('/refresh-token', refreshTokenHandler);
 router.post('/logout', logoutHandler);
 
-// Get profile (JWT protected)
+// Profile (JWT protected)
 router.get('/me', authMiddleware, getProfileHandler);
+router.get('/profile', authMiddleware, getProfileHandler);
+router.put('/profile', authMiddleware, updateProfileHandler);
 
 // Password reset
 router.post('/forgot-password', requestPasswordResetHandler);

@@ -30,8 +30,17 @@ export class ProfileComponent implements OnInit {
 
   loadProfile() {
     this.authService.getProfile().subscribe({
-      next: (res) => {
-        this.user = res;
+      next: (res: any) => {
+        const data = res?.data || res;
+        this.user = {
+          id: data.id || '',
+          name: data.name || '',
+          username: data.username || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          country: data.country || '',
+          incomeBracket: data.incomeBracket || ''
+        };
       },
       error: (err) => {
         this.message = err.error?.message || 'Failed to load profile';
@@ -40,10 +49,23 @@ export class ProfileComponent implements OnInit {
   }
 
   saveChanges() {
+    this.message = '';
     this.authService.updateProfile(this.user).subscribe({
-      next: (res) => {
-        this.user = res;
-        this.message = 'Profile updated successfully!';
+      next: (res: any) => {
+        const updated = res?.data || res;
+        this.user = {
+          ...this.user,
+          ...updated
+        };
+        // Update stored user in localStorage so layout/sidebar reflects changes
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          try {
+            const parsed = JSON.parse(storedUser);
+            localStorage.setItem('user', JSON.stringify({ ...parsed, ...this.user }));
+          } catch {}
+        }
+        this.message = res?.message || 'Profile updated successfully!';
       },
       error: (err) => {
         this.message = err.error?.message || 'Failed to update profile';
