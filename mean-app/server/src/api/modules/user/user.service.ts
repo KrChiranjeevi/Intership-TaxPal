@@ -72,79 +72,127 @@ export async function validateUser(data: LoginDto) {
 }
 
 
+// ------------------- TOKEN HASHING HELPER -------------------
+
+function hashToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
 // ------------------- REFRESH TOKEN -------------------
 
 export async function saveRefreshToken(userId: string, token: string, expiresAt: Date) {
+  const tokenHash = hashToken(token);
   return prisma.refreshToken.create({
-    data: { tokenHash: token, userId, expiresAt }, // save plain token for now
+    data: { tokenHash, userId, expiresAt },
   });
 }
 
 export async function findUserByRefreshToken(token: string) {
-  return prisma.refreshToken.findFirst({
-    where: { tokenHash: token },
+  const tokenHash = hashToken(token);
+  const record = await prisma.refreshToken.findFirst({
+    where: {
+      tokenHash,
+      expiresAt: { gt: new Date() },
+    },
     include: { user: true },
-  })?.then(t => t?.user ?? null);
+  });
+  return record?.user ?? null;
 }
 
 export async function removeRefreshToken(token: string) {
-  return prisma.refreshToken.deleteMany({ where: { tokenHash: token } });
+  const tokenHash = hashToken(token);
+  return prisma.refreshToken.deleteMany({ where: { tokenHash } });
 }
 
 
 // ------------------- PASSWORD RESET -------------------
 
-// In-memory store: keyed by email -> { token, expiresAt }
-type ResetRecord = { token: string; expiresAt: number };
-const passwordResetTokens: Record<string, ResetRecord> = {};
+// Fallback in-memory map if DB table is unmigrated in dev
+const memoryResetFallback: Record<string, { tokenHash: string; userId: string; expiresAt: Date; used: boolean }> = {};
 
 /**
- * Generates a short random token, stores it with an expiry, and returns it.
+ * Generates a crypto-secure random token, stores its SHA-256 hash in the database, and returns the raw token.
  * Token expiry is 15 minutes by default.
  */
-export async function requestPasswordReset(data: RequestPasswordResetDto) {
-  const user = await prisma.user.findUnique({ where: { email: data.email } });
+export async function requestPasswordReset(data: RequestPasswordResetDto): Promise<string | null> {
+  const user = await prisma.user.findUnique({ where: { email: data.email.toLowerCase().trim() } });
   if (!user) return null;
 
-  // create a cryptographically-strong token
-  const resetToken = cryptoRandomToken(24); // ~24 chars
+  // Generate cryptographically strong random token
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = hashToken(resetToken);
   const expiresInMs = (Number(process.env.PASSWORD_RESET_EXPIRES_MINUTES ?? 15) || 15) * 60 * 1000;
-  const expiresAt = Date.now() + expiresInMs;
+  const expiresAt = new Date(Date.now() + expiresInMs);
 
-  passwordResetTokens[data.email] = { token: resetToken, expiresAt };
+  try {
+    // Invalidate previous unused reset tokens for this user
+    await prisma.passwordResetToken.updateMany({
+      where: { userId: user.id, used: false },
+      data: { used: true },
+    });
+
+    // Create new token record in database
+    await prisma.passwordResetToken.create({
+      data: {
+        tokenHash,
+        userId: user.id,
+        expiresAt,
+        used: false,
+      },
+    });
+  } catch (dbErr) {
+    // Graceful fallback for local development if migrations haven't run
+    memoryResetFallback[user.id] = { tokenHash, userId: user.id, expiresAt, used: false };
+  }
 
   return resetToken;
 }
 
 /**
- * Validate token and set new password. Token must match and not be expired.
+ * Validate token hash and set new password. Token must match, not be expired, and not be used.
  */
 export async function saveNewPassword(data: ResetPasswordDto) {
-  const user = await prisma.user.findUnique({ where: { email: data.email } });
+  const user = await prisma.user.findUnique({ where: { email: data.email.toLowerCase().trim() } });
   if (!user) return null;
 
-  const record = passwordResetTokens[data.email];
-  if (!record) return null;
-  if (record.token !== data.token) return null;
-  if (Date.now() > record.expiresAt) {
-    // expired
-    delete passwordResetTokens[data.email];
-    return null;
+  const tokenHash = hashToken(data.token);
+  let isValid = false;
+
+  try {
+    const record = await prisma.passwordResetToken.findFirst({
+      where: {
+        userId: user.id,
+        tokenHash,
+        used: false,
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (record) {
+      isValid = true;
+      // Mark as used immediately (single-use enforcement)
+      await prisma.passwordResetToken.update({
+        where: { id: record.id },
+        data: { used: true },
+      });
+    }
+  } catch (dbErr) {
+    // Check fallback
+    const mem = memoryResetFallback[user.id];
+    if (mem && mem.tokenHash === tokenHash && !mem.used && mem.expiresAt > new Date()) {
+      isValid = true;
+      mem.used = true;
+    }
   }
+
+  if (!isValid) return null;
 
   const hashed = await bcrypt.hash(data.newPassword, Number(process.env.BCRYPT_SALT_ROUNDS || 10));
   const updated = await prisma.user.update({
-    where: { email: data.email },
+    where: { id: user.id },
     data: { password: hashed },
   });
 
-  // Remove token after use
-  delete passwordResetTokens[data.email];
-  return updated;
-}
-
-/** Helper: crypto-quality random token as hex */
-function cryptoRandomToken(length = 24) {
-  const bytes = Math.ceil(length / 2);
-  return crypto.randomBytes(bytes).toString('hex').slice(0, length);
+  const { password, ...rest } = updated;
+  return rest;
 }

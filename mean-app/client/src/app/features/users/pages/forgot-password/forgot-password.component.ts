@@ -31,14 +31,12 @@ export class ForgotPasswordComponent {
 
     const { email } = this.forgotForm.value;
 
-    (this.authService as any).forgotPassword(email).subscribe({
-      next: (res) => {
-        console.log('Reset link sent:', res.link); // Mock email link printed here
-        this.successMessage = 'Password reset link has been sent to your email (check console).';
+    this.authService.forgotPassword(email).subscribe({
+      next: (_res) => {
+        this.successMessage = 'Password reset instructions have been generated. Please check your email to proceed.';
         this.errorMessage = '';
       },
       error: (err) => {
-        console.error(err);
         this.errorMessage = err.error?.message || 'Something went wrong. Please try again.';
         this.successMessage = '';
       }

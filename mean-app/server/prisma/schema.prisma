@@ -24,6 +24,7 @@ model User {
   notificationSettings UserNotificationSetting?
   taxEstimates         TaxEstimate[]
   reports              Report[] // relation to Report
+  passwordResetTokens  PasswordResetToken[]
 }
 
 model RefreshToken {
@@ -32,7 +33,22 @@ model RefreshToken {
   userId    String
   expiresAt DateTime
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  tokenHash String
+  userId    String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
 }
 
 model Transaction {

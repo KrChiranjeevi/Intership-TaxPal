@@ -53,18 +53,21 @@ export async function getUserTaxEstimatesHandler(req: AuthRequest, res: Response
   }
 }
 
-/**
- * Authenticated: Delete a tax estimate by ID
- */
 export async function deleteTaxEstimateHandler(req: AuthRequest, res: Response) {
   try {
-    const { id } = req.params;
-    if (!id) return res.status(400).json({ message: 'Tax estimate ID is required.' });
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
-    await taxService.deleteTaxEstimate(id);
-    return res.status(200).json({ message: 'Tax estimate deleted successfully.' });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Error deleting tax estimate', error });
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ success: false, message: 'Tax estimate ID is required.' });
+
+    await taxService.deleteTaxEstimate(id, userId);
+    return res.status(200).json({ success: true, message: 'Tax estimate deleted successfully.' });
+  } catch (error: any) {
+    console.error('Delete tax estimate error:', error);
+    if (error.message?.includes('not found') || error.message?.includes('not authorized')) {
+      return res.status(404).json({ success: false, message: 'Tax estimate not found' });
+    }
+    return res.status(500).json({ success: false, message: 'Error deleting tax estimate' });
   }
 }

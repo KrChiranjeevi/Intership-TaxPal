@@ -186,19 +186,38 @@ export async function getReportsByUserId(userId: string): Promise<Report[]> {
   });
 }
 
-export async function getReportById(id: string): Promise<Report | null> {
-  return prisma.report.findUnique({ where: { id } });
+export async function getReportById(id: string, userId: string): Promise<Report | null> {
+  return prisma.report.findFirst({ where: { id, userId } });
 }
 
-export async function deleteReport(id: string): Promise<Report> {
+export async function deleteReport(id: string, userId: string): Promise<Report | null> {
+  const existing = await prisma.report.findFirst({ where: { id, userId } });
+  if (!existing) return null;
+
+  // Clean up physical file from disk if it exists
+  try {
+    if (existing.filePath) {
+      const fullPath = path.join(process.cwd(), existing.filePath.replace(/^\//, ''));
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    }
+  } catch (fileErr) {
+    console.error('Failed to remove report file from disk:', fileErr);
+  }
+
   return prisma.report.delete({ where: { id } });
 }
 
-// Update a report
+// Update a report (with ownership check)
 export async function updateReport(
   id: string,
+  userId: string,
   data: Partial<ReportInput>
-): Promise<Report> {
+): Promise<Report | null> {
+  const existing = await prisma.report.findFirst({ where: { id, userId } });
+  if (!existing) return null;
+
   return prisma.report.update({
     where: { id },
     data,

@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReportsService, Report } from '@core/services/reports.service';
 import { REPORT_TYPES, PERIODS, FORMATS, FILE_ICON_URL } from '@core/constants/reports.constants';
-import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-reports',
@@ -63,8 +62,6 @@ export class ReportsComponent implements OnInit {
       
     };
 
-    console.log('Sending report to backend:', newReport);
-
     this.reportsService.createReport(newReport).subscribe({
       next: (res) => {
         this.recentReports.unshift(res);
@@ -78,6 +75,8 @@ export class ReportsComponent implements OnInit {
     });
   }
 
+  private currentPreviewBlobUrl: string | null = null;
+
   resetForm(): void {
     this.reportTypeValue = this.REPORT_TYPES[0];
     this.periodValue = this.PERIODS[0];
@@ -86,32 +85,42 @@ export class ReportsComponent implements OnInit {
 
   selectReport(report: Report): void {
     this.selectedReport = report;
-    this.previewReport(report.filePath, report.format);
+    setTimeout(() => {
+      this.previewReport(report);
+    }, 0);
   }
 
-  previewReport(fileUrl: string, format: string) {
-  const container = document.getElementById('report-preview-container');
-  if (!container) return;
+  previewReport(report: Report): void {
+    const container = document.getElementById('report-preview-container');
+    if (!container) return;
 
-  // Add your backend base URL dynamically resolved from environment.apiUrl
-  const backendBaseUrl = environment.apiUrl.endsWith('/api')
-    ? environment.apiUrl.slice(0, -4)
-    : environment.apiUrl;
-  const timestamp = new Date().getTime();
-  if (format === 'PDF') {
-  
-  container.innerHTML = `<iframe src="${backendBaseUrl}${encodeURI(fileUrl)}?t=${timestamp}" width="100%" height="500px"></iframe>`;
-}
- else if (format === 'CSV') {
-  fetch(`${backendBaseUrl}${encodeURI(fileUrl)}`)
-    .then(res => res.text())
-    .then(data => {
-      container.innerHTML = `<pre style="width:100%;height:500px;overflow:auto;background:#fff;color:#000;padding:10px;font-family:monospace;">${data}</pre>`;
+    container.innerHTML = '<p style="padding: 1rem; color: #64748b;">Loading preview...</p>';
+
+    this.reportsService.downloadReportFile(report.id).subscribe({
+      next: (blob) => {
+        if (this.currentPreviewBlobUrl) {
+          URL.revokeObjectURL(this.currentPreviewBlobUrl);
+          this.currentPreviewBlobUrl = null;
+        }
+
+        const format = report.format?.toUpperCase();
+        if (format === 'PDF') {
+          this.currentPreviewBlobUrl = URL.createObjectURL(blob);
+          container.innerHTML = `<iframe src="${this.currentPreviewBlobUrl}" width="100%" height="550px" style="border: none; border-radius: 6px;"></iframe>`;
+        } else if (format === 'CSV') {
+          blob.text().then((data) => {
+            container.innerHTML = `<pre style="width:100%;height:550px;overflow:auto;background:#fff;color:#1e293b;padding:12px;font-family:monospace;font-size:13px;border-radius:6px;margin:0;">${data}</pre>`;
+          });
+        } else {
+          container.innerHTML = `<p style="padding: 1rem; color: #64748b;">Preview not supported for format: ${report.format}</p>`;
+        }
+      },
+      error: (err) => {
+        console.error('Error loading report preview:', err);
+        container.innerHTML = '<p style="padding: 1rem; color: #ef4444;">Failed to load preview. Please try again.</p>';
+      }
     });
-}
-
-}
-
+  }
 
   updateReport(report: Report): void {
     if (!report) return;
@@ -135,41 +144,52 @@ export class ReportsComponent implements OnInit {
     this.reportsService.deleteReport(report.id).subscribe({
       next: () => {
         this.recentReports = this.recentReports.filter(r => r.id !== report.id);
-        if (this.selectedReport?.id === report.id) this.selectedReport = null;
+        if (this.selectedReport?.id === report.id) {
+          if (this.currentPreviewBlobUrl) {
+            URL.revokeObjectURL(this.currentPreviewBlobUrl);
+            this.currentPreviewBlobUrl = null;
+          }
+          this.selectedReport = null;
+        }
       },
       error: (err) => console.error(err)
     });
   }
 
   downloadReport(): void {
-  if (!this.selectedReport) return;
+    if (!this.selectedReport) return;
 
-  const backendBaseUrl = environment.apiUrl.endsWith('/api')
-    ? environment.apiUrl.slice(0, -4)
-    : environment.apiUrl;
-  const fileUrl = `${backendBaseUrl}${encodeURI(this.selectedReport.filePath)}`;
-
-  // Open in new tab for browser default download behavior
-  window.open(fileUrl, '_blank');
-}
-
+    this.reportsService.downloadReportFile(this.selectedReport.id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const ext = this.selectedReport?.format?.toLowerCase() === 'csv' ? 'csv' : 'pdf';
+        const fileName = (this.selectedReport?.name || 'report').replace(/\s+/g, '_');
+        a.download = `${fileName}.${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => console.error('Failed to download report:', err)
+    });
+  }
 
   printReport(): void {
-  if (!this.selectedReport) return;
+    if (!this.selectedReport) return;
 
-  const container = document.getElementById('report-preview-container');
-  if (!container) return;
+    const container = document.getElementById('report-preview-container');
+    if (!container) return;
 
-  const printWindow = window.open('', '_blank', 'width=800,height=600');
-  if (!printWindow) return;
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (!printWindow) return;
 
-  // Clone the preview HTML for printing
-  printWindow.document.write('<html><head><title>Print Report</title></head><body>');
-  printWindow.document.write(container.innerHTML);
-  printWindow.document.write('</body></html>');
-  printWindow.document.close();
-  printWindow.focus();
-  printWindow.print();
-}
-
+    printWindow.document.write('<html><head><title>Print Report</title></head><body>');
+    printWindow.document.write(container.innerHTML);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  }
 }

@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
 
 import userRoutes from './api/modules/user/user.routes.js';
@@ -17,6 +17,12 @@ dotenv.config();
 
 const app = express();
 
+// ✅ Security Headers with Helmet
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false, // Prevents breaking Angular dev assets/inline scripts
+}));
+
 // ✅ CORS setup — supports localhost (dev), Vercel (prod), and custom env var
 const allowedOrigins = [
   'http://localhost:4200',
@@ -26,11 +32,11 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. mobile apps, curl, server-to-server) or Vercel origins
+    // Allow requests with no origin (e.g. mobile apps, curl, server-to-server) or verified origins
     if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
       callback(null, true);
     } else {
-      callback(new Error(`CORS: origin ${origin} not allowed`));
+      callback(null, false);
     }
   },
   credentials: true
@@ -40,12 +46,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.disable('etag');
 
-const reportsDir = path.join(process.cwd(), 'generated_reports');
-app.use('/generated_reports', express.static(reportsDir));
-
-
 // ✅ Universal no-cache middleware
-app.use((req, res, next) => {
+app.use((_req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');
   next();
 });
@@ -54,25 +56,35 @@ app.use((req, res, next) => {
 app.use('/api/auth', userRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-
-app.use('/api/budgets', (req, res, next) => {
-  res.setHeader('Cache-Control', 'no-store');
-  next();
-}, budgetRoutes);
-
+app.use('/api/budgets', budgetRoutes);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/security', securityRouter);
 app.use('/api/tax-estimator', taxEstimatorRoutes);
 app.use('/api/reports', reportsRoutes);
 
-app.get("/", (req, res) => {
-  res.send("Backend is running successfully!");
+app.get("/", (_req, res) => {
+  res.send("TaxPal Backend is running securely!");
 });
 
-// health route
+// Health route
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'Server is running 🚀' });
+});
+
+// 404 Handler
+app.use((_req, res) => {
+  res.status(404).json({ success: false, message: 'API route not found' });
+});
+
+// Centralized Express Error Handler
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('Server error caught:', err?.message || err);
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({
+    success: false,
+    message: err.message || 'Internal server error',
+  });
 });
 
 export default app;

@@ -79,18 +79,14 @@ export async function getTaxEstimatesByUserId(userId: string): Promise<TaxEstima
  * @param id - The ID of the tax estimate to delete.
  * @param userId - The ID of the user attempting the deletion.
  */
-export async function deleteTaxEstimate(id: string, userId?: string): Promise<void> {
-  const existing = await prisma.taxEstimate.findUnique({ where: { id } });
+export async function deleteTaxEstimate(id: string, userId: string): Promise<void> {
+  const existing = await prisma.taxEstimate.findFirst({ where: { id, userId } });
 
   if (!existing) {
     throw new Error('Tax estimate not found.');
   }
 
-  if (userId && existing.userId !== userId) {
-    throw new Error('You are not authorized to delete this tax estimate.');
-  }
-
   await prisma.taxEstimate.delete({
-    where: { id },
+    where: { id: existing.id },
   });
 }

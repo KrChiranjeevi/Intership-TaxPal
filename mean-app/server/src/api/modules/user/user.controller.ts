@@ -14,45 +14,76 @@ import {
   saveNewPassword,
   findUserByEmail,
 } from './user.service.js';
-import { generateAccessToken, generateRefreshToken } from '../../../utils/jwt.js';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../../../utils/jwt.js';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ------------------- REGISTER -------------------
 export async function registerHandler(req: Request, res: Response) {
   try {
-    const data: RegisterDto = req.body;
-    if (!data.email || !data.password || !data.name || !data.username) {
-      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    const { name, username, email, password, country, incomeBracket }: RegisterDto = req.body;
+
+    if (!name || typeof name !== 'string' || name.trim().length < 2) {
+      return res.status(400).json({ success: false, message: 'Name must be at least 2 characters' });
+    }
+    if (!username || typeof username !== 'string' || username.trim().length < 3) {
+      return res.status(400).json({ success: false, message: 'Username must be at least 3 characters' });
+    }
+    if (!email || !EMAIL_REGEX.test(email.trim())) {
+      return res.status(400).json({ success: false, message: 'Please provide a valid email address' });
+    }
+    if (!password || typeof password !== 'string' || password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
     }
 
-    const existing = await findUserByEmail(data.email);
-    if (existing) return res.status(409).json({ success: false, message: 'Email already in use' });
+    const normalizedEmail = email.toLowerCase().trim();
+    const existing = await findUserByEmail(normalizedEmail);
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'Email is already registered' });
+    }
 
-    const user = await createUser(data);
+    const user = await createUser({
+      name: name.trim(),
+      username: username.trim(),
+      email: normalizedEmail,
+      password,
+      country: country ? String(country) : null,
+      incomeBracket: incomeBracket ? String(incomeBracket) : null,
+    });
+
     return res.status(201).json({ success: true, data: user });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+  } catch (err: any) {
+    console.error('Registration error:', err?.message || err);
+    return res.status(500).json({ success: false, message: 'Server error during registration' });
   }
 }
 
 // ------------------- LOGIN -------------------
 export async function loginHandler(req: Request, res: Response) {
   try {
-    const data: LoginDto = req.body;
-    if (!data.email || !data.password) return res.status(400).json({ success: false, message: 'Missing email or password' });
+    const { email, password }: LoginDto = req.body;
 
-    const user = await validateUser(data);
-    if (!user) return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
+    }
+    if (!EMAIL_REGEX.test(String(email).trim())) {
+      return res.status(400).json({ success: false, message: 'Invalid email format' });
+    }
+
+    const user = await validateUser({ email: String(email).toLowerCase().trim(), password });
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
 
     const accessToken = generateAccessToken({ userId: user.id });
     const refreshToken = generateRefreshToken({ userId: user.id });
     await saveRefreshToken(user.id, refreshToken, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)); // 7 days
 
-    const { password, ...rest } = user;
+    const { password: _p, ...rest } = user;
     return res.json({ success: true, data: { ...rest, accessToken, refreshToken } });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+  } catch (err: any) {
+    console.error('Login error:', err?.message || err);
+    return res.status(500).json({ success: false, message: 'Server error during login' });
   }
 }
 
@@ -60,30 +91,42 @@ export async function loginHandler(req: Request, res: Response) {
 export async function refreshTokenHandler(req: Request, res: Response) {
   try {
     const { refreshToken } = req.body;
-    if (!refreshToken) return res.status(400).json({ success: false, message: 'No token provided' });
+    if (!refreshToken || typeof refreshToken !== 'string') {
+      return res.status(400).json({ success: false, message: 'Refresh token is required' });
+    }
 
+    // Verify JWT cryptographic signature with separate refresh secret
+    const decoded = verifyRefreshToken(refreshToken);
+    if (!decoded) {
+      return res.status(401).json({ success: false, message: 'Invalid or expired refresh token' });
+    }
+
+    // Verify presence and validity in database (by SHA-256 hash)
     const user = await findUserByRefreshToken(refreshToken);
-    if (!user) return res.status(401).json({ success: false, message: 'Invalid refresh token' });
+    if (!user || user.id !== decoded.userId) {
+      return res.status(401).json({ success: false, message: 'Invalid or revoked refresh token' });
+    }
 
     const accessToken = generateAccessToken({ userId: user.id });
     return res.json({ success: true, data: { accessToken } });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+  } catch (err: any) {
+    console.error('Refresh token error:', err?.message || err);
+    return res.status(500).json({ success: false, message: 'Server error during token refresh' });
   }
 }
 
 // ------------------- LOGOUT -------------------
 export async function logoutHandler(req: Request, res: Response) {
   try {
-    const {refreshToken} = req.body;
-    if (!refreshToken) return res.status(400).json({ success: false, message: 'No token provided' });
+    const { refreshToken } = req.body;
+    if (refreshToken && typeof refreshToken === 'string') {
+      await removeRefreshToken(refreshToken);
+    }
 
-    await removeRefreshToken(refreshToken);
     return res.json({ success: true, message: 'Logged out successfully' });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+  } catch (err: any) {
+    console.error('Logout error:', err?.message || err);
+    return res.status(500).json({ success: false, message: 'Server error during logout' });
   }
 }
 
@@ -123,44 +166,50 @@ export async function updateProfileHandler(req: AuthRequest, res: Response) {
 // ------------------- PASSWORD RESET -------------------
 export async function requestPasswordResetHandler(req: Request, res: Response) {
   try {
-    const data: RequestPasswordResetDto = req.body;
-    if (!data?.email) {
-      return res.status(400).json({ success: false, message: 'Email is required' });
+    const { email } = req.body as RequestPasswordResetDto;
+    if (!email || !EMAIL_REGEX.test(String(email).trim())) {
+      return res.status(400).json({ success: false, message: 'Valid email is required' });
     }
 
-    const token = await requestPasswordReset(data);
-    if (!token) return res.status(404).json({ success: false, message: 'User not found' });
+    const token = await requestPasswordReset({ email: email.toLowerCase().trim() });
 
-    // --- Mock email sending: log link to console ---
-    const frontendBase = process.env.FRONTEND_URL?.replace(/\/$/, '') || 'http://localhost:4200';
-    const resetPath = '/reset-password'; // make sure your frontend reset page listens for these query params
-    const link = `${frontendBase}${resetPath}?email=${encodeURIComponent(data.email)}&token=${encodeURIComponent(token)}`;
-    // --- Mock email content (with target="_self") ---
-    const htmlEmail = `<p>Click the link below to reset your password:</p>
-    <a href="${link}" target="_self">Reset Password</a>`;
-    console.log(`\n[Mock Email] Password reset link for ${data.email}:\n${link}\n`);
-    // (In real prod you'd send an email here)
+    // Always respond with a generic success to prevent email enumeration attacks
+    const responseData: any = {
+      success: true,
+      message: 'If an account matches that email, a password reset request has been processed.',
+    };
 
-    return res.json({ success: true, message: 'Password reset link generated and logged to server console (mock email).',link });
+    // In local development, provide the reset link in the response payload for easy testing without an email server
+    if (process.env.NODE_ENV !== 'production' && token) {
+      const frontendBase = process.env.FRONTEND_URL?.replace(/\/$/, '') || 'http://localhost:4200';
+      responseData.resetLink = `${frontendBase}/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
+    }
+
+    return res.json(responseData);
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    console.error('Password reset request error:', err);
+    return res.status(500).json({ success: false, message: 'Server error processing password reset' });
   }
 }
 
 export async function resetPasswordHandler(req: Request, res: Response) {
   try {
-    const data: ResetPasswordDto = req.body;
-    if (!data?.email || !data?.token || !data?.newPassword) {
-      return res.status(400).json({ success: false, message: 'Email, token and newPassword are required' });
+    const { email, token, newPassword }: ResetPasswordDto = req.body;
+    if (!email || !token || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Email, token, and new password are required' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters' });
     }
 
-    const updated = await saveNewPassword(data);
-    if (!updated) return res.status(400).json({ success: false, message: 'Invalid or expired token' });
+    const updated = await saveNewPassword({ email: email.toLowerCase().trim(), token, newPassword });
+    if (!updated) {
+      return res.status(400).json({ success: false, message: 'Invalid, expired, or already used reset token' });
+    }
 
-    return res.json({ success: true, message: 'Password updated successfully' });
+    return res.json({ success: true, message: 'Password updated successfully. You can now log in.' });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    console.error('Password reset error:', err);
+    return res.status(500).json({ success: false, message: 'Server error resetting password' });
   }
 }
