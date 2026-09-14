@@ -1,49 +1,468 @@
 <div class="transactions-page">
+  <!-- Toast Notification -->
+  <div class="tx-toast animate-fade-down" *ngIf="successMessage">
+    <span class="material-icons-round toast-icon">check_circle</span>
+    <span>{{ successMessage }}</span>
+  </div>
+
+  <!-- Page Header -->
   <header class="tx-header animate-fade-up">
     <div class="header-left">
       <h1 class="page-title">Transactions</h1>
-      <p class="page-subtitle">A detailed overview of your recent income and expenses.</p>
+      <p class="page-subtitle">Track, filter, and manage your income and expenses effortlessly.</p>
     </div>
   </header>
 
-  <div class="tx-card-container animate-fade-up delay-1">
-    <div class="tx-card-glass">
-      <div class="tx-list-header">
-        <h3 class="list-title">All Transactions</h3>
-        <span class="list-count">{{ transactions.length }} total</span>
+  <!-- Summary Cards -->
+  <div class="tx-summary-grid animate-fade-up delay-1" *ngIf="hasAnyTransactionsOverall || transactions.length > 0">
+    <div class="summary-card glass-card">
+      <div class="summary-icon income-icon">
+        <span class="material-icons-round">trending_up</span>
+      </div>
+      <div class="summary-info">
+        <span class="summary-label">Total Income</span>
+        <span class="summary-value income-val">+${{ summary.totalIncome | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="summary-card glass-card">
+      <div class="summary-icon expense-icon">
+        <span class="material-icons-round">trending_down</span>
+      </div>
+      <div class="summary-info">
+        <span class="summary-label">Total Expenses</span>
+        <span class="summary-value expense-val">-${{ summary.totalExpense | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="summary-card glass-card">
+      <div class="summary-icon net-icon" [class.negative]="summary.net < 0">
+        <span class="material-icons-round">account_balance_wallet</span>
+      </div>
+      <div class="summary-info">
+        <span class="summary-label">Net Balance</span>
+        <span class="summary-value" [class.income-val]="summary.net >= 0" [class.expense-val]="summary.net < 0">
+          {{ summary.net < 0 ? '-' : '+' }}${{ (summary.net < 0 ? -summary.net : summary.net) | number:'1.2-2' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar -->
+  <div class="tx-toolbar glass-card animate-fade-up delay-2">
+    <div class="toolbar-top">
+      <!-- Search Field -->
+      <div class="search-box">
+        <span class="material-icons-round search-icon">search</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search transactions by description or category..."
+          [ngModel]="searchTerm"
+          (ngModelChange)="onSearchInput($event)"
+          id="tx-search-input"
+        />
+        <button
+          *ngIf="searchTerm"
+          class="clear-search-btn"
+          (click)="onSearchInput('')"
+          title="Clear search"
+        >
+          <span class="material-icons-round">close</span>
+        </button>
       </div>
 
-      <div class="tx-list-body">
-        <div class="tx-empty-state" *ngIf="!transactions.length">
-          <span class="material-icons-round empty-icon">receipt_long</span>
-          <p>No transactions found.</p>
-          <span class="empty-sub">Your financial activities will appear here securely.</span>
+      <!-- Type Filter Pills -->
+      <div class="type-filter-group">
+        <button
+          class="type-pill"
+          [class.active]="selectedType === 'all'"
+          (click)="selectedType = 'all'; onTypeChange()"
+          id="filter-type-all"
+        >
+          All
+        </button>
+        <button
+          class="type-pill type-pill-income"
+          [class.active]="selectedType === 'income'"
+          (click)="selectedType = 'income'; onTypeChange()"
+          id="filter-type-income"
+        >
+          <span class="pill-dot income-dot"></span> Income
+        </button>
+        <button
+          class="type-pill type-pill-expense"
+          [class.active]="selectedType === 'expense'"
+          (click)="selectedType = 'expense'; onTypeChange()"
+          id="filter-type-expense"
+        >
+          <span class="pill-dot expense-dot"></span> Expense
+        </button>
+      </div>
+    </div>
+
+    <!-- Secondary Filters: Category & Dates -->
+    <div class="toolbar-bottom">
+      <div class="filter-item">
+        <label for="category-select" class="filter-label">Category</label>
+        <div class="select-wrapper">
+          <select
+            id="category-select"
+            class="filter-select"
+            [(ngModel)]="selectedCategory"
+            (ngModelChange)="onCategoryChange()"
+          >
+            <option value="all">All Categories</option>
+            <option *ngFor="let cat of availableCategories" [value]="cat">{{ cat }}</option>
+          </select>
+          <span class="material-icons-round select-arrow">expand_more</span>
+        </div>
+      </div>
+
+      <div class="filter-item">
+        <label for="start-date" class="filter-label">From</label>
+        <input
+          id="start-date"
+          type="date"
+          class="filter-date-input"
+          [(ngModel)]="startDate"
+          (ngModelChange)="onDateChange()"
+        />
+      </div>
+
+      <div class="filter-item">
+        <label for="end-date" class="filter-label">To</label>
+        <input
+          id="end-date"
+          type="date"
+          class="filter-date-input"
+          [(ngModel)]="endDate"
+          (ngModelChange)="onDateChange()"
+        />
+      </div>
+
+      <button
+        *ngIf="isFiltered"
+        class="btn-reset-filters"
+        (click)="resetFilters()"
+        title="Reset all filters"
+        id="btn-reset-filters"
+      >
+        <span class="material-icons-round">filter_alt_off</span>
+        <span>Clear Filters</span>
+      </button>
+    </div>
+
+    <!-- Date Validation Warning -->
+    <div class="date-error-banner" *ngIf="dateError">
+      <span class="material-icons-round">error_outline</span>
+      <span>{{ dateError }}</span>
+    </div>
+  </div>
+
+  <!-- API Error State -->
+  <div class="tx-error-banner animate-fade-up" *ngIf="errorMessage">
+    <div class="error-content">
+      <span class="material-icons-round error-icon">warning</span>
+      <p>{{ errorMessage }}</p>
+    </div>
+    <button class="btn-retry" (click)="loadTransactions()">
+      <span class="material-icons-round">refresh</span> Try Again
+    </button>
+  </div>
+
+  <!-- Transactions List Card -->
+  <div class="tx-card-container animate-fade-up delay-3">
+    <div class="tx-card-glass">
+      <div class="tx-list-header">
+        <div class="header-left-title">
+          <h3 class="list-title">All Transactions</h3>
+          <span class="list-count">{{ pagination.total }} {{ pagination.total === 1 ? 'record' : 'records' }}</span>
+        </div>
+        <div class="header-right-meta" *ngIf="isFiltered">
+          <span class="filter-tag">Filtered results</span>
+        </div>
+      </div>
+
+      <!-- Loading State Overlay -->
+      <div class="tx-loading-state" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Loading transactions...</p>
+      </div>
+
+      <!-- Content Body -->
+      <div class="tx-list-body" *ngIf="!isLoading">
+        <!-- Empty State A: User has 0 transactions total across account -->
+        <div class="tx-empty-state" *ngIf="!transactions.length && !isFiltered && !hasAnyTransactionsOverall">
+          <div class="empty-icon-wrap">
+            <span class="material-icons-round empty-icon">receipt_long</span>
+          </div>
+          <h4>No transactions yet</h4>
+          <p class="empty-sub">Add your first income or expense to start tracking your finances.</p>
         </div>
 
-        <div class="tx-row animate-fade-up" *ngFor="let t of transactions; let i = index" [style.animation-delay]="(i * 0.05) + 's'">
+        <!-- Empty State B: Filters returned zero results -->
+        <div class="tx-empty-state" *ngIf="!transactions.length && (isFiltered || hasAnyTransactionsOverall)">
+          <div class="empty-icon-wrap">
+            <span class="material-icons-round empty-icon">search_off</span>
+          </div>
+          <h4>No transactions match your filters</h4>
+          <p class="empty-sub">Try changing your search keywords, category, or date range.</p>
+          <button class="btn-empty-reset" (click)="resetFilters()">
+            <span class="material-icons-round">refresh</span> Clear Filters
+          </button>
+        </div>
+
+        <!-- Transaction Rows -->
+        <div
+          class="tx-row animate-fade-up"
+          *ngFor="let t of transactions; let i = index"
+          [style.animation-delay]="(i * 0.03) + 's'"
+        >
           <div class="tx-left">
-            <div class="tx-icon-wrap" [class.tx-income]="t.type === 'income'" [class.tx-expense]="t.type === 'expense'">
+            <div
+              class="tx-icon-wrap"
+              [class.tx-income]="t.type === 'income'"
+              [class.tx-expense]="t.type === 'expense'"
+            >
               <span class="material-icons-round">
                 {{ t.type === 'income' ? 'arrow_upward' : 'arrow_downward' }}
               </span>
             </div>
             <div class="tx-details">
-              <h4>{{ t.name }}</h4>
-              <span class="tx-meta">{{ t.category }} &bull; {{ t.date | date:'mediumDate' }}</span>
+              <h4 class="tx-desc">{{ t.description }}</h4>
+              <span class="tx-meta">
+                <span class="category-badge">{{ t.category }}</span>
+                <span class="meta-dot">&bull;</span>
+                <span class="tx-date">{{ t.date | date:'mediumDate' }}</span>
+                <span class="meta-dot" *ngIf="t.notes">&bull;</span>
+                <span class="tx-note" *ngIf="t.notes" [title]="t.notes">{{ t.notes }}</span>
+              </span>
             </div>
           </div>
+
           <div class="tx-right">
-            <span class="tx-amount" [class.amount-income]="t.type === 'income'" [class.amount-expense]="t.type === 'expense'">
+            <span
+              class="tx-amount"
+              [class.amount-income]="t.type === 'income'"
+              [class.amount-expense]="t.type === 'expense'"
+            >
               {{ t.type === 'income' ? '+' : '-' }}${{ t.amount | number:'1.2-2' }}
             </span>
+
             <div class="tx-actions">
-              <button class="action-btn delete-btn" (click)="deleteTransaction(t._id)">
+              <button
+                class="action-btn edit-btn"
+                (click)="openEditModal(t)"
+                title="Edit transaction"
+                [id]="'edit-btn-' + t.id"
+              >
+                <span class="material-icons-round">edit</span>
+              </button>
+              <button
+                class="action-btn delete-btn"
+                (click)="openDeleteModal(t)"
+                title="Delete transaction"
+                [id]="'delete-btn-' + t.id"
+              >
                 <span class="material-icons-round">delete_outline</span>
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Pagination Footer -->
+      <div class="tx-pagination" *ngIf="!isLoading && pagination.total > 0">
+        <div class="pagination-info">
+          Showing {{ (pagination.page - 1) * pagination.limit + 1 }} -
+          {{ pagination.page * pagination.limit > pagination.total ? pagination.total : pagination.page * pagination.limit }}
+          of {{ pagination.total }}
+        </div>
+
+        <div class="pagination-controls">
+          <button
+            class="pg-btn"
+            [disabled]="pagination.page <= 1"
+            (click)="prevPage()"
+            title="Previous page"
+            id="pg-prev-btn"
+          >
+            <span class="material-icons-round">chevron_left</span>
+            <span>Previous</span>
+          </button>
+
+          <span class="pg-indicator">
+            Page <strong>{{ pagination.page }}</strong> of <strong>{{ pagination.totalPages }}</strong>
+          </span>
+
+          <button
+            class="pg-btn"
+            [disabled]="pagination.page >= pagination.totalPages"
+            (click)="nextPage()"
+            title="Next page"
+            id="pg-next-btn"
+          >
+            <span>Next</span>
+            <span class="material-icons-round">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Transaction Modal -->
+  <div class="modal-backdrop" *ngIf="isEditModalOpen" (click)="closeEditModal()">
+    <div class="modal-dialog glass-card animate-scale-up" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Transaction</h3>
+        <button class="modal-close-btn" (click)="closeEditModal()">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body" *ngIf="editingTransaction">
+        <div class="modal-error-banner" *ngIf="editModalError">
+          <span class="material-icons-round">error_outline</span>
+          <span>{{ editModalError }}</span>
+        </div>
+
+        <!-- Type Segmented Switch -->
+        <div class="form-group">
+          <label class="form-label">Transaction Type</label>
+          <div class="type-switch">
+            <button
+              type="button"
+              class="switch-btn switch-income"
+              [class.active]="editingTransaction.type === 'income'"
+              (click)="editingTransaction.type = 'income'"
+            >
+              <span class="material-icons-round">arrow_upward</span> Income
+            </button>
+            <button
+              type="button"
+              class="switch-btn switch-expense"
+              [class.active]="editingTransaction.type === 'expense'"
+              (click)="editingTransaction.type = 'expense'"
+            >
+              <span class="material-icons-round">arrow_downward</span> Expense
+            </button>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="edit-desc" class="form-label">Description <span class="required">*</span></label>
+          <input
+            id="edit-desc"
+            type="text"
+            class="form-input"
+            [(ngModel)]="editingTransaction.description"
+            placeholder="e.g. Grocery shopping or Salary"
+          />
+        </div>
+
+        <!-- Amount -->
+        <div class="form-group">
+          <label for="edit-amount" class="form-label">Amount ($) <span class="required">*</span></label>
+          <input
+            id="edit-amount"
+            type="number"
+            step="0.01"
+            min="0.01"
+            class="form-input"
+            [(ngModel)]="editingTransaction.amount"
+            placeholder="0.00"
+          />
+        </div>
+
+        <!-- Category -->
+        <div class="form-group">
+          <label for="edit-category" class="form-label">Category <span class="required">*</span></label>
+          <div class="select-wrapper">
+            <select
+              id="edit-category"
+              class="form-input"
+              [(ngModel)]="editingTransaction.category"
+            >
+              <option *ngFor="let cat of availableCategories" [value]="cat">{{ cat }}</option>
+            </select>
+            <span class="material-icons-round select-arrow">expand_more</span>
+          </div>
+        </div>
+
+        <!-- Date -->
+        <div class="form-group">
+          <label for="edit-date" class="form-label">Date <span class="required">*</span></label>
+          <input
+            id="edit-date"
+            type="date"
+            class="form-input"
+            [(ngModel)]="editingTransaction.date"
+          />
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+          <label for="edit-notes" class="form-label">Notes (Optional)</label>
+          <textarea
+            id="edit-notes"
+            class="form-input form-textarea"
+            rows="2"
+            [(ngModel)]="editingTransaction.notes"
+            placeholder="Additional details or reference..."
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="closeEditModal()" [disabled]="isSubmittingEdit">
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn-save"
+          (click)="submitEdit()"
+          [disabled]="isSubmittingEdit"
+          id="btn-save-edit"
+        >
+          <span *ngIf="!isSubmittingEdit">Save Changes</span>
+          <span *ngIf="isSubmittingEdit">Saving...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal (In-App UI, replaces window.confirm) -->
+  <div class="modal-backdrop" *ngIf="isDeleteModalOpen" (click)="closeDeleteModal()">
+    <div class="modal-dialog modal-delete-dialog glass-card animate-scale-up" (click)="$event.stopPropagation()">
+      <div class="delete-icon-wrap">
+        <span class="material-icons-round delete-alert-icon">delete_forever</span>
+      </div>
+
+      <h3 class="delete-modal-title">Delete Transaction?</h3>
+      <p class="delete-modal-sub">
+        Are you sure you want to permanently delete
+        <strong>"{{ deletingTransactionDescription }}"</strong>?
+        This transaction will be permanently removed.
+      </p>
+
+      <div class="modal-footer delete-footer">
+        <button type="button" class="btn-cancel" (click)="closeDeleteModal()" [disabled]="isSubmittingDelete">
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn-confirm-delete"
+          (click)="confirmDelete()"
+          [disabled]="isSubmittingDelete"
+          id="btn-confirm-delete"
+        >
+          <span *ngIf="!isSubmittingDelete">Delete</span>
+          <span *ngIf="isSubmittingDelete">Deleting...</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>
+
