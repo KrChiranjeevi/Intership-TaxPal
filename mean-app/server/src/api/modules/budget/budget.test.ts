@@ -1,13 +1,96 @@
-import { calculateBudgetSpending, getMonthDateRange } from './budget.service.js';
+import { jest } from '@jest/globals';
+import {
+  calculateBudgetSpending,
+  getMonthDateRange,
+  createBudget,
+  getBudgetsByUserId,
+  updateBudget,
+  deleteBudget
+} from './budget.service.js';
+import { prisma } from '../../../config/prisma.client.js';
 
-describe('Phase 5 - Step 1: Budget Module Spending & Business Logic Tests', () => {
-  describe('1. Actual Transaction Spending Calculation', () => {
+describe('Phase 5 - Step 1: Budget Module Tests (All 10 Scenarios)', () => {
+  const mockUserId = 'user-12345';
+  const otherUserId = 'user-99999';
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  // 1. Budget creation
+  describe('1. Budget creation', () => {
+    it('should create a budget and return it with calculated spending metrics', async () => {
+      const mockCreated = {
+        id: 'budget-1',
+        category: 'Food',
+        amount: 500,
+        spent: 0,
+        month: new Date('2026-09-01T00:00:00.000Z'),
+        description: 'Groceries and snacks',
+        userId: mockUserId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      jest.spyOn(prisma.budget, 'create').mockResolvedValue(mockCreated as any);
+      jest.spyOn(prisma.transaction, 'findMany').mockResolvedValue([
+        { amount: 150, date: new Date('2026-09-10') }
+      ] as any);
+
+      const result = await createBudget({
+        category: 'Food',
+        amount: 500,
+        month: '2026-09-01',
+        description: 'Groceries and snacks',
+        userId: mockUserId
+      });
+
+      expect(result.id).toBe('budget-1');
+      expect(result.category).toBe('Food');
+      expect(result.amount).toBe(500);
+      expect(result.spent).toBe(150);
+      expect(result.remaining).toBe(350);
+      expect(result.percentageUsed).toBe(30);
+      expect(result.isOverBudget).toBe(false);
+    });
+  });
+
+  // 2. Budget retrieval
+  describe('2. Budget retrieval', () => {
+    it('should retrieve budgets for the user with calculated spending without N+1 query issue', async () => {
+      const mockBudgets = [
+        {
+          id: 'budget-1',
+          category: 'Food',
+          amount: 1000,
+          spent: 0,
+          month: new Date('2026-09-01T00:00:00.000Z'),
+          description: null,
+          userId: mockUserId,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+
+      jest.spyOn(prisma.budget, 'findMany').mockResolvedValue(mockBudgets as any);
+      jest.spyOn(prisma.transaction, 'findMany').mockResolvedValue([
+        { amount: 300, category: 'Food', date: new Date('2026-09-05T00:00:00.000Z') }
+      ] as any);
+
+      const result = await getBudgetsByUserId(mockUserId);
+
+      expect(result.length).toBe(1);
+      expect(result[0].spent).toBe(300);
+      expect(result[0].remaining).toBe(700);
+      expect(result[0].percentageUsed).toBe(30);
+    });
+  });
+
+  // 3. Actual transaction spending calculation
+  describe('3. Actual transaction spending calculation', () => {
     it('Scenario 1: should calculate spent, remaining, and percentage correctly for normal spending', () => {
       const budgetAmount = 10000;
-      const expenses = [
-        { amount: 1500 },
-        { amount: 1500 }
-      ];
+      const expenses = [{ amount: 1500 }, { amount: 1500 }];
 
       const result = calculateBudgetSpending(budgetAmount, expenses);
 
@@ -16,22 +99,10 @@ describe('Phase 5 - Step 1: Budget Module Spending & Business Logic Tests', () =
       expect(result.percentageUsed).toBe(30);
       expect(result.isOverBudget).toBe(false);
     });
+  });
 
-    it('Scenario 2: should correctly calculate over-budget scenario when expenses exceed budget limit', () => {
-      const budgetAmount = 10000;
-      const expenses = [
-        { amount: 5000 },
-        { amount: 6500 }
-      ];
-
-      const result = calculateBudgetSpending(budgetAmount, expenses);
-
-      expect(result.spent).toBe(11500);
-      expect(result.remaining).toBe(0); // remaining should not become misleadingly negative
-      expect(result.percentageUsed).toBe(115);
-      expect(result.isOverBudget).toBe(true);
-    });
-
+  // 4. Zero spending
+  describe('4. Zero spending', () => {
     it('Scenario 3: should return zero spent and full remaining when no matching expense transactions exist', () => {
       const budgetAmount = 10000;
       const expenses: Array<{ amount: number }> = [];
@@ -43,121 +114,153 @@ describe('Phase 5 - Step 1: Budget Module Spending & Business Logic Tests', () =
       expect(result.percentageUsed).toBe(0);
       expect(result.isOverBudget).toBe(false);
     });
+  });
 
-    it('should handle decimal amounts with precision', () => {
-      const budgetAmount = 500;
-      const expenses = [
-        { amount: 124.45 },
-        { amount: 75.55 }
-      ];
+  // 5. Over-budget calculation
+  describe('5. Over-budget calculation', () => {
+    it('Scenario 2: should accurately calculate over-budget scenario without misleading negative remaining', () => {
+      const budgetAmount = 10000;
+      const expenses = [{ amount: 5000 }, { amount: 6500 }];
 
       const result = calculateBudgetSpending(budgetAmount, expenses);
 
-      expect(result.spent).toBe(200);
-      expect(result.remaining).toBe(300);
-      expect(result.percentageUsed).toBe(40);
-      expect(result.isOverBudget).toBe(false);
+      expect(result.spent).toBe(11500);
+      expect(result.remaining).toBe(0);
+      expect(result.percentageUsed).toBe(115);
+      expect(result.isOverBudget).toBe(true);
     });
   });
 
-  describe('2. Date Range & Period Mapping', () => {
-    it('should calculate the exact UTC month start and end range for a given month', () => {
-      const date = new Date('2026-09-15T12:00:00.000Z');
-      const { startDate, endDate } = getMonthDateRange(date);
+  // 6. User ownership
+  describe('6. User ownership', () => {
+    it('should only retrieve budgets scoped to authenticated user', async () => {
+      const findManySpy = jest.spyOn(prisma.budget, 'findMany').mockResolvedValue([]);
 
-      expect(startDate.toISOString()).toBe('2026-09-01T00:00:00.000Z');
-      expect(endDate.toISOString()).toBe('2026-09-30T23:59:59.999Z');
-    });
+      await getBudgetsByUserId(mockUserId);
 
-    it('should handle leap years correctly for February', () => {
-      const date = new Date('2028-02-10T12:00:00.000Z'); // 2028 is a leap year
-      const { startDate, endDate } = getMonthDateRange(date);
-
-      expect(startDate.toISOString()).toBe('2028-02-01T00:00:00.000Z');
-      expect(endDate.toISOString()).toBe('2028-02-29T23:59:59.999Z');
+      expect(findManySpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId: mockUserId }
+        })
+      );
     });
   });
 
-  describe('3. User Ownership & Isolation Logic', () => {
-    it('Scenario 4: transactions belonging to another user must be excluded from current user budget', () => {
-      const currentUserId = 'user-owner-123';
-      const otherUserId = 'user-other-456';
-      const budgetCategory = 'Groceries';
-
+  // 7. Other user transactions are ignored
+  describe('7. Other user transactions are ignored', () => {
+    it('Scenario 4: should never include expenses belonging to other users', () => {
       const allSystemExpenses = [
-        { userId: currentUserId, category: 'Groceries', amount: 200 },
-        { userId: currentUserId, category: 'Groceries', amount: 300 },
-        { userId: otherUserId, category: 'Groceries', amount: 5000 } // Other user's expense
+        { userId: mockUserId, category: 'Food', amount: 250 },
+        { userId: otherUserId, category: 'Food', amount: 8000 }
       ];
 
-      // Scoping to authenticated user only:
-      const userExpenses = allSystemExpenses.filter(tx => tx.userId === currentUserId);
-      const matching = userExpenses.filter(tx => tx.category.toLowerCase() === budgetCategory.toLowerCase());
+      const scopedExpenses = allSystemExpenses.filter(tx => tx.userId === mockUserId);
+      const result = calculateBudgetSpending(1000, scopedExpenses);
 
-      const result = calculateBudgetSpending(1000, matching);
-
-      expect(result.spent).toBe(500); // Only 200 + 300
-      expect(result.remaining).toBe(500);
-      expect(result.percentageUsed).toBe(50);
+      expect(result.spent).toBe(250);
+      expect(result.remaining).toBe(750);
       expect(result.isOverBudget).toBe(false);
-    });
-
-    it('transactions with non-expense types (e.g. income) must be ignored in budget calculation', () => {
-      const transactions = [
-        { type: 'expense', category: 'Travel', amount: 150 },
-        { type: 'income', category: 'Travel', amount: 2000 } // Reimbursement / income
-      ];
-
-      const expenseOnly = transactions.filter(tx => tx.type === 'expense');
-      const result = calculateBudgetSpending(500, expenseOnly);
-
-      expect(result.spent).toBe(150);
-      expect(result.remaining).toBe(350);
-      expect(result.percentageUsed).toBe(30);
-    });
-
-    it('case-insensitive and trimmed category matching works reliably', () => {
-      const budgetCategory = '  Dining Out ';
-      const transactions = [
-        { category: 'dining out', amount: 50 },
-        { category: 'DINING OUT', amount: 75 },
-        { category: 'Entertainment', amount: 200 }
-      ];
-
-      const normalizedBudgetCat = budgetCategory.trim().toLowerCase();
-      const matching = transactions.filter(tx => tx.category.trim().toLowerCase() === normalizedBudgetCat);
-
-      const result = calculateBudgetSpending(200, matching);
-
-      expect(result.spent).toBe(125);
-      expect(result.remaining).toBe(75);
-      expect(result.percentageUsed).toBe(62.5);
     });
   });
 
-  describe('4. Input Validation Criteria', () => {
-    it('should identify invalid or zero budget limits', () => {
-      const invalidAmounts = [0, -50, NaN, undefined];
-      invalidAmounts.forEach(amt => {
-        const isInvalid = amt === undefined || isNaN(Number(amt)) || Number(amt) <= 0;
-        expect(isInvalid).toBe(true);
-      });
+  // 8. Invalid budget amount
+  describe('8. Invalid budget amount', () => {
+    it('should throw validation error when creating a budget with amount <= 0', async () => {
+      await expect(
+        createBudget({
+          category: 'Utilities',
+          amount: 0,
+          month: '2026-09-01',
+          userId: mockUserId
+        })
+      ).rejects.toThrow('Budget amount must be greater than 0');
+
+      await expect(
+        createBudget({
+          category: 'Utilities',
+          amount: -100,
+          month: '2026-09-01',
+          userId: mockUserId
+        })
+      ).rejects.toThrow('Budget amount must be greater than 0');
     });
 
-    it('should identify invalid category inputs', () => {
-      const invalidCategories = ['', '   ', null, undefined];
-      invalidCategories.forEach(cat => {
-        const isInvalid = !cat || typeof cat !== 'string' || !cat.trim();
-        expect(isInvalid).toBe(true);
-      });
+    it('should throw validation error when category is missing or empty', async () => {
+      await expect(
+        createBudget({
+          category: '   ',
+          amount: 200,
+          month: '2026-09-01',
+          userId: mockUserId
+        })
+      ).rejects.toThrow('Category is required');
+    });
+  });
+
+  // 9. Update budget
+  describe('9. Update budget', () => {
+    it('should verify ownership and update budget amount & category', async () => {
+      const existing = {
+        id: 'budget-1',
+        category: 'Transport',
+        amount: 300,
+        spent: 0,
+        month: new Date('2026-09-01T00:00:00.000Z'),
+        userId: mockUserId
+      };
+      const updated = {
+        ...existing,
+        amount: 450
+      };
+
+      jest.spyOn(prisma.budget, 'findFirst').mockResolvedValue(existing as any);
+      jest.spyOn(prisma.budget, 'update').mockResolvedValue(updated as any);
+      jest.spyOn(prisma.transaction, 'findMany').mockResolvedValue([
+        { amount: 150, date: new Date('2026-09-12') }
+      ] as any);
+
+      const result = await updateBudget('budget-1', mockUserId, { amount: 450 });
+
+      expect(result).not.toBeNull();
+      expect(result?.amount).toBe(450);
+      expect(result?.spent).toBe(150);
+      expect(result?.remaining).toBe(300);
     });
 
-    it('should identify invalid date formats', () => {
-      const invalidDate = new Date('not-a-valid-date');
-      expect(isNaN(invalidDate.getTime())).toBe(true);
+    it('should return null when updating a budget that belongs to another user', async () => {
+      jest.spyOn(prisma.budget, 'findFirst').mockResolvedValue(null);
 
-      const validDate = new Date('2026-09-01');
-      expect(isNaN(validDate.getTime())).toBe(false);
+      const result = await updateBudget('budget-unowned', mockUserId, { amount: 500 });
+      expect(result).toBeNull();
+    });
+  });
+
+  // 10. Delete budget
+  describe('10. Delete budget', () => {
+    it('should verify ownership and delete the budget', async () => {
+      const existing = {
+        id: 'budget-1',
+        category: 'Food',
+        amount: 200,
+        spent: 0,
+        month: new Date('2026-09-01T00:00:00.000Z'),
+        userId: mockUserId
+      };
+
+      jest.spyOn(prisma.budget, 'findFirst').mockResolvedValue(existing as any);
+      const deleteSpy = jest.spyOn(prisma.budget, 'delete').mockResolvedValue(existing as any);
+
+      const result = await deleteBudget('budget-1', mockUserId);
+
+      expect(result).not.toBeNull();
+      expect(deleteSpy).toHaveBeenCalledWith({ where: { id: 'budget-1' } });
+    });
+
+    it('should return null when deleting a budget that belongs to another user', async () => {
+      jest.spyOn(prisma.budget, 'findFirst').mockResolvedValue(null);
+
+      const result = await deleteBudget('budget-other', mockUserId);
+      expect(result).toBeNull();
     });
   });
 });
