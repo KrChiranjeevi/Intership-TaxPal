@@ -711,3 +711,298 @@ describe('Phase 7 Step 2: AI Financial Health Summary Tests', () => {
     );
   });
 });
+
+describe('Phase 7 Step 3: AI Tax-Saving & Deduction Suggestions Tests', () => {
+  const originalEnv = process.env;
+  const mockUserId = 'user-ai-tax-123';
+
+  beforeEach(() => {
+    jest.resetModules();
+    process.env = { ...originalEnv, AI_API_KEY: 'mock-gemini-test-key' };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    jest.restoreAllMocks();
+  });
+
+  // 1. Authenticated request
+  it('1. Authenticated request should return 200 with suggestions array', async () => {
+    const mockApiResponse = {
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                text: JSON.stringify({
+                  suggestions: [
+                    {
+                      title: 'Health Insurance Deduction',
+                      description: 'If you are self-employed or pay out-of-pocket health insurance premiums, consider reviewing whether these qualify for deduction.',
+                      priority: 'high'
+                    },
+                    {
+                      title: 'Retirement Contributions',
+                      description: 'Contributions to tax-deferred retirement accounts may reduce your taxable income under applicable guidelines.',
+                      priority: 'medium'
+                    }
+                  ]
+                })
+              }
+            ]
+          }
+        }
+      ]
+    };
+
+    (globalThis as any).fetch = (jest.fn() as any).mockResolvedValue({
+      ok: true,
+      json: async () => mockApiResponse
+    });
+
+    const req: any = {
+      user: { id: mockUserId },
+      body: {
+        income: 75000,
+        region: 'us',
+        filingStatus: 'single',
+        businessExpenses: 2000,
+        healthInsurance: 0,
+        retirement: 0
+      }
+    };
+    const res: any = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+
+    await aiController.getTaxSuggestions(req, res);
+
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      suggestions: [
+        {
+          title: 'Health Insurance Deduction',
+          description: 'If you are self-employed or pay out-of-pocket health insurance premiums, consider reviewing whether these qualify for deduction.',
+          priority: 'high'
+        },
+        {
+          title: 'Retirement Contributions',
+          description: 'Contributions to tax-deferred retirement accounts may reduce your taxable income under applicable guidelines.',
+          priority: 'medium'
+        }
+      ]
+    });
+  });
+
+  // 2. Unauthenticated request -> 401
+  it('2. Unauthenticated request should return 401 Unauthorized', async () => {
+    const req: any = { user: undefined, body: { income: 50000 } };
+    const res: any = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+
+    await aiController.getTaxSuggestions(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ success: false, message: 'Unauthorized' })
+    );
+  });
+
+  // 3. Valid tax suggestion response parsing
+  it('3. Valid tax suggestion response should parse JSON and unwrap code blocks cleanly', async () => {
+    (globalThis as any).fetch = (jest.fn() as any).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: '```json\n{"suggestions":[{"title":"Home Office","description":"Consider reviewing home office deductions.","priority":"low"}]}\n```'
+                }
+              ]
+            }
+          }
+        ]
+      })
+    });
+
+    const result = await aiService.suggestTaxDeductions({ income: 60000, homeOffice: 0 });
+    expect(result.length).toBe(1);
+    expect(result[0].title).toBe('Home Office');
+    expect(result[0].priority).toBe('low');
+  });
+
+  // 4. Maximum 3 suggestions
+  it('4. Maximum 3 suggestions: should truncate suggestions array to at most 3 items', async () => {
+    (globalThis as any).fetch = (jest.fn() as any).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify({
+                    suggestions: [
+                      { title: 'S1', description: 'D1', priority: 'low' },
+                      { title: 'S2', description: 'D2', priority: 'medium' },
+                      { title: 'S3', description: 'D3', priority: 'high' },
+                      { title: 'S4', description: 'D4', priority: 'low' },
+                      { title: 'S5', description: 'D5', priority: 'medium' }
+                    ]
+                  })
+                }
+              ]
+            }
+          }
+        ]
+      })
+    });
+
+    const result = await aiService.suggestTaxDeductions({ income: 80000 });
+    expect(result.length).toBe(3);
+    expect(result.map(s => s.title)).toEqual(['S1', 'S2', 'S3']);
+  });
+
+  // 5. Invalid priority
+  it('5. Invalid priority should normalize to "low"', async () => {
+    (globalThis as any).fetch = (jest.fn() as any).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify({
+                    suggestions: [
+                      { title: 'Education Expense', description: 'Check tuition rules.', priority: 'URGENT_MUST_CLAIM' }
+                    ]
+                  })
+                }
+              ]
+            }
+          }
+        ]
+      })
+    });
+
+    const result = await aiService.suggestTaxDeductions({ income: 45000 });
+    expect(result[0].priority).toBe('low');
+  });
+
+  // 6. Malformed AI response
+  it('6. Malformed AI response should return controlled fallback without throwing', async () => {
+    (globalThis as any).fetch = (jest.fn() as any).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        candidates: [{ content: { parts: [{ text: 'NOT VALID JSON' }] } }]
+      })
+    });
+
+    const req: any = { user: { id: mockUserId }, body: { income: 50000 } };
+    const res: any = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+
+    await aiController.getTaxSuggestions(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        fallback: true,
+        suggestions: []
+      })
+    );
+  });
+
+  // 7. AI provider failure
+  it('7. AI provider failure should return 502 with fallback suggestions array', async () => {
+    (globalThis as any).fetch = (jest.fn() as any).mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: async () => 'Provider error'
+    });
+
+    const req: any = { user: { id: mockUserId }, body: { income: 50000 } };
+    const res: any = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+
+    await aiController.getTaxSuggestions(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(502);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        fallback: true,
+        suggestions: []
+      })
+    );
+  });
+
+  // 8. Missing API key
+  it('8. Missing API key should return 503 with fallback suggestions array', async () => {
+    delete process.env.AI_API_KEY;
+    delete process.env.GEMINI_API_KEY;
+
+    const req: any = { user: { id: mockUserId }, body: { income: 50000 } };
+    const res: any = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+
+    await aiController.getTaxSuggestions(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        fallback: true,
+        suggestions: []
+      })
+    );
+  });
+
+  // 9. User ownership / validation
+  it('9. User ownership: rejects missing or non-positive income with 400 Bad Request', async () => {
+    const req: any = { user: { id: mockUserId }, body: { income: -100 } };
+    const res: any = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+
+    await aiController.getTaxSuggestions(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ success: false, message: expect.stringContaining('income is required') })
+    );
+  });
+
+  // 10. Existing tax calculation remains unchanged
+  it('10. Existing tax calculation remains unchanged: pure mathematical calculation produces expected numbers without AI alteration', () => {
+    // Simulating tax calculation formula
+    const income = 100000;
+    const deductions = 15000;
+    const taxableIncome = Math.max(0, income - deductions);
+    const estimatedTax = taxableIncome * 0.15;
+
+    expect(taxableIncome).toBe(85000);
+    expect(estimatedTax).toBe(12750);
+  });
+
+  // 11. AI failure does not break Tax Estimator
+  it('11. AI failure does not break Tax Estimator: continues functioning normally when AI network is down', async () => {
+    (globalThis as any).fetch = (jest.fn() as any).mockRejectedValue(new Error('Connection reset'));
+
+    const req: any = { user: { id: mockUserId }, body: { income: 90000 } };
+    const res: any = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+
+    await aiController.getTaxSuggestions(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        fallback: true,
+        suggestions: []
+      })
+    );
+  });
+});

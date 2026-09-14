@@ -3,7 +3,9 @@ import {
   DEFAULT_ALLOWED_CATEGORIES,
   type AiModelResponse,
   type AggregatedFinancialMetrics,
-  type FinancialSummaryAiResponse
+  type FinancialSummaryAiResponse,
+  type TaxSuggestionInput,
+  type TaxSuggestion
 } from './ai.model.js';
 
 /**
@@ -235,6 +237,134 @@ Rules:
       insights,
       priority
     };
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('AI service request timed out');
+    }
+    throw err;
+  }
+}
+
+/**
+ * Generate AI tax-saving and deduction review suggestions using Google Gemini API.
+ */
+export async function suggestTaxDeductions(
+  input: TaxSuggestionInput
+): Promise<TaxSuggestion[]> {
+  const apiKey = process.env.AI_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error('AI_API_KEY is not configured');
+  }
+
+  const promptInstructions = `You are a tax education assistant for the TaxPal app.
+Analyze the following user-provided tax estimation inputs to identify potential tax-saving or deduction areas for the user to review:
+- Gross Income: $${input.income}
+${input.region ? `- Region/Country: ${input.region}` : ''}
+${input.state ? `- State/Province: ${input.state}` : ''}
+${input.filingStatus ? `- Filing Status: ${input.filingStatus}` : ''}
+${input.quarter ? `- Quarter: ${input.quarter}` : ''}
+- Business Expenses Entered: $${input.businessExpenses ?? 0}
+- Health Insurance Entered: $${input.healthInsurance ?? 0}
+- Retirement Contributions Entered: $${input.retirement ?? 0}
+- Home Office Deduction Entered: $${input.homeOffice ?? 0}
+${input.additionalDeductions !== undefined ? `- Additional Deductions: $${input.additionalDeductions}` : ''}
+
+Rules:
+1. Identify up to 3 potential deduction or tax-saving areas worth reviewing based on the entered values (e.g. if health insurance, retirement, or home office is zero or low).
+2. For each suggestion, provide:
+   - "title": concise name of the deduction or review area
+   - "description": 1-2 sentence cautious explanation emphasizing that eligibility depends on individual circumstances
+   - "priority": "low" | "medium" | "high" (high if common eligible expense with $0 currently entered)
+3. Cautious language requirement:
+   - Use words like "may", "could", "consider reviewing".
+   - Do NOT claim or guarantee that the user qualifies for any deduction.
+   - Do NOT invent specific statutory legal thresholds or claim authoritative tax laws.
+   - Mention that the user should consult official guidelines or a qualified tax professional.
+4. Respond ONLY with a valid JSON object matching:
+{
+  "suggestions": [
+    {
+      "title": "<Area title>",
+      "description": "<Cautious explanation>",
+      "priority": "low" | "medium" | "high"
+    }
+  ]
+}
+5. Maximum 3 suggestions in the array.
+6. Do NOT wrap output in markdown code blocks or backticks. Return raw JSON only.
+7. This is informational guidance, not professional tax advice.`;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [{ text: promptInstructions }]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 400
+        }
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      throw new Error(`AI service responded with status ${response.status}: ${errorText.slice(0, 100)}`);
+    }
+
+    const data: any = await response.json();
+    const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!candidateText) {
+      throw new Error('Malformed or empty response received from AI model');
+    }
+
+    const cleanedJson = extractJsonString(candidateText);
+    let parsed: any;
+    try {
+      parsed = JSON.parse(cleanedJson);
+    } catch {
+      throw new Error('Failed to parse AI output as JSON');
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      throw new Error('Invalid JSON structure returned by AI');
+    }
+
+    const rawList = Array.isArray(parsed.suggestions) ? parsed.suggestions : [];
+    const allowedPriorities = ['low', 'medium', 'high'] as const;
+
+    const suggestions: TaxSuggestion[] = rawList
+      .filter((s: unknown) => s && typeof s === 'object')
+      .map((s: any) => {
+        const title = typeof s.title === 'string' && s.title.trim() ? s.title.trim() : 'General Deduction Review';
+        const description = typeof s.description === 'string' && s.description.trim()
+          ? s.description.trim()
+          : 'Consider reviewing whether any eligible expenses apply under applicable tax guidelines.';
+        const priority = typeof s.priority === 'string' && allowedPriorities.includes(s.priority.toLowerCase() as any)
+          ? (s.priority.toLowerCase() as 'low' | 'medium' | 'high')
+          : 'low';
+
+        return { title, description, priority };
+      })
+      .slice(0, 3);
+
+    return suggestions;
   } catch (err: any) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {

@@ -2,6 +2,7 @@ import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaxEstimatorService, TaxInputs, EstimatedTaxData } from '@core/services/tax-estimator.service';
+import { AiService, TaxSuggestion } from '@core/services/ai.service';
 import { catchError, retry } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { 
@@ -41,13 +42,67 @@ export class TaxEstimatorComponent implements OnInit {
   errorMessage = signal('');
   quarters = STATIC_QUARTERS;
 
+  // AI Tax Suggestions State
+  aiSuggestions = signal<TaxSuggestion[]>([]);
+  isAiLoading = signal<boolean>(false);
+  aiErrorMessage = signal<string | null>(null);
+  aiRequested = signal<boolean>(false);
+
   readonly REGION_OPTIONS = REGION_OPTIONS;
   readonly FILING_STATUSES = FILING_STATUSES;
   readonly TAX_RESULT_ITEMS = TAX_RESULT_ITEMS;
   readonly STATE_OPTIONS = STATE_OPTIONS;
   readonly QUARTER_OPTIONS = QUARTER_OPTIONS;
 
-  constructor(private taxService: TaxEstimatorService) {}
+  constructor(
+    private taxService: TaxEstimatorService,
+    private aiService: AiService
+  ) {}
+
+  /** Fetch AI tax deduction review suggestions based on current user inputs */
+  getAiTaxSuggestions(): void {
+    const inputs = this.taxInputs();
+    if (!inputs.annualGrossIncome || inputs.annualGrossIncome <= 0) {
+      this.aiErrorMessage.set('Please enter your gross income first to get AI tax suggestions.');
+      this.aiRequested.set(true);
+      return;
+    }
+
+    this.aiRequested.set(true);
+    this.isAiLoading.set(true);
+    this.aiErrorMessage.set(null);
+
+    this.aiService.getTaxSuggestions({
+      income: inputs.annualGrossIncome,
+      region: inputs.region,
+      state: inputs.state,
+      quarter: inputs.quarter,
+      filingStatus: inputs.filingStatus,
+      businessExpenses: inputs.businessExpenses,
+      retirement: inputs.retirement,
+      healthInsurance: inputs.healthInsurance,
+      homeOffice: inputs.homeOffice,
+      additionalDeductions: inputs.additionalDeductions
+    }).subscribe({
+      next: (res) => {
+        this.isAiLoading.set(false);
+        if (res && res.suggestions && res.suggestions.length > 0) {
+          this.aiSuggestions.set(res.suggestions);
+        } else if (res && res.fallback) {
+          this.aiErrorMessage.set(res.message || 'Tax suggestions are temporarily unavailable. You can continue using the Tax Estimator normally.');
+          this.aiSuggestions.set([]);
+        } else {
+          this.aiSuggestions.set([]);
+          this.aiErrorMessage.set('No specific deduction gaps identified based on your current inputs.');
+        }
+      },
+      error: () => {
+        this.isAiLoading.set(false);
+        this.aiErrorMessage.set('Tax suggestions are temporarily unavailable. You can continue using the Tax Estimator normally.');
+        this.aiSuggestions.set([]);
+      }
+    });
+  }
 
   ngOnInit() {
     this.quarters = this.generateStaticQuarters();

@@ -3,7 +3,11 @@ import type { Response } from 'express';
 import type { AuthRequest } from '../../middlewares/auth.middleware.js';
 import { prisma } from '../../../config/prisma.client.js';
 import * as aiService from './ai.service.js';
-import { DEFAULT_ALLOWED_CATEGORIES, type AggregatedFinancialMetrics } from './ai.model.js';
+import {
+  DEFAULT_ALLOWED_CATEGORIES,
+  type AggregatedFinancialMetrics,
+  type TaxSuggestionInput
+} from './ai.model.js';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const FALLBACK_SUMMARY = {
@@ -242,6 +246,91 @@ export async function getFinancialSummary(req: AuthRequest, res: Response) {
       fallback: true,
       message: 'Financial insights are temporarily unavailable.',
       data: FALLBACK_SUMMARY
+    });
+  }
+}
+
+/**
+ * Endpoint handler: POST /api/ai/tax-suggestions
+ */
+export async function getTaxSuggestions(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const {
+      income,
+      region,
+      state,
+      quarter,
+      filingStatus,
+      businessExpenses,
+      retirement,
+      healthInsurance,
+      homeOffice,
+      additionalDeductions
+    } = req.body ?? {};
+
+    if (typeof income !== 'number' || isNaN(income) || income <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid positive income is required for tax deduction suggestions'
+      });
+    }
+
+    const input: TaxSuggestionInput = {
+      income,
+      region: typeof region === 'string' ? region : undefined,
+      state: typeof state === 'string' ? state : undefined,
+      quarter: typeof quarter === 'string' ? quarter : undefined,
+      filingStatus: typeof filingStatus === 'string' ? filingStatus : undefined,
+      businessExpenses: typeof businessExpenses === 'number' ? businessExpenses : undefined,
+      retirement: typeof retirement === 'number' ? retirement : undefined,
+      healthInsurance: typeof healthInsurance === 'number' ? healthInsurance : undefined,
+      homeOffice: typeof homeOffice === 'number' ? homeOffice : undefined,
+      additionalDeductions: typeof additionalDeductions === 'number' ? additionalDeductions : undefined
+    };
+
+    const suggestions = await aiService.suggestTaxDeductions(input);
+
+    return res.json({
+      success: true,
+      suggestions
+    });
+  } catch (err: any) {
+    const message = err?.message || '';
+
+    if (message.includes('not configured') || message.includes('AI_API_KEY')) {
+      return res.status(503).json({
+        success: false,
+        fallback: true,
+        message: 'Tax suggestions are temporarily unavailable (API key not configured).',
+        suggestions: []
+      });
+    }
+
+    if (
+      message.includes('timed out') ||
+      message.includes('AI service responded') ||
+      message.includes('parse') ||
+      message.includes('Malformed') ||
+      message.includes('Invalid JSON')
+    ) {
+      return res.status(502).json({
+        success: false,
+        fallback: true,
+        message: 'Tax suggestions are temporarily unavailable. You can continue using the Tax Estimator normally.',
+        suggestions: []
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      fallback: true,
+      message: 'Tax suggestions are temporarily unavailable. You can continue using the Tax Estimator normally.',
+      suggestions: []
     });
   }
 }

@@ -111,13 +111,23 @@
           {{ errorMessage() }}
         </p>
 
-        <!-- Submit -->
-        <button type="submit"
-          [disabled]="!taxForm.valid || isCalculating()"
-          class="calc-btn" style="margin-top: 16px;">
-          <span class="material-icons-round">functions</span>
-          {{ isCalculating() ? 'Calculating...' : 'Calculate Estimated Tax' }}
-        </button>
+        <!-- Submit & AI Action Row -->
+        <div class="te-actions-row" style="display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;">
+          <button type="submit"
+            [disabled]="!taxForm.valid || isCalculating()"
+            class="calc-btn" style="flex: 1; min-width: 180px;">
+            <span class="material-icons-round">functions</span>
+            {{ isCalculating() ? 'Calculating...' : 'Calculate Estimated Tax' }}
+          </button>
+
+          <button type="button"
+            (click)="getAiTaxSuggestions()"
+            [disabled]="isAiLoading()"
+            class="ai-suggest-btn">
+            <span class="material-icons-round" [class.spin-anim]="isAiLoading()">{{ isAiLoading() ? 'autorenew' : 'auto_awesome' }}</span>
+            {{ isAiLoading() ? 'Analyzing...' : 'AI Tax Suggestions' }}
+          </button>
+        </div>
       </form>
     </section>
 
@@ -158,6 +168,54 @@
       </ng-template>
     </aside>
   </div>
+
+  <!-- AI Tax-Saving Suggestions Section -->
+  <section class="te-ai-section" *ngIf="aiRequested()">
+    <div class="ai-tax-card">
+      <div class="ai-tax-header">
+        <div class="ai-title-wrap">
+          <span class="material-icons-round ai-header-icon">auto_awesome</span>
+          <div>
+            <h3>AI Tax-Saving & Deduction Suggestions</h3>
+            <span class="ai-sub">Informational review areas based on your entered values</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-tax-body">
+        <!-- Loading -->
+        <div class="ai-loading" *ngIf="isAiLoading()">
+          <span class="material-icons-round spin-anim">autorenew</span>
+          <span>Analyzing available tax information...</span>
+        </div>
+
+        <!-- Notice / Error / Fallback -->
+        <div class="ai-notice" *ngIf="!isAiLoading() && aiErrorMessage()">
+          <span class="material-icons-round">info</span>
+          <span>{{ aiErrorMessage() }}</span>
+        </div>
+
+        <!-- Suggestions Grid -->
+        <div class="ai-suggestions-grid" *ngIf="!isAiLoading() && aiSuggestions().length > 0">
+          <div class="suggestion-tile" *ngFor="let s of aiSuggestions()">
+            <div class="suggestion-header">
+              <h4>{{ s.title }}</h4>
+              <span class="priority-pill" [ngClass]="'p-' + s.priority">
+                {{ s.priority | titlecase }} Priority
+              </span>
+            </div>
+            <p class="suggestion-desc">{{ s.description }}</p>
+          </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <p class="ai-disclaimer-note" *ngIf="!isAiLoading()">
+          <span class="material-icons-round" style="font-size: 14px; vertical-align: -2px; margin-right: 4px;">verified_user</span>
+          Suggestions are for informational purposes only and do not constitute professional tax advice. Review applicable tax guidelines before claiming deductions.
+        </p>
+      </div>
+    </div>
+  </section>
 
   <!-- Tax Calendar -->
   <section class="te-calendar-section">

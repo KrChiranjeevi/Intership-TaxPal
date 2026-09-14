@@ -58,3 +58,29 @@ export interface FinancialSummaryResponse {
   fallback?: boolean | undefined;
   message?: string | undefined;
 }
+
+export interface TaxSuggestionInput {
+  income: number;
+  region?: string | undefined;
+  state?: string | undefined;
+  quarter?: string | undefined;
+  filingStatus?: string | undefined;
+  businessExpenses?: number | undefined;
+  retirement?: number | undefined;
+  healthInsurance?: number | undefined;
+  homeOffice?: number | undefined;
+  additionalDeductions?: number | undefined;
+}
+
+export interface TaxSuggestion {
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high';
+}
+
+export interface TaxSuggestionsResponse {
+  success: boolean;
+  suggestions: TaxSuggestion[];
+  fallback?: boolean | undefined;
+  message?: string | undefined;
+}
