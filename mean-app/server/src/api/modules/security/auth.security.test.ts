@@ -4,22 +4,21 @@ import crypto from 'crypto';
 
 describe('Phase 2 Security & Auth Hardening Tests', () => {
   const testUserId = 'test-user-12345';
-  const testPayload = { id: testUserId, email: 'security@example.com' };
+  const testPayload = { userId: testUserId };
 
   describe('JWT Access and Refresh Token Separation', () => {
     it('should generate valid access token verifiable by verifyToken', () => {
       const accessToken = generateAccessToken(testPayload);
       expect(typeof accessToken).toBe('string');
       const decoded: any = verifyToken(accessToken);
-      expect(decoded.id).toBe(testUserId);
-      expect(decoded.email).toBe('security@example.com');
+      expect(decoded.userId).toBe(testUserId);
     });
 
     it('should generate valid refresh token verifiable by verifyRefreshToken', () => {
       const refreshToken = generateRefreshToken(testPayload);
       expect(typeof refreshToken).toBe('string');
       const decoded: any = verifyRefreshToken(refreshToken);
-      expect(decoded.id).toBe(testUserId);
+      expect(decoded.userId).toBe(testUserId);
     });
 
     it('should return null when verifying an access token with verifyRefreshToken', () => {

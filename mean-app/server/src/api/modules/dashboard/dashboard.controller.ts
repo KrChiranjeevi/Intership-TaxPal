@@ -1,10 +1,11 @@
-import type { Request, Response } from "express";
+import type { Response } from "express";
+import type { AuthRequest } from "../../middlewares/auth.middleware.js";
 import { getDashboardSummary } from "./dashboard.service.js";
 
 export const dashboardController = {
-  async getSummary(req: Request, res: Response) {
+  async getSummary(req: AuthRequest, res: Response) {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ success: false, message: "Unauthorized" });
       }
@@ -18,7 +19,8 @@ export const dashboardController = {
       return res.json({ success: true, data: summary });
     } catch (err) {
       console.error("Dashboard error:", err);
-      return res.status(500).json({ success: false, message: "Server error" });
+      return res.status(500).json({ success: false, message: "Unable to load dashboard data" });
     }
   },
 };
+

@@ -37,158 +37,202 @@
     (submitForm)="onExpenseAdded($event)">
   </app-add-expense>
 
-  <!-- Stats Cards -->
-  <section class="db-stats">
-    <!-- Monthly Income -->
-    <div class="stat-card income-card animate-fade-up delay-1">
-      <div class="stat-card-header">
-        <p class="stat-label">Monthly Income</p>
-        <div class="stat-icon-wrap income-icon">
-          <span class="material-icons-round">arrow_upward</span>
-        </div>
-      </div>
-      <div class="stat-card-body">
-        <h3 class="stat-value">${{ monthlyIncome | number:'1.2-2' }}</h3>
-        <p class="stat-subtext text-success">+12% from last month</p>
-      </div>
+  <!-- Loading State -->
+  <div class="db-state-card loading-card animate-fade-up" *ngIf="loading">
+    <div class="state-spinner">
+      <span class="material-icons-round spin-anim">refresh</span>
     </div>
+    <h3>Loading your financial dashboard...</h3>
+    <p>Retrieving your latest income, expenses, and tax metrics.</p>
+  </div>
 
-    <!-- Monthly Expenses -->
-    <div class="stat-card expense-card animate-fade-up delay-2">
-      <div class="stat-card-header">
-        <p class="stat-label">Monthly Expenses</p>
-        <div class="stat-icon-wrap expense-icon">
-          <span class="material-icons-round">arrow_downward</span>
-        </div>
-      </div>
-      <div class="stat-card-body">
-        <h3 class="stat-value">${{ monthlyExpenses | number:'1.2-2' }}</h3>
-        <p class="stat-subtext">0% from last month</p>
-      </div>
+  <!-- Error State -->
+  <div class="db-state-card error-card animate-fade-up" *ngIf="errorMessage && !loading">
+    <div class="error-icon-wrap">
+      <span class="material-icons-round">warning_amber</span>
     </div>
+    <h3>Unable to load dashboard data</h3>
+    <p>{{ errorMessage }}</p>
+    <button class="retry-btn" (click)="loadDashboardData()">
+      <span class="material-icons-round">refresh</span>
+      Retry
+    </button>
+  </div>
 
-    <!-- Estimated Tax Due -->
-    <div class="stat-card tax-card animate-fade-up delay-3">
-      <div class="stat-card-header">
-        <p class="stat-label">Estimated Tax Due</p>
-        <div class="stat-icon-wrap tax-icon">
-          <span class="material-icons-round" style="font-size: 12px;">circle</span>
-        </div>
-      </div>
-      <div class="stat-card-body">
-        <h3 class="stat-value">${{ estimatedTaxDue | number:'1.2-2' }}</h3>
-        <p class="stat-subtext text-success">+3.2% from your goal</p>
-      </div>
+  <!-- Empty State (No transactions at all) -->
+  <div class="db-state-card empty-card animate-fade-up" *ngIf="!loading && !errorMessage && isDashboardEmpty">
+    <div class="empty-icon-wrap">
+      <span class="material-icons-round">account_balance_wallet</span>
     </div>
-
-    <!-- Savings Rate -->
-    <div class="stat-card savings-card animate-fade-up delay-4">
-      <div class="stat-card-header">
-        <p class="stat-label">Savings Rate</p>
-        <div class="stat-icon-wrap savings-icon">
-          <span class="material-icons-round">sync</span>
-        </div>
-      </div>
-      <div class="stat-card-body">
-        <h3 class="stat-value">{{ savingsRate | number:'1.1-1' }}%</h3>
-        <p class="stat-subtext text-success">+1.2% from your goal</p>
-      </div>
+    <h3>No financial activity yet</h3>
+    <p>Add your first income or expense to see your dashboard insights.</p>
+    <div class="empty-actions">
+      <button class="btn-success" (click)="showIncome=true">
+        <span class="material-icons-round" style="font-size: 16px;">add</span>
+        Add Income
+      </button>
+      <button class="btn-danger" (click)="showExpense=true">
+        <span class="material-icons-round" style="font-size: 16px;">add</span>
+        Add Expense
+      </button>
     </div>
-  </section>
+  </div>
 
-  <!-- Charts Row -->
-  <section class="db-charts animate-fade-up delay-3">
-    <!-- Bar Chart -->
-    <div class="chart-card chart-bar">
-      <div class="chart-header">
-        <div class="chart-title-wrap">
-          <span class="material-icons-round chart-icon">bar_chart</span>
-          <h3>Income vs Expenses</h3>
-        </div>
-        <span class="chart-sub">Monthly Overview</span>
-      </div>
-      <div class="chart-body">
-        <canvas
-          baseChart
-          #barChart
-          [data]="barChartData"
-          [options]="barChartOptions"
-          chartType="bar">
-        </canvas>
-      </div>
-    </div>
-
-    <!-- Doughnut Chart -->
-    <div class="chart-card chart-pie">
-      <div class="chart-header">
-        <div class="chart-title-wrap">
-          <span class="material-icons-round chart-icon">donut_large</span>
-          <h3>Expense Breakdown</h3>
-        </div>
-        <span class="chart-sub">By Category</span>
-      </div>
-      <div class="chart-body chart-pie-body">
-        <div class="pie-canvas-wrap">
-          <canvas
-            baseChart
-            #pieChart
-            [data]="pieChartData"
-            [options]="pieChartOptions"
-            chartType="doughnut">
-          </canvas>
-        </div>
-        
-        <div class="custom-legend" *ngIf="pieLegendItems && pieLegendItems.length > 0">
-          <div class="legend-item" *ngFor="let item of pieLegendItems">
-            <div class="legend-left">
-              <span class="legend-color" [style.backgroundColor]="item.color"></span>
-              <span class="legend-label">{{item.label}}</span>
-            </div>
-            <span class="legend-value">{{item.percentage}}%</span>
+  <!-- Dashboard Main Content (When data is available) -->
+  <ng-container *ngIf="!loading && !errorMessage && !isDashboardEmpty">
+    <!-- Stats Cards -->
+    <section class="db-stats">
+      <!-- Monthly Income -->
+      <div class="stat-card income-card animate-fade-up delay-1">
+        <div class="stat-card-header">
+          <p class="stat-label">Monthly Income</p>
+          <div class="stat-icon-wrap income-icon">
+            <span class="material-icons-round">arrow_upward</span>
           </div>
         </div>
-
-        <p *ngIf="!transactions.length" class="chart-empty">
-          <span class="material-icons-round">info</span>
-          No expenses yet
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Recent Transactions -->
-  <section class="db-transactions animate-fade-up delay-4">
-    <div class="section-header">
-      <div class="section-title-wrap">
-        <span class="material-icons-round">receipt</span>
-        <h3>Recent Transactions</h3>
-      </div>
-      <span class="tx-count">{{ transactions.length }} entries</span>
-    </div>
-
-    <div class="tx-list">
-      <div class="tx-empty" *ngIf="!transactions.length">
-        <span class="material-icons-round tx-empty-icon">account_balance_wallet</span>
-        <p>No transactions yet</p>
-        <small>Add your first income or expense above</small>
-      </div>
-
-      <div class="tx-row" *ngFor="let t of transactions; let i = index"
-           [style.animation-delay]="i * 0.05 + 's'">
-        <div class="tx-icon-wrap" [class.tx-income]="t.type==='income'" [class.tx-expense]="t.type==='expense'">
-          <span class="material-icons-round">
-            {{ t.type === 'income' ? 'arrow_upward' : 'arrow_downward' }}
-          </span>
-        </div>
-        <div class="tx-info">
-          <h4>{{ t.name }}</h4>
-          <span>{{ t.category }} &bull; {{ t.date }}</span>
-        </div>
-        <div class="tx-amount" [class.amount-income]="t.type==='income'" [class.amount-expense]="t.type==='expense'">
-          {{ t.type === 'income' ? '+' : '-' }}${{ t.amount }}
+        <div class="stat-card-body">
+          <h3 class="stat-value">${{ monthlyIncome | number:'1.2-2' }}</h3>
+          <p class="stat-subtext text-success">This month's earnings</p>
         </div>
       </div>
-    </div>
-  </section>
+
+      <!-- Monthly Expenses -->
+      <div class="stat-card expense-card animate-fade-up delay-2">
+        <div class="stat-card-header">
+          <p class="stat-label">Monthly Expenses</p>
+          <div class="stat-icon-wrap expense-icon">
+            <span class="material-icons-round">arrow_downward</span>
+          </div>
+        </div>
+        <div class="stat-card-body">
+          <h3 class="stat-value">${{ monthlyExpenses | number:'1.2-2' }}</h3>
+          <p class="stat-subtext" [class.text-danger]="monthlyExpenses > 0">This month's spending</p>
+        </div>
+      </div>
+
+      <!-- Estimated Tax Due -->
+      <div class="stat-card tax-card animate-fade-up delay-3">
+        <div class="stat-card-header">
+          <p class="stat-label">Estimated Tax Due</p>
+          <div class="stat-icon-wrap tax-icon">
+            <span class="material-icons-round" style="font-size: 12px;">circle</span>
+          </div>
+        </div>
+        <div class="stat-card-body">
+          <h3 class="stat-value">${{ estimatedTaxDue | number:'1.2-2' }}</h3>
+          <p class="stat-subtext text-success">15% of net savings</p>
+        </div>
+      </div>
+
+      <!-- Savings Rate -->
+      <div class="stat-card savings-card animate-fade-up delay-4">
+        <div class="stat-card-header">
+          <p class="stat-label">Savings Rate</p>
+          <div class="stat-icon-wrap savings-icon">
+            <span class="material-icons-round">sync</span>
+          </div>
+        </div>
+        <div class="stat-card-body">
+          <h3 class="stat-value">{{ savingsRate | number:'1.1-1' }}%</h3>
+          <p class="stat-subtext text-success">Net income retained</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts Row -->
+    <section class="db-charts animate-fade-up delay-3">
+      <!-- Bar Chart -->
+      <div class="chart-card chart-bar">
+        <div class="chart-header">
+          <div class="chart-title-wrap">
+            <span class="material-icons-round chart-icon">bar_chart</span>
+            <h3>Income vs Expenses</h3>
+          </div>
+          <span class="chart-sub">Monthly Overview</span>
+        </div>
+        <div class="chart-body">
+          <canvas
+            baseChart
+            #barChart
+            [data]="barChartData"
+            [options]="barChartOptions"
+            chartType="bar">
+          </canvas>
+        </div>
+      </div>
+
+      <!-- Doughnut Chart -->
+      <div class="chart-card chart-pie">
+        <div class="chart-header">
+          <div class="chart-title-wrap">
+            <span class="material-icons-round chart-icon">donut_large</span>
+            <h3>Expense Breakdown</h3>
+          </div>
+          <span class="chart-sub">By Category</span>
+        </div>
+        <div class="chart-body chart-pie-body">
+          <div class="pie-canvas-wrap">
+            <canvas
+              baseChart
+              #pieChart
+              [data]="pieChartData"
+              [options]="pieChartOptions"
+              chartType="doughnut">
+            </canvas>
+          </div>
+          
+          <div class="custom-legend" *ngIf="pieLegendItems && pieLegendItems.length > 0">
+            <div class="legend-item" *ngFor="let item of pieLegendItems">
+              <div class="legend-left">
+                <span class="legend-color" [style.backgroundColor]="item.color"></span>
+                <span class="legend-label">{{item.label}}</span>
+              </div>
+              <span class="legend-value">{{item.percentage}}%</span>
+            </div>
+          </div>
+
+          <p *ngIf="!pieLegendItems.length" class="chart-empty">
+            <span class="material-icons-round">info</span>
+            No expenses this month
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Transactions -->
+    <section class="db-transactions animate-fade-up delay-4">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <span class="material-icons-round">receipt</span>
+          <h3>Recent Transactions</h3>
+        </div>
+        <span class="tx-count">{{ transactions.length }} entries</span>
+      </div>
+
+      <div class="tx-list">
+        <div class="tx-empty" *ngIf="!transactions.length">
+          <span class="material-icons-round tx-empty-icon">account_balance_wallet</span>
+          <p>No transactions yet</p>
+          <small>Add your first income or expense above</small>
+        </div>
+
+        <div class="tx-row" *ngFor="let t of transactions; let i = index"
+             [style.animation-delay]="i * 0.05 + 's'">
+          <div class="tx-icon-wrap" [class.tx-income]="t.type==='income'" [class.tx-expense]="t.type==='expense'">
+            <span class="material-icons-round">
+              {{ t.type === 'income' ? 'arrow_upward' : 'arrow_downward' }}
+            </span>
+          </div>
+          <div class="tx-info">
+            <h4>{{ t.name || t.description }}</h4>
+            <span>{{ t.category }} &bull; {{ t.date | date:'mediumDate' }}</span>
+          </div>
+          <div class="tx-amount" [class.amount-income]="t.type==='income'" [class.amount-expense]="t.type==='expense'">
+            {{ t.type === 'income' ? '+' : '-' }}${{ t.amount | number:'1.2-2' }}
+          </div>
+        </div>
+      </div>
+    </section>
+  </ng-container>
 
 </div>

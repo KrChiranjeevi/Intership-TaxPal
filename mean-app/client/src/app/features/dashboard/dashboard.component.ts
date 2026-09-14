@@ -7,9 +7,8 @@ import { NgChartsModule, BaseChartDirective } from 'ng2-charts';
 import { AddIncomeComponent } from '../transactions/add-income/add-income.component';
 import { AddExpenseComponent } from '../transactions/add-expense/add-expense.component';
 import { TransactionService } from '@core/services/transaction.service';
-import { BudgetService } from '@core/services/budget.service';
+import { DashboardService, DashboardData, DashboardTransaction } from '@core/services/dashboard.service';
 import { ChartConfiguration } from 'chart.js';
-import { TaxEstimatorService } from '@core/services/tax-estimator.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -26,12 +25,16 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   showExpense = false;
   userName = 'User';
 
+  loading = true;
+  errorMessage: string | null = null;
+  isDashboardEmpty = false;
+  dashboardData: DashboardData | null = null;
+
   monthlyIncome = 0;
   monthlyExpenses = 0;
   estimatedTaxDue = 0;
-  latestTaxEstimate: any = null;
   savingsRate = 0;
-  transactions: any[] = [];
+  transactions: DashboardTransaction[] = [];
 
   public barChartOptions: ChartConfiguration['options'] = {
     responsive: true,
@@ -76,169 +79,138 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   pieLegendItems: Array<{label: string, percentage: string, color: string}> = [];
 
   constructor(
+    private dashboardService: DashboardService,
     private txService: TransactionService,
     private authService: AuthService,
-    private router: Router,
-    private budgetService: BudgetService,
-    private taxService: TaxEstimatorService,   
+    private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.loadTransactions();
-    const savedTax = localStorage.getItem('estimatedTaxDue');
-    if (savedTax) this.estimatedTaxDue = +savedTax;
-
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
         const user = JSON.parse(storedUser);
         this.userName = user.name || user.username || user.email || 'User';
-      } catch { this.userName = 'User'; }
+      } catch {
+        this.userName = 'User';
+      }
     }
+
+    this.loadDashboardData();
   }
 
   ngAfterViewInit(): void {
-    // Relying on CSS animations (defined in styles.scss) instead of GSAP for more stable visibility
+    // Relying on CSS animations (defined in styles.scss) for smooth transitions
   }
 
-  onLogout() {
+  onLogout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
   }
 
-  loadTransactions() {
-    this.txService.getTransactions().subscribe({
-      next: (res: any) => {
-        const txs = Array.isArray(res) ? res : (res?.data ?? []);
-        this.transactions = Array.isArray(txs) ? txs : [];
-        this.calculateStats();
-        this.updateCharts();
+  loadDashboardData(): void {
+    this.loading = true;
+    this.errorMessage = null;
+
+    this.dashboardService.getDashboardSummary('monthly').subscribe({
+      next: (res) => {
+        this.loading = false;
+        if (res && res.success && res.data) {
+          this.dashboardData = res.data;
+          this.isDashboardEmpty = res.data.allTimeTotalTransactions === 0;
+
+          // 1. Populate summary values from backend
+          const summary = res.data.summary;
+          this.monthlyIncome = summary?.monthlyIncome ?? res.data.totalIncome ?? 0;
+          this.monthlyExpenses = summary?.monthlyExpenses ?? res.data.totalExpenses ?? 0;
+          this.estimatedTaxDue = summary?.estimatedTax ?? res.data.estimatedTax ?? 0;
+          this.savingsRate = summary?.savingsRate ?? 0;
+
+          // 2. Populate recent transactions list from backend
+          this.transactions = res.data.recentTransactions ?? [];
+
+          // 3. Render charts from backend aggregated response
+          this.renderCharts(res.data);
+        } else {
+          this.errorMessage = 'Unable to load dashboard data. Please try again.';
+        }
       },
-      error: (err) => console.error('Error loading transactions', err)
+      error: (err) => {
+        this.loading = false;
+        console.error('Error fetching dashboard data:', err?.message || err);
+        this.errorMessage = 'Unable to load dashboard data. Please try again.';
+      }
     });
   }
 
-  
-
-  calculateStats() {
-    this.monthlyIncome = this.transactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + Number(t.amount || 0), 0);
-
-    this.monthlyExpenses = this.transactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + Number(t.amount || 0), 0);
-
-    this.savingsRate = this.monthlyIncome
-      ? +(((this.monthlyIncome - this.monthlyExpenses) / this.monthlyIncome) * 100).toFixed(2)
-      : 0;
-    this.estimatedTaxDue = +((this.monthlyIncome - this.monthlyExpenses) * 0.15).toFixed(2);
-    localStorage.setItem('estimatedTaxDue', this.estimatedTaxDue.toString());
-
-  }
-
-  updateCharts() {
-    // 1️⃣ --- Monthly aggregation for bar chart ---
-    const months = [
-      'Jan','Feb','Mar','Apr','May','Jun',
-      'Jul','Aug','Sep','Oct','Nov','Dec'
-    ];
-    const incomeByMonth = Array(12).fill(0);
-    const expenseByMonth = Array(12).fill(0);
-
-    this.transactions.forEach(t => {
-      const d = new Date(t.date);
-      const m = d.getMonth(); // 0–11
-      if (t.type === 'income') incomeByMonth[m] += Number(t.amount || 0);
-      if (t.type === 'expense') expenseByMonth[m] += Number(t.amount || 0);
-    });
+  private renderCharts(data: DashboardData): void {
+    // 1️⃣ Bar Chart: 12-Month Income vs Expenses from backend
+    const points = data.incomeVsExpenses ?? [];
+    const labels = points.map(p => p.month);
+    const incomeData = points.map(p => p.income);
+    const expenseData = points.map(p => p.expense);
 
     this.barChartData = {
-      labels: months,
-      datasets: [
-        { data: incomeByMonth, label: 'Income' },
-        { data: expenseByMonth, label: 'Expense' }
-      ]
-    };
-
-    // 2️⃣ --- Expense breakdown for pie chart ---
-const expenseTx = this.transactions.filter(t => t.type === 'expense');
-const sumsByCategory = expenseTx.reduce((acc: Record<string, number>, t) => {
-  const cat = t.category || 'Uncategorized';
-  acc[cat] = (acc[cat] || 0) + Number(t.amount || 0);
-  return acc;
-}, {});
-
-const labels = Object.keys(sumsByCategory);
-const data = labels.map(l => sumsByCategory[l]);
-const totalExpense = data.reduce((a,b) => a+b, 0);
-
-const backgroundColors = [
-  '#00e676', '#00d2ff', '#a855f7', '#ff5252', '#ffca28',
-  '#00BCD4', '#8BC34A', '#FFC107', '#E91E63', '#3F51B5'
-];
-
-this.pieLegendItems = labels.map((label, idx) => ({
-  label,
-  percentage: ((sumsByCategory[label] / totalExpense) * 100).toFixed(0),
-  color: backgroundColors[idx % backgroundColors.length]
-}));
-
-this.pieChartData = labels.length
-  ? {
       labels,
       datasets: [
-        {
-          data,
-          backgroundColor: backgroundColors.slice(0, labels.length),
-          borderColor: '#181d27', // matching card background
-          borderWidth: 2
-        }
+        { data: incomeData, label: 'Income', backgroundColor: '#00d2ff', borderRadius: 4, barPercentage: 0.6 },
+        { data: expenseData, label: 'Expense', backgroundColor: '#ff5252', borderRadius: 4, barPercentage: 0.6 }
       ]
-    }
-  : {
-      labels: ['No expenses'],
-      datasets: [{ data: [1], backgroundColor: ['#ccc'] }]
     };
 
-// 🩵 Ensure the chart type is DOUGHNUT (runtime check without type error)
-if (this.pieChart?.chart) {
-  const chartInstance = this.pieChart.chart;
-  // If chart type is not doughnut, rebuild it correctly
-  if ((chartInstance as any).config.type !== 'doughnut') {
-    (chartInstance as any).destroy();
-    this.pieChart.chart = new (window as any).Chart(chartInstance.canvas, {
-      type: 'doughnut',
-      data: this.pieChartData,
-      options: this.pieChartOptions
-    });
-  } else {
-    chartInstance.data = this.pieChartData;
-    chartInstance.update();
+    // 2️⃣ Doughnut Chart: Expense Breakdown by Category from backend
+    const breakdown = data.expenseBreakdown ?? [];
+    const backgroundColors = [
+      '#00e676', '#00d2ff', '#a855f7', '#ff5252', '#ffca28',
+      '#00BCD4', '#8BC34A', '#FFC107', '#E91E63', '#3F51B5'
+    ];
+
+    if (breakdown.length > 0) {
+      const pieLabels = breakdown.map(b => b.category);
+      const pieValues = breakdown.map(b => b.amount);
+
+      this.pieLegendItems = breakdown.map((item, idx) => ({
+        label: item.category,
+        percentage: item.percentage.toFixed(0),
+        color: backgroundColors[idx % backgroundColors.length]
+      }));
+
+      this.pieChartData = {
+        labels: pieLabels,
+        datasets: [
+          {
+            data: pieValues,
+            backgroundColor: backgroundColors.slice(0, pieLabels.length),
+            borderColor: '#181d27',
+            borderWidth: 2
+          }
+        ]
+      };
+    } else {
+      this.pieLegendItems = [];
+      this.pieChartData = {
+        labels: ['No expenses'],
+        datasets: [{ data: [1], backgroundColor: ['#334155'] }]
+      };
+    }
+
+    // Force chart re-rendering safely
+    setTimeout(() => {
+      if (this.barChart?.chart) {
+        this.barChart.chart.update();
+      }
+      if (this.pieChart?.chart) {
+        this.pieChart.chart.update();
+      }
+    }, 100);
   }
-}
 
-
-// ✅ Force re-render
-setTimeout(() => {
-  if (this.barChart?.chart) {
-    this.barChart.chart.update();
-  }
-  if (this.pieChart?.chart) {
-    this.pieChart.chart.update();
-  }
-}, 100);
-
-
-
-  }
-
-  onIncomeAdded(data: any) {
+  onIncomeAdded(data: any): void {
     const payload = { ...data, date: new Date(data.date).toISOString() };
     this.txService.addIncome(payload).subscribe({
       next: () => {
         this.showIncome = false;
-        this.loadTransactions();
+        this.loadDashboardData();
       },
       error: (err) => {
         console.error('Error adding income', err);
@@ -247,12 +219,12 @@ setTimeout(() => {
     });
   }
 
-  onExpenseAdded(data: any) {
+  onExpenseAdded(data: any): void {
     const payload = { ...data, date: new Date(data.date).toISOString() };
     this.txService.addExpense(payload).subscribe({
       next: () => {
         this.showExpense = false;
-        this.loadTransactions();
+        this.loadDashboardData();
       },
       error: (err) => {
         console.error('Error adding expense', err);
