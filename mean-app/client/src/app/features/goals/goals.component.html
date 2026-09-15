@@ -1,0 +1,287 @@
+<div class="goals-page animate-fade-up">
+
+  <!-- Header Banner -->
+  <header class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Financial Goals & Milestones</h1>
+      <p class="page-subtitle">
+        Plan, track, and celebrate your savings milestones with automated progress tracking.
+      </p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-primary" (click)="openCreateModal()">
+        <span class="material-icons-round">add</span> Create Custom Goal
+      </button>
+    </div>
+  </header>
+
+  <!-- Metric Overview -->
+  <div class="summary-cards-grid">
+    <div class="metric-card">
+      <div class="card-icon gold-glow">
+        <span class="material-icons-round">emoji_events</span>
+      </div>
+      <div class="card-info">
+        <span class="card-label">Active Savings Goals</span>
+        <strong class="card-value">{{ goals.length }}</strong>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="card-icon green-glow">
+        <span class="material-icons-round">savings</span>
+      </div>
+      <div class="card-info">
+        <span class="card-label">Total Amount Saved</span>
+        <strong class="card-value">${{ totalSaved | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="card-icon blue-glow">
+        <span class="material-icons-round">flag</span>
+      </div>
+      <div class="card-info">
+        <span class="card-label">Total Target Value</span>
+        <strong class="card-value">${{ totalTarget | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popular Quick Goal Templates -->
+  <div class="templates-section">
+    <span class="templates-label">Quick Goal Suggestions:</span>
+    <div class="template-chips">
+      <button
+        type="button"
+        class="template-chip"
+        *ngFor="let t of popularTemplates"
+        (click)="openCreateModal(t)">
+        <span class="material-icons-round chip-icon">add_circle_outline</span>
+        <span class="chip-title">{{ t.name }}</span>
+        <span class="chip-amt">(${{ t.amount | number }})</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Goals Grid -->
+  <div class="goals-grid">
+    <!-- Loading State -->
+    <div class="empty-goals-state" *ngIf="loading">
+      <span class="material-icons-round spin-anim">autorenew</span>
+      <p>Loading your financial goals...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-goals-state" *ngIf="!loading && goals.length === 0">
+      <span class="material-icons-round empty-icon">savings</span>
+      <h3>No financial goals yet</h3>
+      <p>Set targets for a new laptop, emergency fund, or dream vacation.</p>
+      <button type="button" class="btn-primary" (click)="openCreateModal()" style="margin-top: 14px;">
+        <span class="material-icons-round">add</span> Create First Goal
+      </button>
+    </div>
+
+    <!-- Goal Cards -->
+    <div
+      class="goal-card"
+      *ngFor="let goal of goals"
+      [class.goal-completed]="goal.completed || calculateProgress(goal) >= 100">
+
+      <div class="goal-card-top">
+        <div class="goal-category-badge">
+          <span class="material-icons-round cat-icon">bookmark</span>
+          {{ goal.category || 'General' }}
+        </div>
+
+        <div class="goal-card-actions">
+          <button type="button" class="card-btn" (click)="openEditModal(goal)" title="Edit Goal">
+            <span class="material-icons-round">edit</span>
+          </button>
+          <button type="button" class="card-btn delete" (click)="deleteGoal(goal.id)" title="Delete Goal">
+            <span class="material-icons-round">delete</span>
+          </button>
+        </div>
+      </div>
+
+      <h3 class="goal-name">{{ goal.name }}</h3>
+
+      <!-- Progress Section with Circular Progress Graphic -->
+      <div class="progress-container">
+        <div class="circular-progress-wrap">
+          <svg class="progress-ring" width="80" height="80">
+            <circle
+              class="progress-ring-circle-bg"
+              stroke-width="7"
+              fill="transparent"
+              r="32"
+              cx="40"
+              cy="40"
+            />
+            <circle
+              class="progress-ring-circle"
+              stroke-width="7"
+              stroke-linecap="round"
+              fill="transparent"
+              r="32"
+              cx="40"
+              cy="40"
+              [style.strokeDasharray]="201"
+              [style.strokeDashoffset]="201 - (201 * calculateProgress(goal)) / 100"
+            />
+          </svg>
+          <span class="progress-percentage">{{ calculateProgress(goal) }}%</span>
+        </div>
+
+        <div class="progress-numbers">
+          <div class="num-row">
+            <span class="num-label">Saved</span>
+            <strong class="num-val current-val">${{ goal.currentAmount | number:'1.2-2' }}</strong>
+          </div>
+          <div class="num-row">
+            <span class="num-label">Target</span>
+            <span class="num-val">${{ goal.targetAmount | number:'1.2-2' }}</span>
+          </div>
+          <div class="num-row">
+            <span class="num-label">Remaining</span>
+            <span class="num-val rem-val">${{ (goal.targetAmount - goal.currentAmount > 0 ? goal.targetAmount - goal.currentAmount : 0) | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Linear Progress Bar -->
+      <div class="progress-track">
+        <div class="progress-fill" [style.width.%]="calculateProgress(goal)"></div>
+      </div>
+
+      <!-- Footer Info & Contribution Action -->
+      <div class="goal-card-footer">
+        <div class="deadline-info">
+          <span class="material-icons-round date-icon">event</span>
+          <span>{{ calculateDaysLeft(goal.deadline) }} days left</span>
+        </div>
+
+        <button
+          type="button"
+          class="btn-contribute"
+          (click)="openContributeModal(goal)">
+          <span class="material-icons-round">add_circle</span> Add Funds
+        </button>
+      </div>
+
+      <div class="completed-badge" *ngIf="goal.completed || calculateProgress(goal) >= 100">
+        <span class="material-icons-round">verified</span> Target Reached!
+      </div>
+    </div>
+  </div>
+
+  <!-- Create / Edit Goal Modal -->
+  <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ editingId ? 'Edit Financial Goal' : 'Create Financial Goal' }}</h3>
+        <button type="button" class="close-modal-btn" (click)="closeModal()">×</button>
+      </div>
+
+      <form [formGroup]="goalForm" (ngSubmit)="saveGoal()" class="modal-form">
+        <div class="form-group">
+          <label>Goal Name</label>
+          <input type="text" formControlName="name" placeholder="e.g. Buy Laptop, Vacation Fund, Emergency Cushion" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Target Amount ($)</label>
+            <input type="number" step="1" formControlName="targetAmount" placeholder="1000" />
+          </div>
+          <div class="form-group">
+            <label>Initial Savings ($)</label>
+            <input type="number" step="1" formControlName="currentAmount" placeholder="0" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category</label>
+            <select formControlName="category">
+              <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Target Deadline</label>
+            <input type="date" formControlName="deadline" />
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" (click)="closeModal()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="goalForm.invalid || isSubmitting">
+            <span *ngIf="!isSubmitting">{{ editingId ? 'Update Goal' : 'Save Goal' }}</span>
+            <span *ngIf="isSubmitting">Saving...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Contribute Deposit Modal -->
+  <div class="modal-backdrop" *ngIf="showContributeModal" (click)="closeContributeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Deposit to "{{ contributingGoal?.name }}"</h3>
+        <button type="button" class="close-modal-btn" (click)="closeContributeModal()">×</button>
+      </div>
+
+      <div class="contribute-body">
+        <p class="contribute-desc">
+          Current Balance: <strong>${{ contributingGoal?.currentAmount | number:'1.2-2' }}</strong> of ${{ contributingGoal?.targetAmount | number:'1.2-2' }}
+        </p>
+
+        <div class="form-group" style="margin-top: 14px;">
+          <label>Contribution Amount ($)</label>
+          <input type="number" [(ngModel)]="contributeAmount" min="1" step="10" placeholder="100" />
+        </div>
+
+        <div class="quick-deposit-presets">
+          <button type="button" class="preset-btn" (click)="contributeAmount = 50">+$50</button>
+          <button type="button" class="preset-btn" (click)="contributeAmount = 100">+$100</button>
+          <button type="button" class="preset-btn" (click)="contributeAmount = 250">+$250</button>
+          <button type="button" class="preset-btn" (click)="contributeAmount = 500">+$500</button>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 20px;">
+          <button type="button" class="btn-cancel" (click)="closeContributeModal()">Cancel</button>
+          <button type="button" class="btn-primary" [disabled]="isContributing || contributeAmount <= 0" (click)="submitContribution()">
+            <span *ngIf="!isContributing">Confirm Deposit</span>
+            <span *ngIf="isContributing">Processing...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Milestone Celebration Modal -->
+  <div class="modal-backdrop" *ngIf="showCelebrationModal" (click)="showCelebrationModal = false">
+    <div class="modal-card celebration-card" (click)="$event.stopPropagation()">
+      <div class="celebration-icon">🏆</div>
+      <h2>Target Achieved!</h2>
+      <p class="celebration-text">
+        You successfully reached 100% of your financial goal for <strong>"{{ completedGoalName }}"</strong>.
+      </p>
+      <button type="button" class="btn-primary celebrate-btn" (click)="showCelebrationModal = false">
+        Celebrate & Continue
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <aside class="corner-toast success" *ngIf="successMessage">
+    <div class="corner-toast-icon">
+      <span class="material-icons-round">check_circle</span>
+    </div>
+    <div class="corner-toast-body">
+      <strong class="corner-toast-title">Success</strong>
+      <span class="corner-toast-desc">{{ successMessage }}</span>
+    </div>
+  </aside>
+</div>

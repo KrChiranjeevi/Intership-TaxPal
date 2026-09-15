@@ -18,6 +18,8 @@ export class NotificationsComponent implements OnInit {
     taxReminders: false
   };
 
+  message: string = '';
+
   constructor(private notificationsService: NotificationsService) {}
 
   ngOnInit() {
@@ -26,15 +28,38 @@ export class NotificationsComponent implements OnInit {
 
   loadPreferences() {
     this.notificationsService.getPreferences().subscribe({
-      next: (prefs) => (this.settings = prefs),
+      next: (res) => {
+        const data = res?.data || res;
+        if (data) {
+          this.settings = {
+            emailNotifications: !!data.emailNotifications,
+            transactionAlerts: !!data.transactionAlerts,
+            budgetWarnings: !!data.budgetWarnings,
+            taxReminders: !!data.taxReminders
+          };
+        }
+      },
       error: (err) => console.error('Failed to load preferences', err)
     });
   }
 
   // Call this method whenever a toggle changes
   savePreferences() {
+    this.message = '';
     this.notificationsService.updatePreferences(this.settings).subscribe({
-      next: (updated) => (this.settings = updated),
+      next: (res) => {
+        const data = res?.data || res;
+        if (data) {
+          this.settings = {
+            emailNotifications: !!data.emailNotifications,
+            transactionAlerts: !!data.transactionAlerts,
+            budgetWarnings: !!data.budgetWarnings,
+            taxReminders: !!data.taxReminders
+          };
+        }
+        this.message = 'Notification preferences updated!';
+        setTimeout(() => (this.message = ''), 3000);
+      },
       error: (err) => console.error('Failed to update preferences', err)
     });
   }

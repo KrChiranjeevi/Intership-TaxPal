@@ -8,10 +8,14 @@ const router = Router();
 // Protect all routes
 router.use(authMiddleware);
 
-// Get user notification preferences
-router.get("/", notificationsController.getNotificationSettings);
+// User Notifications REST APIs
+router.get("/", notificationsController.getNotifications);
+router.patch("/read-all", notificationsController.markAllAsRead);
+router.patch("/:id/read", notificationsController.markAsRead);
+router.delete("/:id", notificationsController.deleteNotification);
 
-// Update user notification preferences
-router.put("/", notificationsController.updateNotificationSettings);
+// User notification preferences
+router.get("/settings", notificationsController.getNotificationSettings);
+router.put("/settings", notificationsController.updateNotificationSettings);
 
 export default router;

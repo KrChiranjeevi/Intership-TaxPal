@@ -9,6 +9,8 @@ import { AddExpenseComponent } from '../transactions/add-expense/add-expense.com
 import { TransactionService } from '@core/services/transaction.service';
 import { DashboardService, DashboardData, DashboardTransaction, DashboardPeriod } from '@core/services/dashboard.service';
 import { AiService, FinancialHealthSummary } from '@core/services/ai.service';
+import { RecurringService, RecurringTransaction } from '@core/services/recurring.service';
+import { GoalService, Goal } from '@core/services/goal.service';
 import { ChartConfiguration } from 'chart.js';
 
 @Component({
@@ -50,6 +52,11 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   isAiLoading = false;
   aiErrorMessage: string | null = null;
   private aiCache = new Map<string, FinancialHealthSummary>();
+
+  // Recurring & Goals Widgets State
+  upcomingRecurring: RecurringTransaction[] = [];
+  dashboardGoals: Goal[] = [];
+  isLoadingWidgets = false;
 
   public barChartOptions: ChartConfiguration['options'] = {
     responsive: true,
@@ -99,6 +106,8 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     private txService: TransactionService,
     private authService: AuthService,
     private aiService: AiService,
+    private recurringService: RecurringService,
+    private goalService: GoalService,
     private router: Router
   ) {}
 
@@ -126,6 +135,34 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     }
 
     this.loadDashboardData('monthly', true);
+    this.loadExtraWidgets();
+  }
+
+  loadExtraWidgets(): void {
+    this.isLoadingWidgets = true;
+    this.recurringService.getAll().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.upcomingRecurring = res.data
+            .filter(r => r.status === 'active')
+            .sort((a, b) => new Date(a.nextRun).getTime() - new Date(b.nextRun).getTime())
+            .slice(0, 4);
+        }
+      },
+      error: () => {}
+    });
+
+    this.goalService.getAll().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.dashboardGoals = res.data.slice(0, 3);
+        }
+        this.isLoadingWidgets = false;
+      },
+      error: () => {
+        this.isLoadingWidgets = false;
+      }
+    });
   }
 
   ngAfterViewInit(): void {

@@ -17,14 +17,24 @@ model User {
   createdAt            DateTime                 @default(now())
   username             String?                  @unique
   twoFactorEnabled     Boolean                  @default(false)
+  phone                String?
+  currency             String?                  @default("USD")
+  timezone             String?                  @default("UTC")
+  language             String?                  @default("en")
+  theme                String?                  @default("dark")
+  avatarUrl            String?
+  taxRegion            String?
   budgets              Budget[]
   categories           Category[]
   refreshTokens        RefreshToken[]
   transactions         Transaction[]
   notificationSettings UserNotificationSetting?
   taxEstimates         TaxEstimate[]
-  reports              Report[] // relation to Report
+  reports              Report[]
   passwordResetTokens  PasswordResetToken[]
+  notifications        Notification[]
+  recurringTransactions RecurringTransaction[]
+  goals                Goal[]
 }
 
 model RefreshToken {
@@ -158,3 +168,53 @@ model Report {
 
   @@index([userId])
 }
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String   // 'budget_exceeded' | 'budget_warning' | 'tax_reminder' | 'report_generated' | 'ai_recommendation' | 'monthly_summary' | 'goal_completed'
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isRead])
+}
+
+model RecurringTransaction {
+  id          String   @id @default(uuid())
+  userId      String
+  title       String
+  amount      Float
+  category    String?
+  type        String   // 'income' | 'expense'
+  frequency   String   // 'daily' | 'weekly' | 'monthly' | 'yearly'
+  nextRun     DateTime
+  status      String   @default("active") // 'active' | 'paused'
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status, nextRun])
+}
+
+model Goal {
+  id            String    @id @default(uuid())
+  userId        String
+  name          String
+  targetAmount  Float
+  currentAmount Float     @default(0)
+  category      String?
+  deadline      DateTime
+  completed     Boolean   @default(false)
+  completedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+

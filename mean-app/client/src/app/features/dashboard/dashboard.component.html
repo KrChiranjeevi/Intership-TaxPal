@@ -350,6 +350,88 @@
       </section>
     </ng-container>
 
+    <!-- Widgets Grid: Upcoming Recurring & Financial Goals -->
+    <div class="db-widgets-grid animate-fade-up delay-3">
+      <!-- Upcoming Recurring Payments Card -->
+      <section class="widget-card">
+        <div class="widget-header">
+          <div class="widget-title-wrap">
+            <span class="material-icons-round widget-icon blue-glow">event_repeat</span>
+            <div>
+              <h3 class="widget-title">Upcoming Recurring</h3>
+              <span class="widget-sub">Automated payment schedules</span>
+            </div>
+          </div>
+          <a routerLink="/recurring" class="widget-link">
+            View All <span class="material-icons-round">arrow_forward</span>
+          </a>
+        </div>
+
+        <div class="widget-body">
+          <div *ngIf="upcomingRecurring.length === 0" class="widget-empty">
+            <span class="material-icons-round">calendar_today</span>
+            <p>No active recurring schedules</p>
+            <a routerLink="/recurring" class="widget-empty-action">Setup Recurring Payment</a>
+          </div>
+
+          <div *ngIf="upcomingRecurring.length > 0" class="widget-items-list">
+            <div class="recurring-item-row" *ngFor="let item of upcomingRecurring">
+              <div class="item-badge-wrap">
+                <span class="freq-tag" [ngClass]="item.frequency">{{ item.frequency }}</span>
+              </div>
+              <div class="item-main">
+                <strong class="item-title">{{ item.title }}</strong>
+                <span class="item-due">Next run: {{ item.nextRun | date:'MMM d, y' }}</span>
+              </div>
+              <div class="item-amount" [class.expense-text]="item.type === 'expense'" [class.income-text]="item.type === 'income'">
+                {{ item.type === 'expense' ? '-' : '+' }}${{ item.amount | number:'1.2-2' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Financial Goals Summary Card -->
+      <section class="widget-card">
+        <div class="widget-header">
+          <div class="widget-title-wrap">
+            <span class="material-icons-round widget-icon gold-glow">emoji_events</span>
+            <div>
+              <h3 class="widget-title">Financial Goals</h3>
+              <span class="widget-sub">Target savings progress</span>
+            </div>
+          </div>
+          <a routerLink="/goals" class="widget-link">
+            View All <span class="material-icons-round">arrow_forward</span>
+          </a>
+        </div>
+
+        <div class="widget-body">
+          <div *ngIf="dashboardGoals.length === 0" class="widget-empty">
+            <span class="material-icons-round">flag</span>
+            <p>No active savings goals</p>
+            <a routerLink="/goals" class="widget-empty-action">Create Savings Goal</a>
+          </div>
+
+          <div *ngIf="dashboardGoals.length > 0" class="widget-items-list">
+            <div class="goal-item-row" *ngFor="let goal of dashboardGoals">
+              <div class="goal-item-header">
+                <span class="goal-title">{{ goal.title }}</span>
+                <span class="goal-percent">{{ goal.progressPercentage || ((goal.currentAmount / goal.targetAmount) * 100 | number:'1.0-0') }}%</span>
+              </div>
+              <div class="goal-progress-track">
+                <div class="goal-progress-fill" [style.width.%]="goal.progressPercentage || ((goal.currentAmount / goal.targetAmount) * 100)"></div>
+              </div>
+              <div class="goal-item-footer">
+                <span>${{ goal.currentAmount | number:'1.0-0' }} of ${{ goal.targetAmount | number:'1.0-0' }}</span>
+                <span class="goal-days-text">{{ goal.daysRemaining }} days left</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
     <!-- Recent Transactions -->
     <section class="db-transactions animate-fade-up delay-4">
       <div class="section-header">

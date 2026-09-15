@@ -13,7 +13,11 @@ import {
   requestPasswordReset,
   saveNewPassword,
   findUserByEmail,
+  changePassword,
+  exportUserData,
+  deleteUserAccount,
 } from './user.service.js';
+
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../../../utils/jwt.js';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -153,15 +157,58 @@ export async function updateProfileHandler(req: AuthRequest, res: Response) {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
-    const { name, username, country, incomeBracket } = req.body;
-    const updated = await updateUserProfile(userId, { name, username, country, incomeBracket });
-
+    const updated = await updateUserProfile(userId, req.body);
     return res.json({ success: true, data: updated, message: 'Profile updated successfully' });
-  } catch (err) {
-    console.error(err);
+  } catch (err: any) {
+    console.error('Update profile error:', err?.message || err);
     return res.status(500).json({ success: false, message: 'Failed to update profile' });
   }
 }
+
+// ------------------- CHANGE PASSWORD -------------------
+export async function changePasswordHandler(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword || newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters' });
+    }
+
+    await changePassword(userId, currentPassword, newPassword);
+    return res.json({ success: true, message: 'Password updated successfully' });
+  } catch (err: any) {
+    return res.status(400).json({ success: false, message: err?.message || 'Password update failed' });
+  }
+}
+
+// ------------------- EXPORT DATA -------------------
+export async function exportDataHandler(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const exportBundle = await exportUserData(userId);
+    return res.json({ success: true, data: exportBundle });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err?.message || 'Export failed' });
+  }
+}
+
+// ------------------- DELETE ACCOUNT -------------------
+export async function deleteAccountHandler(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    await deleteUserAccount(userId);
+    return res.json({ success: true, message: 'Account permanently deleted' });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err?.message || 'Account deletion failed' });
+  }
+}
+
 
 // ------------------- PASSWORD RESET -------------------
 export async function requestPasswordResetHandler(req: Request, res: Response) {

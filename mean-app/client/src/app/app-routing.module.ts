@@ -31,6 +31,8 @@ export const routes: Routes = [
       { path: 'budget', loadComponent: () => import('./features/budgets/budget.component').then(m => m.BudgetComponent) },
       { path: 'tax-estimator', loadComponent: () => import('./features/tax-estimator/tax-estimator.component').then(m => m.TaxEstimatorComponent) },
       { path: 'reports', loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent) },
+      { path: 'recurring', loadComponent: () => import('./features/recurring/recurring.component').then(m => m.RecurringComponent) },
+      { path: 'goals', loadComponent: () => import('./features/goals/goals.component').then(m => m.GoalsComponent) },
       {
         path: 'settings',
         loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent),

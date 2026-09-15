@@ -13,6 +13,8 @@ import securityRouter from './api/modules/security/security.routes.js';
 import taxEstimatorRoutes from './api/modules/tax/taxEstimator.routes.js';
 import reportsRoutes from './api/modules/reports/reports.routes.js';
 import aiRoutes from './api/modules/ai/ai.routes.js';
+import recurringRoutes from './api/modules/recurring/recurring.routes.js';
+import goalsRoutes from './api/modules/goals/goals.routes.js';
 
 dotenv.config();
 
@@ -64,6 +66,8 @@ app.use('/api/security', securityRouter);
 app.use('/api/tax-estimator', taxEstimatorRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/recurring-transactions', recurringRoutes);
+app.use('/api/goals', goalsRoutes);
 
 app.get("/", (_req, res) => {
   res.send("TaxPal Backend is running securely!");

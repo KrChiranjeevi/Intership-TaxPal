@@ -2,45 +2,121 @@
   <div class="panel-header">
     <div class="header-icon material-icons-round">person</div>
     <div class="header-text">
-      <h3>Profile Information</h3>
-      <p>Update your personal details below.</p>
+      <h3>Profile & Regional Preferences</h3>
+      <p>Manage your personal profile, regional currency, timezone, and appearance.</p>
     </div>
   </div>
 
   <form (ngSubmit)="saveChanges()" class="settings-form">
+    <!-- Avatar Section -->
+    <div class="avatar-section">
+      <div class="current-avatar-wrap">
+        <img [src]="user.avatarUrl || presetAvatars[0]" alt="Profile avatar" class="current-avatar" />
+      </div>
+      <div class="avatar-picker-content">
+        <label class="section-label">Select Avatar Preset</label>
+        <div class="avatar-presets">
+          <button
+            type="button"
+            class="avatar-preset-btn"
+            *ngFor="let av of presetAvatars"
+            [class.active]="user.avatarUrl === av"
+            (click)="selectAvatar(av)">
+            <img [src]="av" alt="Avatar option" />
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personal Info Row -->
     <div class="form-row">
       <div class="form-group">
-        <label for="firstName">First Name</label>
+        <label for="firstName">Full Name</label>
         <div class="input-wrap">
           <span class="material-icons-round input-icon">badge</span>
-          <input type="text" id="firstName" [(ngModel)]="user.name" name="name" placeholder="John" />
+          <input type="text" id="firstName" [(ngModel)]="user.name" name="name" placeholder="John Doe" />
         </div>
       </div>
       <div class="form-group">
-        <label for="lastName">Last Name (Username)</label>
+        <label for="username">Username</label>
         <div class="input-wrap">
           <span class="material-icons-round input-icon">account_circle</span>
-          <input type="text" id="lastName" [(ngModel)]="user.username" name="username" placeholder="Doe" />
+          <input type="text" id="username" [(ngModel)]="user.username" name="username" placeholder="johndoe" />
         </div>
       </div>
     </div>
 
     <div class="form-row">
-      <div class="form-group full-width">
+      <div class="form-group">
         <label for="email">Email Address</label>
         <div class="input-wrap">
           <span class="material-icons-round input-icon">email</span>
           <input type="email" id="email" [(ngModel)]="user.email" name="email" placeholder="john@example.com" />
         </div>
       </div>
-    </div>
-
-    <div class="form-row">
-      <div class="form-group full-width">
+      <div class="form-group">
         <label for="phone">Phone Number</label>
         <div class="input-wrap">
           <span class="material-icons-round input-icon">phone</span>
           <input type="tel" id="phone" [(ngModel)]="user.phone" name="phone" placeholder="+1 (555) 000-0000" />
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="country">Country</label>
+        <div class="input-wrap">
+          <span class="material-icons-round input-icon">public</span>
+          <input type="text" id="country" [(ngModel)]="user.country" name="country" placeholder="United States" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="currency">Default Currency</label>
+        <div class="input-wrap">
+          <span class="material-icons-round input-icon">payments</span>
+          <select id="currency" [(ngModel)]="user.currency" name="currency">
+            <option value="USD">USD ($ - US Dollar)</option>
+            <option value="EUR">EUR (€ - Euro)</option>
+            <option value="GBP">GBP (£ - British Pound)</option>
+            <option value="INR">INR (₹ - Indian Rupee)</option>
+            <option value="CAD">CAD ($ - Canadian Dollar)</option>
+            <option value="AUD">AUD ($ - Australian Dollar)</option>
+            <option value="JPY">JPY (¥ - Japanese Yen)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="timezone">Timezone</label>
+        <div class="input-wrap">
+          <span class="material-icons-round input-icon">schedule</span>
+          <select id="timezone" [(ngModel)]="user.timezone" name="timezone">
+            <option value="UTC">UTC (Coordinated Universal Time)</option>
+            <option value="America/New_York">Eastern Time (US & Canada)</option>
+            <option value="America/Chicago">Central Time (US & Canada)</option>
+            <option value="America/Los_Angeles">Pacific Time (US & Canada)</option>
+            <option value="Europe/London">London (GMT/BST)</option>
+            <option value="Asia/Kolkata">India Standard Time (IST)</option>
+            <option value="Asia/Tokyo">Tokyo (JST)</option>
+            <option value="Australia/Sydney">Sydney (AEST)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="language">Language</label>
+        <div class="input-wrap">
+          <span class="material-icons-round input-icon">translate</span>
+          <select id="language" [(ngModel)]="user.language" name="language">
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="hi">Hindi</option>
+            <option value="ja">Japanese</option>
+          </select>
         </div>
       </div>
     </div>
@@ -50,7 +126,7 @@
         <span class="material-icons-round">save</span>
         Save Changes
       </button>
-      <span class="status-msg" *ngIf="message" [class.success]="message.includes('success')">{{ message }}</span>
+      <span class="status-msg" *ngIf="message" [class.success]="isSuccess" [class.error]="!isSuccess">{{ message }}</span>
     </div>
   </form>
 </div>

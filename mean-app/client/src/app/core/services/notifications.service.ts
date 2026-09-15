@@ -30,12 +30,12 @@ export class NotificationsService {
   }
 
   // Get notification preferences for the current user
-  getPreferences(): Observable<NotificationSettings> {
-    return this.http.get<NotificationSettings>(this.apiUrl, this.getAuthHeaders());
+  getPreferences(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/settings`, this.getAuthHeaders());
   }
 
   // Update notification preferences
-  updatePreferences(settings: NotificationSettings): Observable<NotificationSettings> {
-    return this.http.put<NotificationSettings>(this.apiUrl, settings, this.getAuthHeaders());
+  updatePreferences(settings: NotificationSettings): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/settings`, settings, this.getAuthHeaders());
   }
 }

@@ -46,7 +46,20 @@ export async function findUserById(id: string) {
 
 export async function updateUserProfile(
   id: string,
-  data: { name?: string; username?: string; country?: string; incomeBracket?: string }
+  data: {
+    name?: string;
+    username?: string;
+    country?: string | null;
+    incomeBracket?: string | null;
+    phone?: string | null;
+    currency?: string | null;
+    timezone?: string | null;
+    language?: string | null;
+    theme?: string | null;
+    avatarUrl?: string | null;
+    taxRegion?: string | null;
+    twoFactorEnabled?: boolean;
+  }
 ) {
   const user = await prisma.user.update({
     where: { id },
@@ -55,11 +68,20 @@ export async function updateUserProfile(
       ...(data.username !== undefined && { username: data.username }),
       ...(data.country !== undefined && { country: data.country }),
       ...(data.incomeBracket !== undefined && { incomeBracket: data.incomeBracket }),
+      ...(data.phone !== undefined && { phone: data.phone }),
+      ...(data.currency !== undefined && { currency: data.currency }),
+      ...(data.timezone !== undefined && { timezone: data.timezone }),
+      ...(data.language !== undefined && { language: data.language }),
+      ...(data.theme !== undefined && { theme: data.theme }),
+      ...(data.avatarUrl !== undefined && { avatarUrl: data.avatarUrl }),
+      ...(data.taxRegion !== undefined && { taxRegion: data.taxRegion }),
+      ...(data.twoFactorEnabled !== undefined && { twoFactorEnabled: Boolean(data.twoFactorEnabled) }),
     },
   });
   const { password, ...rest } = user;
   return rest;
 }
+
 
 export async function validateUser(data: LoginDto) {
   const user = await prisma.user.findUnique({ where: { email: data.email } });
@@ -196,3 +218,97 @@ export async function saveNewPassword(data: ResetPasswordDto) {
   const { password, ...rest } = updated;
   return rest;
 }
+
+/**
+ * Changes password verifying the user's current password first.
+ */
+export async function changePassword(userId: string, currentPass: string, newPass: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new Error('User not found');
+
+  const matches = await bcrypt.compare(currentPass, user.password);
+  if (!matches) {
+    throw new Error('Current password does not match');
+  }
+
+  const hashed = await bcrypt.hash(newPass, Number(process.env.BCRYPT_SALT_ROUNDS || 10));
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashed },
+  });
+
+  return true;
+}
+
+/**
+ * Exports all user data across all tables into a structured export object.
+ */
+export async function exportUserData(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      username: true,
+      email: true,
+      country: true,
+      incomeBracket: true,
+      phone: true,
+      currency: true,
+      timezone: true,
+      language: true,
+      theme: true,
+      twoFactorEnabled: true,
+      createdAt: true,
+      transactions: {
+        select: { id: true, type: true, amount: true, category: true, description: true, date: true, notes: true }
+      },
+      budgets: {
+        select: { id: true, category: true, amount: true, spent: true, month: true, description: true }
+      },
+      categories: {
+        select: { id: true, name: true, type: true, color: true }
+      },
+      goals: {
+        select: { id: true, name: true, targetAmount: true, currentAmount: true, category: true, deadline: true, completed: true }
+      },
+      recurringTransactions: {
+        select: { id: true, title: true, amount: true, category: true, type: true, frequency: true, nextRun: true, status: true }
+      },
+      taxEstimates: true,
+      reports: {
+        select: { id: true, reportType: true, period: true, format: true, generatedAt: true }
+      }
+    }
+  });
+
+  return {
+    exportDate: new Date().toISOString(),
+    version: '1.0',
+    platform: 'TaxPal',
+    userData: user
+  };
+}
+
+/**
+ * Permanently deletes user account and cleans up all related records.
+ */
+export async function deleteUserAccount(userId: string) {
+  // Cascading deletes for user relations
+  await prisma.notification.deleteMany({ where: { userId } }).catch(() => {});
+  await prisma.goal.deleteMany({ where: { userId } }).catch(() => {});
+  await prisma.recurringTransaction.deleteMany({ where: { userId } }).catch(() => {});
+  await prisma.transaction.deleteMany({ where: { userId } }).catch(() => {});
+  await prisma.budget.deleteMany({ where: { userId } }).catch(() => {});
+  await prisma.category.deleteMany({ where: { userId } }).catch(() => {});
+  await prisma.taxEstimate.deleteMany({ where: { userId } }).catch(() => {});
+  await prisma.report.deleteMany({ where: { userId } }).catch(() => {});
+  await prisma.refreshToken.deleteMany({ where: { userId } }).catch(() => {});
+  await prisma.passwordResetToken.deleteMany({ where: { userId } }).catch(() => {});
+  await prisma.userNotificationSetting.deleteMany({ where: { userId } }).catch(() => {});
+
+  return await prisma.user.delete({
+    where: { id: userId }
+  });
+}
+

@@ -135,3 +135,235 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(18px);
 }
+
+.message {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  background: rgba(255, 255, 255, 0.05);
+
+  &.success {
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+  }
+
+  &.error {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+  }
+}
+
+// Data Export row
+.setting-row-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+
+  .btn-export {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+    padding: 0.55rem 1.15rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+
+    &:hover:not(:disabled) {
+      background: #3b82f6;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Danger Zone
+.danger-zone {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+
+  .danger-title {
+    color: #f87171;
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .btn-danger-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #f87171;
+    padding: 0.55rem 1.15rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+
+    &:hover {
+      background: #ef4444;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+    }
+  }
+}
+
+// Modal
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1.5rem;
+}
+
+.danger-modal {
+  background: #0f172a;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 1rem;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(239, 68, 68, 0.15);
+  overflow: hidden;
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #f87171;
+      margin: 0;
+    }
+
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .warning-text {
+      display: flex;
+      gap: 0.5rem;
+      color: #fca5a5;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      margin: 0;
+
+      span {
+        color: #ef4444;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+      }
+    }
+
+    .instruction-text {
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      margin: 0;
+
+      strong {
+        color: #f87171;
+      }
+    }
+
+    .confirmation-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0.75rem 1rem;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 0.5rem;
+      color: #f8fafc;
+      font-size: 0.95rem;
+
+      &:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+      }
+    }
+
+    .error-msg {
+      color: #f87171;
+      font-size: 0.825rem;
+    }
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.2);
+
+    .btn-cancel {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      padding: 0.6rem 1.15rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-confirm-delete {
+      background: #ef4444;
+      border: 1px solid #dc2626;
+      color: #ffffff;
+      padding: 0.6rem 1.25rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+
+      &:hover:not(:disabled) {
+        background: #dc2626;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+

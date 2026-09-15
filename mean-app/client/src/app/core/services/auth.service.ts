@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { tap, Observable, throwError } from 'rxjs';
 
@@ -11,7 +11,15 @@ export interface UserProfile {
   phone?: string;
   country?: string;
   incomeBracket?: string;
+  currency?: string;
+  timezone?: string;
+  language?: string;
+  theme?: string;
+  avatarUrl?: string;
+  taxRegion?: string;
+  twoFactorEnabled?: boolean;
 }
+
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -86,10 +94,67 @@ export class AuthService {
   }
 
   getProfile(): Observable<{ success: boolean; data: UserProfile }> {
-    return this.http.get<{ success: boolean; data: UserProfile }>(`${this.api}/profile`);
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${this.getToken()}`
+    });
+    return this.http.get<{ success: boolean; data: UserProfile }>(`${this.api}/profile`, { headers });
   }
 
   updateProfile(data: Partial<UserProfile>): Observable<{ success: boolean; data: UserProfile; message?: string }> {
-    return this.http.put<{ success: boolean; data: UserProfile; message?: string }>(`${this.api}/profile`, data);
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${this.getToken()}`
+    });
+    return this.http.put<{ success: boolean; data: UserProfile; message?: string }>(`${this.api}/profile`, data, { headers }).pipe(
+      tap((res) => {
+        if (res.data) {
+          const stored = localStorage.getItem('user');
+          const current = stored ? JSON.parse(stored) : {};
+          localStorage.setItem('user', JSON.stringify({ ...current, ...res.data }));
+        }
+      })
+    );
+  }
+
+  changePassword(currentPasswordOrDto: string | { currentPassword?: string; oldPassword?: string; newPassword: string }, newPasswordParam?: string): Observable<any> {
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${this.getToken()}`
+    });
+    let payload: any;
+    if (typeof currentPasswordOrDto === 'string') {
+      payload = {
+        oldPassword: currentPasswordOrDto,
+        currentPassword: currentPasswordOrDto,
+        newPassword: newPasswordParam
+      };
+    } else {
+      payload = {
+        oldPassword: currentPasswordOrDto.oldPassword || currentPasswordOrDto.currentPassword,
+        currentPassword: currentPasswordOrDto.currentPassword || currentPasswordOrDto.oldPassword,
+        newPassword: currentPasswordOrDto.newPassword
+      };
+    }
+    return this.http.post(`${this.api}/change-password`, payload, { headers });
+  }
+
+  exportData(): Observable<Blob> {
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${this.getToken()}`
+    });
+    return this.http.post(`${this.api}/export-data`, {}, {
+      headers,
+      responseType: 'blob' as 'json'
+    }) as Observable<Blob>;
+  }
+
+  deleteAccount(): Observable<any> {
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${this.getToken()}`
+    });
+    return this.http.delete(`${this.api}/account`, { headers }).pipe(
+      tap(() => {
+        this.logout();
+      })
+    );
   }
 }
+

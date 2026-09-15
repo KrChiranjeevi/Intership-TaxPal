@@ -1,28 +1,30 @@
-<div class="security-card">
-  <h3><span class="icon">🔒</span> Security Settings</h3>
+<div class="security-card animate-fade-up">
+  <h3><span class="material-icons-round sec-icon">lock</span> Password & Authentication</h3>
+  
   <form (ngSubmit)="updatePassword()">
     <div class="form-row">
-
       <div class="form-group full-width">
         <label for="currentPassword">Current Password</label>
-        <input type="password" id="currentPassword" class="text-input" [(ngModel)]="oldPassword" name="oldPassword"/>
+        <input type="password" id="currentPassword" class="text-input" [(ngModel)]="oldPassword" name="oldPassword" placeholder="Enter current password"/>
       </div>
 
       <div class="form-group full-width">
         <label for="newPassword">New Password</label>
-        <input type="password" id="newPassword" class="text-input" [(ngModel)]="newPassword" name="newPassword"/>
+        <input type="password" id="newPassword" class="text-input" [(ngModel)]="newPassword" name="newPassword" placeholder="Minimum 8 characters"/>
       </div>
 
       <div class="form-group full-width">
         <label for="confirmPassword">Confirm New Password</label>
-        <input type="password" id="confirmPassword" class="text-input" [(ngModel)]="confirmPassword" name="confirmPassword"/>
+        <input type="password" id="confirmPassword" class="text-input" [(ngModel)]="confirmPassword" name="confirmPassword" placeholder="Re-type new password"/>
       </div>
 
-      <button type="submit" class="save-btn">Update Password</button>
+      <button type="submit" class="save-btn">
+        <span class="material-icons-round">vpn_key</span> Update Password
+      </button>
     </div>
   </form>
 
-  <div *ngIf="message" class="message">{{ message }}</div>
+  <div *ngIf="message" class="message" [class.success]="isSuccess" [class.error]="!isSuccess">{{ message }}</div>
 
   <!-- Divider Line -->
   <div class="divider"></div>
@@ -30,12 +32,73 @@
   <!-- Two Factor Authentication -->
   <div class="form-group toggle-group">
     <div class="label-description">
-      <label for="twoFactorAuth">Two-Factor Authentication</label>
-      <p class="description-text">Add an extra layer of security to your account</p>
+      <label for="twoFactorAuth">Two-Factor Authentication (2FA)</label>
+      <p class="description-text">Add an extra layer of verification when logging into your account.</p>
     </div>
     <label class="switch">
       <input type="checkbox" id="twoFactorAuth" [(ngModel)]="twoFactorEnabled" (change)="toggleTwoFactor()" name="twoFactorAuth"/>
       <span class="slider round"></span>
     </label>
   </div>
+
+  <!-- Divider Line -->
+  <div class="divider"></div>
+
+  <!-- Data Privacy & Export -->
+  <div class="setting-row-action">
+    <div class="label-description">
+      <label>Export Account Data</label>
+      <p class="description-text">Download a complete JSON copy of your profile, transactions, budgets, goals, and records.</p>
+    </div>
+    <button type="button" class="btn-export" (click)="exportData()" [disabled]="isExporting">
+      <span class="material-icons-round">file_download</span>
+      {{ isExporting ? 'Exporting...' : 'Export Data (JSON)' }}
+    </button>
+  </div>
+
+  <!-- Divider Line -->
+  <div class="divider"></div>
+
+  <!-- Danger Zone -->
+  <div class="danger-zone">
+    <div class="label-description">
+      <label class="danger-title">Danger Zone: Delete Account</label>
+      <p class="description-text">Permanently delete your account, financial data, transactions, and preferences. This action cannot be undone.</p>
+    </div>
+    <button type="button" class="btn-danger-outline" (click)="openDeleteModal()">
+      <span class="material-icons-round">delete_forever</span> Delete Account
+    </button>
+  </div>
 </div>
+
+<!-- Delete Account Confirmation Modal -->
+<div class="modal-backdrop" *ngIf="showDeleteModal">
+  <div class="modal-dialog danger-modal">
+    <div class="modal-header">
+      <h4 class="modal-title">Delete Account Permanently?</h4>
+      <button type="button" class="close-btn" (click)="closeDeleteModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="warning-text">
+        <span class="material-icons-round">warning</span>
+        Warning: All your data, transactions, budgets, recurring schedules, and goals will be completely erased from TaxPal.
+      </p>
+      <p class="instruction-text">
+        To confirm this irreversible action, please type <strong>DELETE</strong> below:
+      </p>
+      <input
+        type="text"
+        class="confirmation-input"
+        [(ngModel)]="deleteConfirmationInput"
+        placeholder="Type DELETE to confirm" />
+      <span class="error-msg" *ngIf="deleteError">{{ deleteError }}</span>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-cancel" (click)="closeDeleteModal()" [disabled]="isDeleting">Cancel</button>
+      <button type="button" class="btn-confirm-delete" (click)="confirmDeleteAccount()" [disabled]="isDeleting">
+        {{ isDeleting ? 'Deleting...' : 'Permanently Delete My Account' }}
+      </button>
+    </div>
+  </div>
+</div>
+

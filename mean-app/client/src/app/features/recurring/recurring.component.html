@@ -1,0 +1,231 @@
+<div class="recurring-page animate-fade-up">
+
+  <!-- Header Banner -->
+  <header class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Recurring Payments & Subscriptions</h1>
+      <p class="page-subtitle">
+        Automate your scheduled incomes, bills, and subscriptions with periodic execution.
+      </p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-secondary" (click)="triggerProcessNow()">
+        <span class="material-icons-round">sync</span> Check Due Payments
+      </button>
+      <button type="button" class="btn-primary" (click)="openCreateModal()">
+        <span class="material-icons-round">add</span> New Recurring
+      </button>
+    </div>
+  </header>
+
+  <!-- Metric Summary Cards -->
+  <div class="summary-cards-grid">
+    <div class="metric-card">
+      <div class="card-icon blue-glow">
+        <span class="material-icons-round">repeat</span>
+      </div>
+      <div class="card-info">
+        <span class="card-label">Active Recurring Rules</span>
+        <strong class="card-value">{{ recurringList.length }}</strong>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="card-icon green-glow">
+        <span class="material-icons-round">account_balance_wallet</span>
+      </div>
+      <div class="card-info">
+        <span class="card-label">Estimated Monthly Outflow</span>
+        <strong class="card-value">${{ totalMonthlyCommitment | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="card-icon cyan-glow">
+        <span class="material-icons-round">schedule</span>
+      </div>
+      <div class="card-info">
+        <span class="card-label">Automated Cron</span>
+        <strong class="card-value">Hourly Active</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <h3>Scheduled Recurring Rules</h3>
+      <span class="table-count">{{ recurringList.length }} total</span>
+    </div>
+
+    <!-- Loading State -->
+    <div class="table-state" *ngIf="loading">
+      <span class="material-icons-round spin-anim">autorenew</span>
+      <p>Loading recurring transactions...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div class="table-state" *ngIf="!loading && recurringList.length === 0">
+      <span class="material-icons-round empty-icon">event_repeat</span>
+      <h4>No recurring payments yet</h4>
+      <p>Add subscriptions, rent, insurance, or salaries to automate tracking.</p>
+      <button type="button" class="btn-primary" (click)="openCreateModal()" style="margin-top: 12px;">
+        <span class="material-icons-round">add</span> Add First Rule
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive" *ngIf="!loading && recurringList.length > 0">
+      <table class="recurring-table">
+        <thead>
+          <tr>
+            <th>Title & Category</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Frequency</th>
+            <th>Next Scheduled Run</th>
+            <th>Status</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of recurringList" [class.paused-row]="item.status === 'paused'">
+            <td>
+              <div class="title-cell">
+                <span class="rule-icon material-icons-round" [class.is-income]="item.type === 'income'">
+                  {{ item.type === 'income' ? 'arrow_downward' : 'arrow_upward' }}
+                </span>
+                <div>
+                  <strong class="rule-title">{{ item.title }}</strong>
+                  <span class="rule-category">{{ item.category || 'General' }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="type-pill" [class.income]="item.type === 'income'" [class.expense]="item.type === 'expense'">
+                {{ item.type | uppercase }}
+              </span>
+            </td>
+            <td>
+              <strong class="amount-val" [class.income-val]="item.type === 'income'">
+                {{ item.type === 'income' ? '+' : '-' }}${{ item.amount | number:'1.2-2' }}
+              </strong>
+            </td>
+            <td>
+              <span class="frequency-badge frequency-{{ item.frequency }}">
+                {{ item.frequency | titlecase }}
+              </span>
+            </td>
+            <td>
+              <span class="next-run-text">
+                <span class="material-icons-round" style="font-size: 14px; vertical-align: -2px;">event</span>
+                {{ item.nextRun | date:'mediumDate' }}
+              </span>
+            </td>
+            <td>
+              <span class="status-pill status-{{ item.status }}">
+                <span class="status-dot"></span>
+                {{ item.status | titlecase }}
+              </span>
+            </td>
+            <td class="actions-col">
+              <div class="action-btns-wrap">
+                <button
+                  type="button"
+                  class="tbl-action-btn"
+                  [title]="item.status === 'active' ? 'Pause Rule' : 'Resume Rule'"
+                  (click)="toggleStatus(item)">
+                  <span class="material-icons-round">{{ item.status === 'active' ? 'pause' : 'play_arrow' }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="tbl-action-btn"
+                  title="Edit Rule"
+                  (click)="openEditModal(item)">
+                  <span class="material-icons-round">edit</span>
+                </button>
+                <button
+                  type="button"
+                  class="tbl-action-btn delete"
+                  title="Delete Rule"
+                  (click)="deleteRecurring(item.id)">
+                  <span class="material-icons-round">delete</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Create / Edit Modal -->
+  <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ editingId ? 'Edit Recurring Payment' : 'Create Recurring Payment' }}</h3>
+        <button type="button" class="close-modal-btn" (click)="closeModal()">×</button>
+      </div>
+
+      <form [formGroup]="recurringForm" (ngSubmit)="saveRecurring()" class="modal-form">
+        <div class="form-group">
+          <label>Title / Description</label>
+          <input type="text" formControlName="title" placeholder="e.g. Netflix Subscription, Apartment Rent" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Amount ($)</label>
+            <input type="number" step="0.01" formControlName="amount" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label>Type</label>
+            <select formControlName="type">
+              <option value="expense">Expense (Outgoing)</option>
+              <option value="income">Income (Incoming)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category</label>
+            <select formControlName="category">
+              <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Repeat Frequency</label>
+            <select formControlName="frequency">
+              <option *ngFor="let f of frequencies" [value]="f.value">{{ f.label }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Start / Next Run Date</label>
+          <input type="date" formControlName="startDate" />
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" (click)="closeModal()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="recurringForm.invalid || isSubmitting">
+            <span *ngIf="!isSubmitting">{{ editingId ? 'Update Rule' : 'Save Rule' }}</span>
+            <span *ngIf="isSubmitting">Saving...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <aside class="corner-toast success" *ngIf="successMessage">
+    <div class="corner-toast-icon">
+      <span class="material-icons-round">check_circle</span>
+    </div>
+    <div class="corner-toast-body">
+      <strong class="corner-toast-title">Success</strong>
+      <span class="corner-toast-desc">{{ successMessage }}</span>
+    </div>
+  </aside>
+</div>

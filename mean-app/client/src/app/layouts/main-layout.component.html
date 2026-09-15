@@ -11,6 +11,7 @@
 
     <!-- Navigation -->
     <nav class="sidebar-nav">
+      <div class="nav-section-label">Core Management</div>
       <ul class="nav-list">
         <li class="nav-item" routerLink="/dashboard" routerLinkActive="active"
             [routerLinkActiveOptions]="{ exact: true }" (click)="closeModals()">
@@ -21,10 +22,22 @@
           <span class="nav-icon material-icons-round">credit_card</span>
           <span class="nav-label">Transactions</span>
         </li>
+        <li class="nav-item" routerLink="/recurring" routerLinkActive="active" (click)="closeModals()">
+          <span class="nav-icon material-icons-round">event_repeat</span>
+          <span class="nav-label">Recurring</span>
+        </li>
+        <li class="nav-item" routerLink="/goals" routerLinkActive="active" (click)="closeModals()">
+          <span class="nav-icon material-icons-round">flag</span>
+          <span class="nav-label">Financial Goals</span>
+        </li>
         <li class="nav-item" routerLink="/budget" routerLinkActive="active" (click)="closeModals()">
           <span class="nav-icon material-icons-round">pie_chart_outline</span>
           <span class="nav-label">Budget</span>
         </li>
+      </ul>
+
+      <div class="nav-section-label" style="margin-top: 18px;">Taxes & Analytics</div>
+      <ul class="nav-list">
         <li class="nav-item" routerLink="/tax-estimator" routerLinkActive="active" (click)="closeModals()">
           <span class="nav-icon material-icons-round">receipt_long</span>
           <span class="nav-label">Tax Estimation</span>
@@ -38,11 +51,12 @@
 
     <!-- Sidebar Footer / User Profile -->
     <div class="sidebar-footer">
-      <div class="user-profile">
-        <div class="user-avatar">{{ userInitials }}</div>
+      <div class="user-profile" routerLink="/settings/profile" (click)="closeModals()" style="cursor: pointer;">
+        <div class="user-avatar" *ngIf="!avatarUrl">{{ userInitials }}</div>
+        <img [src]="avatarUrl" *ngIf="avatarUrl" class="user-avatar-img" alt="Avatar" />
         <div class="user-info">
           <span class="user-name">{{ userName }}</span>
-          <span class="user-role">Premium User</span>
+          <span class="user-role">Verified Account</span>
         </div>
       </div>
       <div class="footer-actions">
@@ -60,6 +74,141 @@
 
   <!-- Main content area -->
   <main class="main-content">
-    <router-outlet></router-outlet>
+    <!-- Top Professional Navbar Header -->
+    <header class="top-navbar">
+      <div class="top-navbar-left">
+        <button class="menu-toggle-btn" (click)="toggleSidebar()" aria-label="Toggle navigation">
+          <span class="material-icons-round">menu</span>
+        </button>
+        <div class="page-context">
+          <span class="brand-badge">TaxPal Pro</span>
+          <span class="breadcrumb-separator">/</span>
+          <span class="current-route-title">{{ currentRouteTitle }}</span>
+        </div>
+      </div>
+
+      <div class="top-navbar-right">
+        <!-- Notification Center Bell Trigger -->
+        <div class="notification-trigger-wrap" #notificationWrap>
+          <button
+            type="button"
+            class="notification-bell-btn"
+            [class.bell-shake]="hasNewNotification"
+            (click)="toggleNotifications()"
+            aria-label="View notifications">
+            <span class="material-icons-round bell-icon">notifications</span>
+            <span class="unread-badge badge-pulse" *ngIf="unreadCount > 0">
+              {{ unreadCount > 99 ? '99+' : unreadCount }}
+            </span>
+          </button>
+
+          <!-- Notification Center Dropdown -->
+          <div class="notification-dropdown" *ngIf="notificationsOpen" #dropdownEl>
+            <div class="dropdown-header">
+              <div class="header-title-row">
+                <div class="title-with-count">
+                  <h4 class="dropdown-title">Notification Center</h4>
+                  <span class="unread-chip" *ngIf="unreadCount > 0">{{ unreadCount }} unread</span>
+                </div>
+                <button
+                  type="button"
+                  class="mark-all-btn"
+                  *ngIf="unreadCount > 0"
+                  (click)="markAllAsRead()">
+                  <span class="material-icons-round">done_all</span> Mark all read
+                </button>
+              </div>
+
+              <!-- Tabs: All vs Unread -->
+              <div class="notification-tabs">
+                <button
+                  type="button"
+                  class="tab-btn"
+                  [class.active]="notificationFilter === 'all'"
+                  (click)="setFilter('all')">
+                  All
+                </button>
+                <button
+                  type="button"
+                  class="tab-btn"
+                  [class.active]="notificationFilter === 'unread'"
+                  (click)="setFilter('unread')">
+                  Unread <span class="tab-count" *ngIf="unreadCount > 0">({{ unreadCount }})</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Notification Items List -->
+            <div class="notification-list">
+              <div class="empty-notifications" *ngIf="filteredNotifications.length === 0">
+                <span class="material-icons-round empty-icon">notifications_none</span>
+                <p class="empty-title">All caught up!</p>
+                <p class="empty-desc">No {{ notificationFilter === 'unread' ? 'unread ' : '' }}notifications at this time.</p>
+              </div>
+
+              <div
+                class="notification-item"
+                *ngFor="let item of filteredNotifications"
+                [class.unread]="!item.isRead">
+                <div class="item-type-icon" [ngClass]="'type-' + item.type">
+                  <span class="material-icons-round" *ngIf="item.type === 'budget_exceeded'">error</span>
+                  <span class="material-icons-round" *ngIf="item.type === 'budget_warning'">warning</span>
+                  <span class="material-icons-round" *ngIf="item.type === 'tax_reminder'">receipt_long</span>
+                  <span class="material-icons-round" *ngIf="item.type === 'report_generated'">check_circle</span>
+                  <span class="material-icons-round" *ngIf="item.type === 'ai_recommendation'">auto_awesome</span>
+                  <span class="material-icons-round" *ngIf="item.type === 'monthly_summary'">insights</span>
+                  <span class="material-icons-round" *ngIf="item.type === 'goal_completed'">emoji_events</span>
+                </div>
+
+                <div class="item-content">
+                  <div class="item-header">
+                    <strong class="item-title">{{ item.title }}</strong>
+                    <span class="item-time">{{ item.createdAt | date:'shortTime' }}</span>
+                  </div>
+                  <p class="item-message">{{ item.message }}</p>
+                </div>
+
+                <div class="item-actions">
+                  <button
+                    type="button"
+                    class="action-icon-btn check-btn"
+                    *ngIf="!item.isRead"
+                    (click)="markAsRead(item.id, $event)"
+                    title="Mark as read">
+                    <span class="material-icons-round">check</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="action-icon-btn delete-btn"
+                    (click)="deleteNotification(item.id, $event)"
+                    title="Delete notification">
+                    <span class="material-icons-round">close</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="dropdown-footer">
+              <span class="footer-note">Real-time alerts powered by TaxPal Core</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Avatar Profile Thumbnail -->
+        <div class="top-user-pill" routerLink="/settings/profile" title="View Profile">
+          <div class="user-avatar-sm" *ngIf="!avatarUrl">{{ userInitials }}</div>
+          <img [src]="avatarUrl" *ngIf="avatarUrl" class="user-avatar-img-sm" alt="Avatar" />
+          <div class="top-user-meta">
+            <span class="top-user-name">{{ userName }}</span>
+            <span class="top-user-badge">PRO</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Routed Page Content -->
+    <div class="content-body">
+      <router-outlet></router-outlet>
+    </div>
   </main>
 </div>
