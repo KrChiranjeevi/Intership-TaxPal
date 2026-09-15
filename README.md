@@ -18,6 +18,21 @@ Key capabilities provided:
 
 ---
 
+## 📚 Technical Documentation
+
+Complete engineering and interview documentation is available in the [`docs/`](./docs/) directory:
+
+- **[Project Overview](docs/PROJECT_OVERVIEW.md)**: Executive summary, problem statement, solution, and core modules.
+- **[System Architecture](docs/ARCHITECTURE.md)**: Layered architecture, security flows, data models, and database indexing.
+- **[REST API Specification](docs/API.md)**: Comprehensive endpoint documentation with request/response schemas.
+- **[Environment Configuration](docs/ENVIRONMENT.md)**: Detailed environment variable guide for local and production setups.
+- **[Interview Walkthrough & Demo Guide](docs/INTERVIEW_EXPLANATION.md)**: 30-second and 2-minute project explanations with live demo flow.
+- **[Technical Q&A & Engineering Challenges](docs/INTERVIEW_TECHNICAL_QA.md)**: In-depth answers to 25+ technical interview questions.
+- **[Resume Bullets](docs/RESUME_BULLETS.md)**: Tailored, ATS-friendly resume bullets for Full Stack, SDE, and Data roles.
+- **[STAR Stories](docs/INTERVIEW_STAR_STORIES.md)**: Seven structured behavioral and technical engineering stories.
+
+---
+
 ## Architecture
 
 TaxPal is architected as a clean, decoupled client-server web application using standard layered design patterns.
