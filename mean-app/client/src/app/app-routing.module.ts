@@ -8,7 +8,11 @@ import { ForgotPasswordComponent } from './features/users/pages/forgot-password/
 import { ResetPasswordComponent } from './features/users/pages/reset-password/reset-password.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  {
+    path: '',
+    loadComponent: () => import('./features/landing/landing.component').then(m => m.LandingComponent),
+    pathMatch: 'full'
+  },
 
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
