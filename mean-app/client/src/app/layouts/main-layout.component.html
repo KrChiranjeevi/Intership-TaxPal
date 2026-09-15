@@ -47,6 +47,14 @@
           <span class="nav-label">Reports</span>
         </li>
       </ul>
+
+      <div *ngIf="isAdmin" class="nav-section-label" style="margin-top: 18px; color: #c084fc;">Administration</div>
+      <ul *ngIf="isAdmin" class="nav-list">
+        <li class="nav-item" routerLink="/admin" routerLinkActive="active" (click)="closeModals()">
+          <span class="nav-icon material-icons-round" style="color: #c084fc;">admin_panel_settings</span>
+          <span class="nav-label" style="color: #c084fc;">Admin Portal</span>
+        </li>
+      </ul>
     </nav>
 
     <!-- Sidebar Footer / User Profile -->
@@ -74,6 +82,9 @@
 
   <!-- Main content area -->
   <main class="main-content">
+    <!-- Offline Indicator Ribbon & PWA Prompt -->
+    <app-offline-banner></app-offline-banner>
+
     <!-- Top Professional Navbar Header -->
     <header class="top-navbar">
       <div class="top-navbar-left">
@@ -211,4 +222,12 @@
       <router-outlet></router-outlet>
     </div>
   </main>
+
+  <!-- Floating AI Financial Assistant -->
+  <app-ai-assistant></app-ai-assistant>
+
+  <!-- Global Keyboard Shortcuts Modal & Trigger -->
+  <app-keyboard-shortcuts></app-keyboard-shortcuts>
+
 </div>
+

@@ -2,6 +2,7 @@
 import type { Response } from "express";
 import type { AuthRequest } from "../../middlewares/auth.middleware.js";
 import * as notificationsService from "./notifications.service.js";
+import { prisma } from "../../../config/prisma.client.js";
 
 /**
  * GET /api/notifications
@@ -131,5 +132,45 @@ export const updateNotificationSettings = async (req: AuthRequest, res: Response
   } catch (err: any) {
     console.error("Error updating notification settings:", err);
     return res.status(500).json({ success: false, message: err?.message || "Server error" });
+  }
+};
+
+/**
+ * POST /api/notifications/test-email
+ */
+export const sendTestEmail = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, name: true }
+    });
+
+    if (!user || !user.email) {
+      return res.status(404).json({ success: false, message: "User or email not found" });
+    }
+
+    const { sendEmail, weeklySummaryTemplate } = await import("../email/email.service.js");
+    const sent = await sendEmail({
+      to: user.email,
+      subject: "TaxPal — Test Email Notification",
+      html: weeklySummaryTemplate(user.name || "Valued User", 12500, 4320, 8180, "Groceries & Utilities"),
+      text: "This is a test notification from TaxPal. Your email notifications are configured successfully!"
+    });
+
+    return res.status(200).json({
+      success: true,
+      delivered: sent,
+      message: sent
+        ? `Test notification sent to ${user.email}!`
+        : `Email service tested: simulated delivery logged (configure SMTP in .env for live inbox delivery).`
+    });
+  } catch (err: any) {
+    console.error("Error sending test email:", err);
+    return res.status(500).json({ success: false, message: err?.message || "Failed to trigger test email" });
   }
 };

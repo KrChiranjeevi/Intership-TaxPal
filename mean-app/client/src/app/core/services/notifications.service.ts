@@ -38,4 +38,9 @@ export class NotificationsService {
   updatePreferences(settings: NotificationSettings): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/settings`, settings, this.getAuthHeaders());
   }
+
+  // Trigger test email notification
+  sendTestEmail(): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/test-email`, {}, this.getAuthHeaders());
+  }
 }

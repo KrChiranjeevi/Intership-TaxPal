@@ -56,5 +56,29 @@
       </div>
 
     </div>
+
+    <!-- Email Diagnostics & Test Trigger -->
+    <div class="email-test-section" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h4 style="margin: 0; font-size: 0.95rem; font-weight: 600; color: #f1f5f9;">Test Email Delivery</h4>
+          <p style="margin: 4px 0 0; font-size: 0.8rem; color: #94a3b8;">Send a simulated or live preview digest to your registered email.</p>
+        </div>
+        <button type="button" 
+                (click)="sendTestEmail()" 
+                [disabled]="sendingTestEmail || !settings.emailNotifications"
+                style="padding: 9px 18px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; border: none; cursor: pointer; background: linear-gradient(135deg, #00d2ff, #3a7bd5); color: white; display: flex; align-items: center; gap: 8px; opacity: settings.emailNotifications ? 1 : 0.5;">
+          <span *ngIf="sendingTestEmail" class="spinner" style="display:inline-block; width:12px; height:12px; border:2px solid #fff; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite;"></span>
+          <span>{{ sendingTestEmail ? 'Sending...' : '📨 Send Test Email' }}</span>
+        </button>
+      </div>
+
+      <div *ngIf="testEmailMessage" style="padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; background: rgba(0, 210, 255, 0.1); border: 1px solid rgba(0, 210, 255, 0.3); color: #38bdf8;">
+        {{ testEmailMessage }}
+      </div>
+      <div *ngIf="message" style="padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); color: #4ade80;">
+        {{ message }}
+      </div>
+    </div>
   </form>
 </div>

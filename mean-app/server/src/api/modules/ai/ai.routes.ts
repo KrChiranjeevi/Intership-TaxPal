@@ -5,7 +5,8 @@ import { aiLimiter } from '../../middlewares/rateLimit.middleware.js';
 import {
   categorizeTransaction,
   getFinancialSummary,
-  getTaxSuggestions
+  getTaxSuggestions,
+  chatWithAssistant
 } from './ai.controller.js';
 
 const router = Router();
@@ -19,4 +20,8 @@ router.get('/financial-summary', authMiddleware, aiLimiter, getFinancialSummary)
 // Endpoint for AI tax deduction & savings suggestions
 router.post('/tax-suggestions', authMiddleware, aiLimiter, getTaxSuggestions);
 
+// Endpoint for floating AI financial assistant chat
+router.post('/chat', authMiddleware, aiLimiter, chatWithAssistant);
+
 export default router;
+

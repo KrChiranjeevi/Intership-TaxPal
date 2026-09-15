@@ -24,6 +24,8 @@ model User {
   theme                String?                  @default("dark")
   avatarUrl            String?
   taxRegion            String?
+  role                 String?                  @default("USER")
+  isActive             Boolean                  @default(true)
   budgets              Budget[]
   categories           Category[]
   refreshTokens        RefreshToken[]

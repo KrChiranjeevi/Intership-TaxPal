@@ -18,6 +18,8 @@ export interface UserProfile {
   avatarUrl?: string;
   taxRegion?: string;
   twoFactorEnabled?: boolean;
+  role?: string;
+  isActive?: boolean;
 }
 
 
@@ -79,6 +81,25 @@ export class AuthService {
 
   saveRefreshToken(token: string) { localStorage.setItem('refreshToken', token); }
   getRefreshToken(): string | null { return localStorage.getItem('refreshToken'); }
+
+  getUser(): UserProfile | null {
+    const raw = localStorage.getItem('user');
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  isLoggedIn(): boolean {
+    return !!this.getToken();
+  }
+
+  isAdmin(): boolean {
+    const user = this.getUser();
+    return user?.role === 'ADMIN';
+  }
 
   logout() {
     const refreshToken = this.getRefreshToken();

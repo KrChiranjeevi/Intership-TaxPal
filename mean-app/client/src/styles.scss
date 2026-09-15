@@ -486,3 +486,28 @@ html, body {
   }
 }
 
+/* ── UNIVERSAL SKELETON SHIMMER SYSTEM ───────────────────────── */
+.skeleton-shimmer, .skeleton-pulse {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.09) 37%,
+    rgba(255, 255, 255, 0.04) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmerWave 1.4s ease infinite;
+  border-radius: 6px;
+  display: inline-block;
+  color: transparent !important;
+  user-select: none;
+}
+
+@keyframes shimmerWave {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+

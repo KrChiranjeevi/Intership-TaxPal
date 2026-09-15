@@ -62,6 +62,93 @@ export interface DashboardResponse {
   message?: string;
 }
 
+// Advanced Analytics types
+export interface TrendPoint {
+  month: string;
+  value: number;
+  change: number | null;
+}
+
+export interface CashFlowPoint {
+  month: string;
+  value: number;
+  positive: boolean;
+}
+
+export interface SavingsTrendPoint {
+  month: string;
+  value: number;
+}
+
+export interface QuarterlyPoint {
+  label: string;
+  income: number;
+  expense: number;
+  net: number;
+}
+
+export interface YearlyComparison {
+  current: { year: number; income: number; expense: number };
+  prior: { year: number; income: number; expense: number };
+  incomeGrowth: number | null;
+  expenseGrowth: number | null;
+}
+
+export interface MonthlyComparison {
+  month: string;
+  currentIncome: number;
+  currentExpense: number;
+  priorIncome: number;
+  priorExpense: number;
+}
+
+export interface TopCategory {
+  category: string;
+  amount: number;
+}
+
+export interface BiggestExpense {
+  id: string;
+  amount: number;
+  category: string;
+  description: string;
+  date: string;
+}
+
+export interface IncomeSource {
+  source: string;
+  amount: number;
+}
+
+export interface Prediction {
+  nextMonthExpense: number;
+  nextMonthIncome: number;
+  projectedSavings: number;
+}
+
+export interface AdvancedAnalytics {
+  incomeTrend: TrendPoint[];
+  expenseTrend: TrendPoint[];
+  cashFlow: CashFlowPoint[];
+  savingsTrend: SavingsTrendPoint[];
+  categoryGrowth: Record<string, number>;
+  monthlyComparison: MonthlyComparison[];
+  quarterlyComparison: QuarterlyPoint[];
+  yearlyComparison: YearlyComparison;
+  topCategories: TopCategory[];
+  biggestExpense: BiggestExpense | null;
+  highestIncomeSource: IncomeSource | null;
+  averageDailySpending: number;
+  prediction: Prediction;
+  year: number;
+}
+
+export interface AnalyticsResponse {
+  success: boolean;
+  data: AdvancedAnalytics;
+  message?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -77,5 +164,10 @@ export class DashboardService {
 
     return this.http.get<DashboardResponse>(this.apiUrl, { params });
   }
-}
 
+  getAdvancedAnalytics(year?: number): Observable<AnalyticsResponse> {
+    let params = new HttpParams();
+    if (year) params = params.set('year', year.toString());
+    return this.http.get<AnalyticsResponse>(`${this.apiUrl}/analytics`, { params });
+  }
+}

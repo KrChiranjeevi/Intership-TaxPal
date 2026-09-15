@@ -19,6 +19,8 @@ export class NotificationsComponent implements OnInit {
   };
 
   message: string = '';
+  sendingTestEmail: boolean = false;
+  testEmailMessage: string = '';
 
   constructor(private notificationsService: NotificationsService) {}
 
@@ -61,6 +63,23 @@ export class NotificationsComponent implements OnInit {
         setTimeout(() => (this.message = ''), 3000);
       },
       error: (err) => console.error('Failed to update preferences', err)
+    });
+  }
+
+  sendTestEmail() {
+    this.sendingTestEmail = true;
+    this.testEmailMessage = '';
+    this.notificationsService.sendTestEmail().subscribe({
+      next: (res) => {
+        this.sendingTestEmail = false;
+        this.testEmailMessage = res?.message || 'Test email dispatched!';
+        setTimeout(() => (this.testEmailMessage = ''), 6000);
+      },
+      error: (err) => {
+        this.sendingTestEmail = false;
+        this.testEmailMessage = 'Failed to send test email. Check server configuration.';
+        setTimeout(() => (this.testEmailMessage = ''), 5000);
+      }
     });
   }
 }

@@ -1048,3 +1048,21 @@
   }
 }
 
+/* ── Advanced Analytics Section ───────────────────────────────── */
+.db-analytics-section {
+  margin-top: 2rem;
+  background: var(--surface, #0f172a);
+  border: 1px solid var(--border-color, #1e2847);
+  border-radius: 20px;
+  padding: 1.75rem 2rem;
+
+  .section-header {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #1a2035;
+    padding-bottom: 1rem;
+  }
+}
+
+.delay-5 {
+  animation-delay: 0.5s;
+}

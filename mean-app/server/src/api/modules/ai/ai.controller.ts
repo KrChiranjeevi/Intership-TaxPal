@@ -334,3 +334,109 @@ export async function getTaxSuggestions(req: AuthRequest, res: Response) {
     });
   }
 }
+
+/**
+ * POST /api/ai/chat
+ * Floating AI Financial Assistant proxy — sends user message with financial context to Gemini
+ */
+export async function chatWithAssistant(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const apiKey = process.env.AI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(503).json({ success: false, message: 'AI assistant is not configured.' });
+    }
+
+    const { message, history } = req.body ?? {};
+    if (!message || typeof message !== 'string' || !message.trim()) {
+      return res.status(400).json({ success: false, message: 'Message is required.' });
+    }
+
+    // Fetch last 90 days of transactions for context
+    const since = new Date();
+    since.setDate(since.getDate() - 90);
+    const transactions = await prisma.transaction.findMany({
+      where: { userId, date: { gte: since } },
+      orderBy: { date: 'desc' },
+      take: 60,
+      select: { type: true, amount: true, category: true, description: true, date: true }
+    });
+
+    const totalIncome  = transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
+    const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+    const netSavings   = totalIncome - totalExpense;
+
+    const topCategories: Record<string, number> = {};
+    transactions.filter(t => t.type === 'expense').forEach(t => {
+      const cat = t.category || 'Uncategorized';
+      topCategories[cat] = (topCategories[cat] || 0) + Number(t.amount);
+    });
+    const topCatStr = Object.entries(topCategories)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([cat, amt]) => `${cat}: ₹${amt.toFixed(0)}`)
+      .join(', ');
+
+    const systemContext = `You are TaxPal AI, a personal finance assistant. 
+The user's financial data for the last 90 days:
+- Total Income: ₹${totalIncome.toFixed(2)}
+- Total Expenses: ₹${totalExpense.toFixed(2)}
+- Net Savings: ₹${netSavings.toFixed(2)}
+- Top Expense Categories: ${topCatStr || 'No data yet'}
+- Total Transactions: ${transactions.length}
+
+Answer only finance-related questions (spending, savings, tax, budget advice). 
+Be concise and helpful. Use ₹ for currency. Format numbers nicely.
+If asked something unrelated to finance, politely redirect to financial topics.`;
+
+    // Build Gemini chat history
+    const chatHistory: Array<{ role: string; parts: Array<{ text: string }> }> = [
+      { role: 'user', parts: [{ text: systemContext }] },
+      { role: 'model', parts: [{ text: 'Understood! I am TaxPal AI, ready to help with your finances.' }] }
+    ];
+
+    if (Array.isArray(history)) {
+      for (const msg of history.slice(-10)) { // last 10 messages for context
+        if (msg.role === 'user' || msg.role === 'model') {
+          chatHistory.push({ role: msg.role, parts: [{ text: String(msg.text || '') }] });
+        }
+      }
+    }
+
+    const requestBody = {
+      contents: [
+        ...chatHistory,
+        { role: 'user', parts: [{ text: message.trim() }] }
+      ],
+      generationConfig: { maxOutputTokens: 512, temperature: 0.7 }
+    };
+
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const geminiRes = await fetch(geminiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!geminiRes.ok) {
+      return res.status(502).json({ success: false, message: 'AI service is temporarily unavailable.' });
+    }
+
+    const geminiData = await geminiRes.json() as any;
+    const reply = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!reply) {
+      return res.status(502).json({ success: false, message: 'AI service returned an empty response.' });
+    }
+
+    return res.json({ success: true, reply: reply.trim() });
+  } catch (err) {
+    console.error('AI chat error:', err);
+    return res.status(500).json({ success: false, message: 'AI assistant encountered an error.' });
+  }
+}
+

@@ -1,0 +1,311 @@
+<section class="analytics-panel">
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="analytics-loading">
+    <div class="skeleton-row">
+      <div class="skeleton-card" *ngFor="let i of [1,2,3,4]"></div>
+    </div>
+    <div class="skeleton-chart"></div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!loading && error" class="analytics-error">
+    <span class="material-icons">bar_chart</span>
+    <p>{{ error }}</p>
+  </div>
+
+  <!-- Main Content -->
+  <ng-container *ngIf="!loading && !error && analytics">
+
+    <!-- ── INSIGHT METRIC CARDS ──────────────────────────── -->
+    <div class="insight-cards">
+      <div class="insight-card">
+        <div class="insight-icon daily"><span class="material-icons">today</span></div>
+        <div class="insight-body">
+          <span class="insight-label">Avg Daily Spend</span>
+          <span class="insight-value">{{ formatCurrency(analytics.averageDailySpending) }}</span>
+        </div>
+      </div>
+
+      <div class="insight-card" *ngIf="analytics.biggestExpense">
+        <div class="insight-icon biggest"><span class="material-icons">trending_up</span></div>
+        <div class="insight-body">
+          <span class="insight-label">Biggest Expense</span>
+          <span class="insight-value">{{ formatCurrency(analytics.biggestExpense.amount) }}</span>
+          <span class="insight-sub">{{ analytics.biggestExpense.category }}</span>
+        </div>
+      </div>
+
+      <div class="insight-card" *ngIf="analytics.highestIncomeSource">
+        <div class="insight-icon income"><span class="material-icons">savings</span></div>
+        <div class="insight-body">
+          <span class="insight-label">Top Income Source</span>
+          <span class="insight-value">{{ formatCurrency(analytics.highestIncomeSource.amount) }}</span>
+          <span class="insight-sub">{{ analytics.highestIncomeSource.source }}</span>
+        </div>
+      </div>
+
+      <div class="insight-card prediction-card">
+        <div class="insight-icon predict"><span class="material-icons">auto_graph</span></div>
+        <div class="insight-body">
+          <span class="insight-label">Next Month Forecast</span>
+          <span class="insight-value">{{ formatCurrency(analytics.prediction.nextMonthExpense) }}</span>
+          <span class="insight-sub">
+            Projected savings: {{ formatCurrency(analytics.prediction.projectedSavings) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB BAR ────────────────────────────────────────── -->
+    <div class="analytics-tabs">
+      <button class="tab-btn" [class.active]="activeTab === 'trends'" (click)="setTab('trends')">
+        <span class="material-icons">show_chart</span> Trends
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'comparison'" (click)="setTab('comparison')">
+        <span class="material-icons">compare_arrows</span> Comparison
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'categories'" (click)="setTab('categories')">
+        <span class="material-icons">category</span> Categories
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'insights'" (click)="setTab('insights')">
+        <span class="material-icons">lightbulb</span> Insights
+      </button>
+    </div>
+
+    <!-- ── TRENDS TAB ─────────────────────────────────────── -->
+    <div *ngIf="activeTab === 'trends'" class="tab-content">
+      <div class="charts-grid">
+        <div class="chart-card span-full">
+          <div class="chart-header">
+            <h3>Income vs Expense Trend</h3>
+            <span class="chart-period">{{ analytics.year }}</span>
+          </div>
+          <div class="chart-body">
+            <canvas baseChart #trendChart
+              [data]="trendChartData"
+              [options]="trendChartOptions"
+              type="line">
+            </canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header"><h3>Monthly Cash Flow</h3></div>
+          <div class="chart-body">
+            <canvas baseChart #cashFlowChart
+              [data]="cashFlowChartData"
+              [options]="cashFlowChartOptions"
+              type="bar">
+            </canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header"><h3>Savings Rate (%)</h3></div>
+          <div class="chart-body">
+            <canvas baseChart #savingsChart
+              [data]="savingsChartData"
+              [options]="savingsChartOptions"
+              type="line">
+            </canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── COMPARISON TAB ─────────────────────────────────── -->
+    <div *ngIf="activeTab === 'comparison'" class="tab-content">
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header"><h3>Quarterly Comparison</h3></div>
+          <div class="chart-body">
+            <canvas baseChart #quarterlyChart
+              [data]="quarterlyChartData"
+              [options]="quarterlyChartOptions"
+              type="bar">
+            </canvas>
+          </div>
+        </div>
+
+        <div class="chart-card yearly-comparison">
+          <div class="chart-header"><h3>Year-on-Year Comparison</h3></div>
+          <div class="yoy-grid">
+            <!-- Current Year -->
+            <div class="yoy-col current">
+              <span class="yoy-year">{{ analytics.yearlyComparison.current.year }}</span>
+              <div class="yoy-stat income">
+                <span class="yoy-label">Income</span>
+                <span class="yoy-val">{{ formatCurrency(analytics.yearlyComparison.current.income) }}</span>
+              </div>
+              <div class="yoy-stat expense">
+                <span class="yoy-label">Expense</span>
+                <span class="yoy-val">{{ formatCurrency(analytics.yearlyComparison.current.expense) }}</span>
+              </div>
+            </div>
+
+            <!-- Growth indicators -->
+            <div class="yoy-arrows">
+              <div class="growth-badge" [class.positive]="(analytics.yearlyComparison.incomeGrowth ?? 0) >= 0">
+                <span class="material-icons">{{ (analytics.yearlyComparison.incomeGrowth ?? 0) >= 0 ? 'arrow_upward' : 'arrow_downward' }}</span>
+                {{ yearOnYearIncomeLabel }}
+              </div>
+              <div class="growth-badge expense-badge" [class.positive]="(analytics.yearlyComparison.expenseGrowth ?? 0) < 0">
+                <span class="material-icons">{{ (analytics.yearlyComparison.expenseGrowth ?? 0) >= 0 ? 'arrow_upward' : 'arrow_downward' }}</span>
+                {{ yearOnYearExpenseLabel }}
+              </div>
+            </div>
+
+            <!-- Prior Year -->
+            <div class="yoy-col prior">
+              <span class="yoy-year">{{ analytics.yearlyComparison.prior.year }}</span>
+              <div class="yoy-stat income">
+                <span class="yoy-label">Income</span>
+                <span class="yoy-val">{{ formatCurrency(analytics.yearlyComparison.prior.income) }}</span>
+              </div>
+              <div class="yoy-stat expense">
+                <span class="yoy-label">Expense</span>
+                <span class="yoy-val">{{ formatCurrency(analytics.yearlyComparison.prior.expense) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monthly Comparison Table -->
+        <div class="chart-card span-full monthly-table-card">
+          <div class="chart-header"><h3>Month-by-Month Comparison (vs prior year)</h3></div>
+          <div class="monthly-table-wrap">
+            <table class="monthly-table">
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Income {{ analytics.year }}</th>
+                  <th>Income {{ analytics.year - 1 }}</th>
+                  <th>Expense {{ analytics.year }}</th>
+                  <th>Expense {{ analytics.year - 1 }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of analytics.monthlyComparison">
+                  <td>{{ row.month.slice(0, 3) }}</td>
+                  <td class="income-cell">{{ formatCurrency(row.currentIncome) }}</td>
+                  <td class="muted-cell">{{ formatCurrency(row.priorIncome) }}</td>
+                  <td class="expense-cell">{{ formatCurrency(row.currentExpense) }}</td>
+                  <td class="muted-cell">{{ formatCurrency(row.priorExpense) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CATEGORIES TAB ─────────────────────────────────── -->
+    <div *ngIf="activeTab === 'categories'" class="tab-content">
+      <div class="charts-grid">
+        <!-- Top Categories bars -->
+        <div class="chart-card span-full">
+          <div class="chart-header"><h3>Top Expense Categories</h3></div>
+          <div class="category-bars">
+            <ng-container *ngFor="let cat of analytics.topCategories; let i = index">
+              <div class="cat-row">
+                <span class="cat-rank">#{{ i + 1 }}</span>
+                <span class="cat-name">{{ cat.category }}</span>
+                <div class="cat-bar-wrap">
+                  <div class="cat-bar"
+                    [style.width.%]="analytics.topCategories[0].amount > 0 ? (cat.amount / analytics.topCategories[0].amount * 100) : 0">
+                  </div>
+                </div>
+                <span class="cat-amount">{{ formatCurrency(cat.amount) }}</span>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- Category Growth -->
+        <div class="chart-card span-full" *ngIf="categoryGrowthEntries.length > 0">
+          <div class="chart-header"><h3>Category Growth vs Last Month</h3></div>
+          <div class="cat-growth-grid">
+            <div class="cat-growth-item" *ngFor="let item of categoryGrowthEntries"
+              [class.grew]="item.change > 0" [class.shrunk]="item.change < 0">
+              <span class="cgi-name">{{ item.cat }}</span>
+              <span class="cgi-badge">
+                <span class="material-icons">{{ item.change >= 0 ? 'trending_up' : 'trending_down' }}</span>
+                {{ formatPercent(item.change) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── INSIGHTS TAB ───────────────────────────────────── -->
+    <div *ngIf="activeTab === 'insights'" class="tab-content">
+      <div class="insights-grid">
+        <!-- Prediction card -->
+        <div class="insight-full-card prediction">
+          <div class="ifc-header">
+            <span class="material-icons">auto_graph</span>
+            <h3>Next Month Prediction</h3>
+          </div>
+          <div class="prediction-values">
+            <div class="pv-item">
+              <span class="pv-label">Predicted Income</span>
+              <span class="pv-val income">{{ formatCurrency(analytics.prediction.nextMonthIncome) }}</span>
+            </div>
+            <div class="pv-item">
+              <span class="pv-label">Predicted Expenses</span>
+              <span class="pv-val expense">{{ formatCurrency(analytics.prediction.nextMonthExpense) }}</span>
+            </div>
+            <div class="pv-item">
+              <span class="pv-label">Projected Savings</span>
+              <span class="pv-val" [class.income]="analytics.prediction.projectedSavings >= 0" [class.expense]="analytics.prediction.projectedSavings < 0">
+                {{ formatCurrency(analytics.prediction.projectedSavings) }}
+              </span>
+            </div>
+          </div>
+          <p class="prediction-note">Based on 3-month rolling average.</p>
+        </div>
+
+        <!-- Biggest expense info -->
+        <div class="insight-full-card" *ngIf="analytics.biggestExpense">
+          <div class="ifc-header">
+            <span class="material-icons">receipt_long</span>
+            <h3>Biggest Single Expense</h3>
+          </div>
+          <div class="ifc-detail">
+            <span class="ifc-amount expense">{{ formatCurrency(analytics.biggestExpense.amount) }}</span>
+            <span class="ifc-cat">{{ analytics.biggestExpense.category }}</span>
+            <span class="ifc-desc" *ngIf="analytics.biggestExpense.description">{{ analytics.biggestExpense.description }}</span>
+            <span class="ifc-date">{{ analytics.biggestExpense.date | date:'mediumDate' }}</span>
+          </div>
+        </div>
+
+        <!-- Highest income source -->
+        <div class="insight-full-card" *ngIf="analytics.highestIncomeSource">
+          <div class="ifc-header">
+            <span class="material-icons">account_balance_wallet</span>
+            <h3>Highest Income Source</h3>
+          </div>
+          <div class="ifc-detail">
+            <span class="ifc-amount income">{{ formatCurrency(analytics.highestIncomeSource.amount) }}</span>
+            <span class="ifc-cat">{{ analytics.highestIncomeSource.source }}</span>
+          </div>
+        </div>
+
+        <!-- Avg daily spending info -->
+        <div class="insight-full-card">
+          <div class="ifc-header">
+            <span class="material-icons">today</span>
+            <h3>Average Daily Spending</h3>
+          </div>
+          <div class="ifc-detail">
+            <span class="ifc-amount expense">{{ formatCurrency(analytics.averageDailySpending) }}</span>
+            <span class="ifc-sub">per day this month</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+</section>

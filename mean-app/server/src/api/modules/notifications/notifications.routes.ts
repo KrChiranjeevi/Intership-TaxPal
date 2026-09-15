@@ -17,5 +17,6 @@ router.delete("/:id", notificationsController.deleteNotification);
 // User notification preferences
 router.get("/settings", notificationsController.getNotificationSettings);
 router.put("/settings", notificationsController.updateNotificationSettings);
+router.post("/test-email", notificationsController.sendTestEmail);
 
 export default router;

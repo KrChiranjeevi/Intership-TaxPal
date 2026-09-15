@@ -3,12 +3,22 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { Subscription, filter } from 'rxjs';
 import { NotificationService, AppNotification } from '@core/services/notification.service';
+import { AiAssistantComponent } from '../shared/ai-assistant/ai-assistant.component';
+import { OfflineBannerComponent } from '../shared/components/offline-banner/offline-banner.component';
+import { KeyboardShortcutsComponent } from '../shared/components/keyboard-shortcuts/keyboard-shortcuts.component';
 import gsap from 'gsap';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, RouterOutlet],
+  imports: [
+    CommonModule,
+    RouterModule,
+    RouterOutlet,
+    AiAssistantComponent,
+    OfflineBannerComponent,
+    KeyboardShortcutsComponent
+  ],
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.scss']
 })
@@ -21,6 +31,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   userInitials = 'U';
   avatarUrl: string | null = null;
   currentRouteTitle = 'Dashboard';
+  isAdmin = false;
 
   notificationsOpen = false;
   notifications: AppNotification[] = [];
@@ -79,9 +90,11 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
         this.userName = user.name || user.username || user.email || 'User';
         this.userInitials = this.userName.substring(0, 2).toUpperCase();
         this.avatarUrl = user.avatarUrl || null;
+        this.isAdmin = user.role === 'ADMIN';
       } catch {
         this.userName = 'User';
         this.userInitials = 'U';
+        this.isAdmin = false;
       }
     }
   }
@@ -94,6 +107,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     else if (url.includes('/budget')) this.currentRouteTitle = 'Budgeting';
     else if (url.includes('/tax-estimator')) this.currentRouteTitle = 'Tax Estimator';
     else if (url.includes('/reports')) this.currentRouteTitle = 'Financial Reports';
+    else if (url.includes('/admin')) this.currentRouteTitle = 'Admin Portal';
     else if (url.includes('/settings')) this.currentRouteTitle = 'Settings';
     else this.currentRouteTitle = 'Overview';
   }

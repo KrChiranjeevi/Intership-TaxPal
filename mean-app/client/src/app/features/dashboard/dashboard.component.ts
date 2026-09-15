@@ -11,12 +11,13 @@ import { DashboardService, DashboardData, DashboardTransaction, DashboardPeriod 
 import { AiService, FinancialHealthSummary } from '@core/services/ai.service';
 import { RecurringService, RecurringTransaction } from '@core/services/recurring.service';
 import { GoalService, Goal } from '@core/services/goal.service';
+import { AnalyticsComponent } from './analytics/analytics.component';
 import { ChartConfiguration } from 'chart.js';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, NgChartsModule, AddIncomeComponent, AddExpenseComponent, RouterModule],
+  imports: [CommonModule, NgChartsModule, AddIncomeComponent, AddExpenseComponent, RouterModule, AnalyticsComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })

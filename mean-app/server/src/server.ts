@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import app from './app.js';
 import { prisma } from './config/prisma.client.js';
 import { initRecurringCron } from './jobs/recurring.cron.js';
+import { startReminderScheduler } from './api/modules/email/reminder.cron.js';
 
 dotenv.config();
 
@@ -13,6 +14,7 @@ prisma.$connect()
     console.log('✅ Database connection established successfully.');
     // Start background jobs once DB connects
     initRecurringCron();
+    startReminderScheduler();
   })
   .catch((err) => {
     console.error('❌ Database connection failed:', err.message || err);

@@ -1,0 +1,19 @@
+{
+  "name": "TaxPal — Intelligent Financial Management",
+  "short_name": "TaxPal",
+  "description": "Production-grade personal finance, AI insights, budget tracking, tax estimation, and reports platform.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0f1e",
+  "theme_color": "#00d2ff",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["finance", "productivity", "utilities"]
+}

@@ -1,0 +1,317 @@
+<div class="admin-dashboard-container">
+
+  <!-- ── HEADER ────────────────────────────────────────────────────────── -->
+  <header class="admin-header">
+    <div class="header-titles">
+      <div class="badge-pill">
+        <span class="status-dot"></span>
+        <span>Platform Administration</span>
+      </div>
+      <h1 class="page-title">Admin Command Center</h1>
+      <p class="page-subtitle">Platform governance, user provisioning, and systemic financial analytics.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-action" (click)="loadAnalytics(); loadUsers()" [disabled]="loadingAnalytics || loadingUsers">
+        <span class="material-icons" [class.spin]="loadingAnalytics || loadingUsers">refresh</span>
+        <span>Refresh Platform</span>
+      </button>
+      <a routerLink="/dashboard" class="btn-back">
+        <span class="material-icons">arrow_back</span>
+        <span>User App</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Alerts -->
+  <div *ngIf="message" class="alert-success">
+    <span class="material-icons">check_circle</span>
+    <span>{{ message }}</span>
+  </div>
+  <div *ngIf="errorMessage" class="alert-error">
+    <span class="material-icons">error</span>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- ── METRICS GRID ────────────────────────────────────────────────── -->
+  <section class="metrics-grid">
+    <!-- Total Users -->
+    <div class="metric-card">
+      <div class="metric-icon-wrap blue">
+        <span class="material-icons">people</span>
+      </div>
+      <div class="metric-details">
+        <span class="metric-label">Total Registered Users</span>
+        <div class="metric-value">
+          <span *ngIf="!loadingAnalytics">{{ analytics?.metrics?.totalUsers ?? 0 | number }}</span>
+          <span *ngIf="loadingAnalytics" class="skeleton-shimmer">---</span>
+        </div>
+        <div class="metric-sub">
+          <span class="dot-green"></span> {{ analytics?.metrics?.activeUsers ?? 0 }} active
+          <span class="dot-red" style="margin-left: 8px;"></span> {{ analytics?.metrics?.inactiveUsers ?? 0 }} deactivated
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Transaction Volume -->
+    <div class="metric-card">
+      <div class="metric-icon-wrap emerald">
+        <span class="material-icons">account_balance_wallet</span>
+      </div>
+      <div class="metric-details">
+        <span class="metric-label">Total Platform Volume</span>
+        <div class="metric-value">
+          <span *ngIf="!loadingAnalytics">₹{{ analytics?.metrics?.totalVolume ?? 0 | number:'1.2-2' }}</span>
+          <span *ngIf="loadingAnalytics" class="skeleton-shimmer">---</span>
+        </div>
+        <div class="metric-sub">
+          {{ analytics?.metrics?.totalTransactions ?? 0 | number }} recorded transactions
+        </div>
+      </div>
+    </div>
+
+    <!-- Income vs Expense Ratio -->
+    <div class="metric-card">
+      <div class="metric-icon-wrap purple">
+        <span class="material-icons">query_stats</span>
+      </div>
+      <div class="metric-details">
+        <span class="metric-label">Average Transaction Size</span>
+        <div class="metric-value">
+          <span *ngIf="!loadingAnalytics">₹{{ analytics?.metrics?.averageTransaction ?? 0 | number:'1.2-2' }}</span>
+          <span *ngIf="loadingAnalytics" class="skeleton-shimmer">---</span>
+        </div>
+        <div class="metric-sub">
+          Income: ₹{{ analytics?.metrics?.totalIncomeVolume ?? 0 | number:'1.0-0' }} • Spend: ₹{{ analytics?.metrics?.totalExpenseVolume ?? 0 | number:'1.0-0' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Budgets & Reports -->
+    <div class="metric-card">
+      <div class="metric-icon-wrap amber">
+        <span class="material-icons">pie_chart</span>
+      </div>
+      <div class="metric-details">
+        <span class="metric-label">Budgets & Reports</span>
+        <div class="metric-value">
+          <span *ngIf="!loadingAnalytics">{{ (analytics?.metrics?.totalBudgets ?? 0) + (analytics?.metrics?.totalReports ?? 0) | number }}</span>
+          <span *ngIf="loadingAnalytics" class="skeleton-shimmer">---</span>
+        </div>
+        <div class="metric-sub">
+          {{ analytics?.metrics?.totalBudgets ?? 0 }} budgets • {{ analytics?.metrics?.totalReports ?? 0 }} reports
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── MAIN CONTENT: USERS TABLE & DEMOGRAPHICS ─────────────────────── -->
+  <div class="admin-main-grid">
+
+    <!-- USER MANAGEMENT SECTION -->
+    <section class="admin-panel user-mgmt-panel">
+      <div class="panel-top">
+        <div class="panel-header-info">
+          <h2>User Governance & Access Control</h2>
+          <span class="user-count-tag">{{ totalUsersCount }} users enrolled</span>
+        </div>
+
+        <!-- Filters Bar -->
+        <div class="table-controls">
+          <div class="search-input-wrap">
+            <span class="material-icons">search</span>
+            <input type="text"
+                   [(ngModel)]="searchQuery"
+                   (ngModelChange)="onSearchChange()"
+                   placeholder="Search by name, email, or username..." />
+            <button *ngIf="searchQuery" (click)="searchQuery=''; onSearchChange()" class="clear-search">
+              <span class="material-icons">close</span>
+            </button>
+          </div>
+
+          <div class="filter-selects">
+            <select [(ngModel)]="selectedRole" (change)="onFilterChange()" class="custom-select">
+              <option value="">All Roles</option>
+              <option value="ADMIN">Admins Only</option>
+              <option value="USER">Standard Users</option>
+            </select>
+
+            <select [(ngModel)]="selectedStatus" (change)="onFilterChange()" class="custom-select">
+              <option value="">All Statuses</option>
+              <option value="active">Active Only</option>
+              <option value="inactive">Deactivated Only</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users Table -->
+      <div class="table-responsive">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Country</th>
+              <th>Joined</th>
+              <th>Activity</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="loadingUsers">
+              <td colspan="7" class="loading-state">
+                <span class="spinner"></span>
+                <span>Loading user directory...</span>
+              </td>
+            </tr>
+
+            <tr *ngIf="!loadingUsers && users.length === 0">
+              <td colspan="7" class="empty-state">
+                <span class="material-icons">person_off</span>
+                <p>No users found matching current filters.</p>
+              </td>
+            </tr>
+
+            <tr *ngFor="let u of users" [class.row-inactive]="!u.isActive">
+              <!-- User info -->
+              <td>
+                <div class="user-cell">
+                  <div class="avatar-badge" [class.admin-avatar]="u.role === 'ADMIN'">
+                    {{ getInitials(u.name) }}
+                  </div>
+                  <div class="user-meta">
+                    <span class="user-name">{{ u.name }}</span>
+                    <span class="user-email">{{ u.email }}</span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Country -->
+              <td>
+                <span class="country-pill">{{ u.country || 'Global' }}</span>
+              </td>
+
+              <!-- Joined -->
+              <td class="text-muted">
+                {{ u.createdAt | date:'MMM d, y' }}
+              </td>
+
+              <!-- Activity count -->
+              <td>
+                <span class="activity-badge">
+                  {{ u._count?.transactions ?? 0 }} txns
+                </span>
+              </td>
+
+              <!-- Role -->
+              <td>
+                <span class="role-badge" [class.admin]="u.role === 'ADMIN'">
+                  {{ u.role }}
+                </span>
+              </td>
+
+              <!-- Status -->
+              <td>
+                <span class="status-badge" [class.active]="u.isActive" [class.inactive]="!u.isActive">
+                  <span class="dot"></span>
+                  {{ u.isActive ? 'Active' : 'Deactivated' }}
+                </span>
+              </td>
+
+              <!-- Actions -->
+              <td class="text-right">
+                <div class="actions-group">
+                  <!-- Toggle Role -->
+                  <button class="btn-icon"
+                          (click)="toggleUserRole(u)"
+                          [disabled]="actionLoading || u.id === currentAdminId"
+                          title="Toggle Role (USER / ADMIN)">
+                    <span class="material-icons">admin_panel_settings</span>
+                  </button>
+
+                  <!-- Toggle Active Status -->
+                  <button class="btn-icon"
+                          [class.warn]="u.isActive"
+                          [class.success]="!u.isActive"
+                          (click)="toggleUserStatus(u)"
+                          [disabled]="actionLoading || u.id === currentAdminId"
+                          [title]="u.isActive ? 'Deactivate User' : 'Reactivate User'">
+                    <span class="material-icons">{{ u.isActive ? 'block' : 'check_circle' }}</span>
+                  </button>
+
+                  <!-- Delete User -->
+                  <button class="btn-icon danger"
+                          (click)="deleteUser(u)"
+                          [disabled]="actionLoading || u.id === currentAdminId"
+                          title="Delete User Permanently">
+                    <span class="material-icons">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination-bar" *ngIf="totalPages > 1">
+        <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+        <div class="pagination-buttons">
+          <button (click)="prevPage()" [disabled]="currentPage === 1" class="btn-page">
+            <span class="material-icons">chevron_left</span> Previous
+          </button>
+          <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="btn-page">
+            Next <span class="material-icons">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- DEMOGRAPHICS & RECENT SIGNUPS SIDEBAR -->
+    <aside class="admin-sidebar">
+
+      <!-- Country Breakdown -->
+      <div class="admin-panel country-panel">
+        <h3>User Distribution</h3>
+        <p class="panel-sub">Top user regional distribution</p>
+
+        <div class="country-list" *ngIf="analytics?.countryBreakdown?.length">
+          <div class="country-item" *ngFor="let c of analytics?.countryBreakdown">
+            <div class="country-info">
+              <span class="country-name">{{ c.country }}</span>
+              <span class="country-count">{{ c.count }} users</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" [style.width.%]="(c.count / (analytics?.metrics?.totalUsers || 1)) * 100"></div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="!analytics?.countryBreakdown?.length" class="empty-side">
+          No regional breakdown data available.
+        </div>
+      </div>
+
+      <!-- Recent Signups Card -->
+      <div class="admin-panel recent-signups-panel">
+        <h3>Recent Registrations</h3>
+        <p class="panel-sub">Latest users onboarding onto TaxPal</p>
+
+        <div class="recent-list" *ngIf="analytics?.recentSignups?.length">
+          <div class="recent-user-item" *ngFor="let r of analytics?.recentSignups">
+            <div class="recent-avatar">{{ getInitials(r.name) }}</div>
+            <div class="recent-user-meta">
+              <span class="recent-name">{{ r.name }}</span>
+              <span class="recent-email">{{ r.email }}</span>
+            </div>
+            <span class="recent-time">{{ r.createdAt | date:'shortDate' }}</span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+</div>

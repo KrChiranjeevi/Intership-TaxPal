@@ -15,6 +15,7 @@ import reportsRoutes from './api/modules/reports/reports.routes.js';
 import aiRoutes from './api/modules/ai/ai.routes.js';
 import recurringRoutes from './api/modules/recurring/recurring.routes.js';
 import goalsRoutes from './api/modules/goals/goals.routes.js';
+import adminRoutes from './api/modules/admin/admin.routes.js';
 
 dotenv.config();
 
@@ -68,6 +69,7 @@ app.use('/api/reports', reportsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/recurring-transactions', recurringRoutes);
 app.use('/api/goals', goalsRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get("/", (_req, res) => {
   res.send("TaxPal Backend is running securely!");

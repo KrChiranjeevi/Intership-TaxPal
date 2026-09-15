@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { LoginComponent } from './features/users/pages/login/login.component';
 import { SignupComponent } from './features/users/pages/signup/signup.component';
 import { AuthGuard } from '@core/guard/auth.guard';
+import { AdminGuard } from '@core/guard/admin.guard';
 import { MainLayoutComponent } from './layouts/main-layout.component';
 import { ForgotPasswordComponent } from './features/users/pages/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './features/users/pages/reset-password/reset-password.component';
@@ -34,6 +35,11 @@ export const routes: Routes = [
       { path: 'recurring', loadComponent: () => import('./features/recurring/recurring.component').then(m => m.RecurringComponent) },
       { path: 'goals', loadComponent: () => import('./features/goals/goals.component').then(m => m.GoalsComponent) },
       {
+        path: 'admin',
+        loadComponent: () => import('./features/admin/admin.component').then(m => m.AdminComponent),
+        canActivate: [AdminGuard]
+      },
+      {
         path: 'settings',
         loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent),
         children: [
@@ -60,7 +66,11 @@ export const routes: Routes = [
     ]
   },
 
-  { path: '**', redirectTo: 'login' },
+  { path: '403', loadComponent: () => import('./features/errors/forbidden/forbidden.component').then(m => m.ForbiddenComponent) },
+  { path: '500', loadComponent: () => import('./features/errors/server-error/server-error.component').then(m => m.ServerErrorComponent) },
+  { path: 'session-expired', loadComponent: () => import('./features/errors/session-expired/session-expired.component').then(m => m.SessionExpiredComponent) },
+  { path: '404', loadComponent: () => import('./features/errors/not-found/not-found.component').then(m => m.NotFoundComponent) },
+  { path: '**', loadComponent: () => import('./features/errors/not-found/not-found.component').then(m => m.NotFoundComponent) },
 ];
 
 @NgModule({
