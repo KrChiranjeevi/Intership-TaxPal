@@ -92,6 +92,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   };
 
   pieLegendItems: Array<{label: string, percentage: string, color: string}> = [];
+  signupSuccessToast = false;
 
   constructor(
     private dashboardService: DashboardService,
@@ -110,6 +111,18 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       } catch {
         this.userName = 'User';
       }
+    }
+
+    try {
+      if (sessionStorage.getItem('taxpal_signup_success')) {
+        this.signupSuccessToast = true;
+        sessionStorage.removeItem('taxpal_signup_success');
+        setTimeout(() => {
+          this.signupSuccessToast = false;
+        }, 5000);
+      }
+    } catch {
+      // ignore
     }
 
     this.loadDashboardData('monthly', true);

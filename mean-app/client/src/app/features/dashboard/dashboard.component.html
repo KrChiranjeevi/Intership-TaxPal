@@ -1,6 +1,20 @@
 <!-- Dashboard Page -->
 <div class="db-page">
 
+  <!-- Right Corner Success Toast (After Account Creation) -->
+  <aside class="corner-toast success" *ngIf="signupSuccessToast" role="status" aria-live="polite">
+    <div class="corner-toast-icon">
+      <svg class="tick-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+    <div class="corner-toast-body">
+      <strong class="corner-toast-title">Account Created Successfully!</strong>
+      <span class="corner-toast-desc">Welcome to your TaxPal dashboard.</span>
+    </div>
+    <button type="button" class="corner-toast-close" (click)="signupSuccessToast = false" aria-label="Close notification">×</button>
+  </aside>
+
   <!-- Page Header -->
   <header class="db-header animate-fade-up">
     <div class="db-header-left">

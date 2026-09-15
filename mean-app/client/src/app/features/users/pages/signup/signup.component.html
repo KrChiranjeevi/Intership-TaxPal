@@ -103,7 +103,12 @@
         </div>
       </div>
 
-      <button class="submit-btn" type="submit">Create Account</button>
+      <button class="submit-btn" type="submit" [disabled]="isSubmitting">
+        <span *ngIf="!isSubmitting">Create Account</span>
+        <span *ngIf="isSubmitting" class="submitting-spinner">
+          <span class="btn-spinner"></span> Creating Account...
+        </span>
+      </button>
     </form>
 
     <div class="form-footer">
@@ -111,3 +116,29 @@
     </div>
   </div>
 </div>
+
+<!-- Corner Toast Notification (Right side corner popup) -->
+<aside class="corner-toast success" *ngIf="showSuccessToast" role="status" aria-live="polite">
+  <div class="corner-toast-icon">
+    <svg class="tick-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+  </div>
+  <div class="corner-toast-body">
+    <strong class="corner-toast-title">Account Created Successfully!</strong>
+    <span class="corner-toast-desc">Redirecting to your dashboard...</span>
+  </div>
+</aside>
+
+<!-- Corner Error Toast -->
+<aside class="corner-toast error" *ngIf="errorMessage" role="alert">
+  <div class="corner-toast-icon">
+    <span class="material-icons-round" style="font-size: 20px;">error_outline</span>
+  </div>
+  <div class="corner-toast-body">
+    <strong class="corner-toast-title">Registration Issue</strong>
+    <span class="corner-toast-desc">{{ errorMessage }}</span>
+  </div>
+  <button type="button" class="corner-toast-close" (click)="errorMessage = ''" aria-label="Close notification">×</button>
+</aside>
+

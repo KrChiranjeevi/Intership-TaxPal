@@ -217,6 +217,33 @@
     box-shadow: 0 10px 30px var(--primary-glow);
   }
   &:active { transform: translateY(0); }
+
+  &:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+}
+
+.submitting-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spinnerRotate 0.6s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spinnerRotate {
+  to { transform: rotate(360deg); }
 }
 
 .form-footer {
@@ -228,3 +255,4 @@
     &:hover { text-decoration: underline; }
   }
 }
+
