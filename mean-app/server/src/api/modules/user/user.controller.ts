@@ -79,6 +79,10 @@ export async function loginHandler(req: Request, res: Response) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
+    if (user.isActive === false) {
+      return res.status(403).json({ success: false, message: 'Account is deactivated. Please contact support.' });
+    }
+
     const accessToken = generateAccessToken({ userId: user.id });
     const refreshToken = generateRefreshToken({ userId: user.id });
     await saveRefreshToken(user.id, refreshToken, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)); // 7 days
@@ -109,6 +113,10 @@ export async function refreshTokenHandler(req: Request, res: Response) {
     const user = await findUserByRefreshToken(refreshToken);
     if (!user || user.id !== decoded.userId) {
       return res.status(401).json({ success: false, message: 'Invalid or revoked refresh token' });
+    }
+
+    if (user.isActive === false) {
+      return res.status(403).json({ success: false, message: 'Account is deactivated. Please contact support.' });
     }
 
     const accessToken = generateAccessToken({ userId: user.id });

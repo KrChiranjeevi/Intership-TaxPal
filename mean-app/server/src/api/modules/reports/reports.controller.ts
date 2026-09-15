@@ -180,11 +180,12 @@ export async function downloadReportFile(req: AuthRequest, res: Response) {
       return res.status(404).json({ success: false, message: 'Report file not found' });
     }
 
-    // Resolve sanitized file path on disk
-    const sanitizedRelPath = report.filePath.replace(/^\/?generated_reports\/?/, '');
-    const fullPath = path.join(process.cwd(), 'generated_reports', sanitizedRelPath);
+    // Resolve sanitized file path on disk with strict path traversal prevention
+    const reportsDir = path.resolve(process.cwd(), 'generated_reports');
+    const safeFilename = path.basename(report.filePath);
+    const fullPath = path.join(reportsDir, safeFilename);
 
-    if (!fs.existsSync(fullPath)) {
+    if (!fullPath.startsWith(reportsDir) || !fs.existsSync(fullPath)) {
       return res.status(404).json({ success: false, message: 'File no longer exists on server' });
     }
 

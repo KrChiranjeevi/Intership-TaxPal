@@ -2,6 +2,7 @@
 import type { Response } from 'express';
 import type { AdminRequest } from '../../middlewares/admin.middleware.js';
 import * as adminService from './admin.service.js';
+import { prisma } from '../../../config/prisma.client.js';
 
 export async function getAnalytics(req: AdminRequest, res: Response) {
   try {
@@ -47,6 +48,15 @@ export async function updateUserStatus(req: AdminRequest, res: Response) {
       return res.status(400).json({ success: false, message: 'Administrators cannot deactivate their own account.' });
     }
 
+    // Protect other administrators from being deactivated
+    const targetUser = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    if (targetUser.role === 'ADMIN' && req.user?.id !== id) {
+      return res.status(403).json({ success: false, message: 'Cannot deactivate another administrator account.' });
+    }
+
     const updated = await adminService.setUserStatus(id, isActive);
     return res.status(200).json({ success: true, data: updated, message: `User account ${isActive ? 'activated' : 'deactivated'} successfully.` });
   } catch (err: any) {
@@ -71,6 +81,15 @@ export async function updateUserRole(req: AdminRequest, res: Response) {
       return res.status(400).json({ success: false, message: 'Cannot demote your own administrator privileges.' });
     }
 
+    // Protect other administrators from having their role changed
+    const targetUser = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    if (targetUser.role === 'ADMIN' && req.user?.id !== id) {
+      return res.status(403).json({ success: false, message: 'Cannot alter role of another administrator.' });
+    }
+
     const updated = await adminService.setUserRole(id, role);
     return res.status(200).json({ success: true, data: updated, message: `User role updated to ${role}.` });
   } catch (err: any) {
@@ -88,6 +107,15 @@ export async function deleteUser(req: AdminRequest, res: Response) {
 
     if (req.user?.id === id) {
       return res.status(400).json({ success: false, message: 'Administrators cannot delete their own account from admin portal.' });
+    }
+
+    // Protect other administrators from deletion
+    const targetUser = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    if (targetUser.role === 'ADMIN') {
+      return res.status(403).json({ success: false, message: 'Protected account: Cannot delete another administrator account.' });
     }
 
     await adminService.deleteUserAccount(id);

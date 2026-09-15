@@ -84,11 +84,20 @@ export async function updateUserProfile(
 
 
 export async function validateUser(data: LoginDto) {
-  const user = await prisma.user.findUnique({ where: { email: data.email } });
+  const user = await prisma.user.findUnique({ where: { email: data.email.toLowerCase().trim() } });
   if (!user) return null;
 
   const isMatch = await bcrypt.compare(data.password, user.password);
   if (!isMatch) return null;
+
+  const adminEmail = process.env.INITIAL_ADMIN_EMAIL?.trim().toLowerCase();
+  if (adminEmail && user.email.toLowerCase() === adminEmail && user.role !== 'ADMIN') {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { role: 'ADMIN' },
+    }).catch(console.error);
+    user.role = 'ADMIN';
+  }
 
   return user;
 }

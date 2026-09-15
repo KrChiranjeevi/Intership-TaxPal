@@ -70,9 +70,21 @@ export class OfflineService {
     return outcome === 'accepted';
   }
 
+  private getQueueKey(): string {
+    if (typeof localStorage === 'undefined') return 'taxpal_offline_tx_queue_default';
+    try {
+      const rawUser = localStorage.getItem('user');
+      const userId = rawUser ? JSON.parse(rawUser)?.id : null;
+      return userId ? `taxpal_offline_tx_queue_${userId}` : 'taxpal_offline_tx_queue_default';
+    } catch {
+      return 'taxpal_offline_tx_queue_default';
+    }
+  }
+
   public getQueue(): QueuedTransaction[] {
     if (typeof localStorage === 'undefined') return [];
-    const raw = localStorage.getItem(this.queueKey);
+    const key = this.getQueueKey();
+    const raw = localStorage.getItem(key);
     try {
       return raw ? JSON.parse(raw) : [];
     } catch {
@@ -81,6 +93,7 @@ export class OfflineService {
   }
 
   public queueTransaction(data: Omit<QueuedTransaction, 'id' | 'createdAt'>): void {
+    const key = this.getQueueKey();
     const queue = this.getQueue();
     const item: QueuedTransaction = {
       ...data,
@@ -88,10 +101,16 @@ export class OfflineService {
       createdAt: new Date().toISOString()
     };
     queue.push(item);
-    localStorage.setItem(this.queueKey, JSON.stringify(queue));
+    localStorage.setItem(key, JSON.stringify(queue));
+  }
+
+  public clearQueue(): void {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.removeItem(this.getQueueKey());
   }
 
   public syncQueuedTransactions(): void {
+    const key = this.getQueueKey();
     const queue = this.getQueue();
     if (queue.length === 0) return;
 
@@ -103,9 +122,9 @@ export class OfflineService {
       Authorization: `Bearer ${token}`
     });
 
-    // Send items sequentially
+    // Atomically clear current user queue before replay
     const items = [...queue];
-    localStorage.removeItem(this.queueKey);
+    localStorage.removeItem(key);
 
     for (const item of items) {
       this.http.post(`${environment.apiUrl}/transactions`, {
@@ -116,13 +135,18 @@ export class OfflineService {
         date: item.date
       }, { headers }).subscribe({
         next: () => {
-          console.log('[OfflineService] Synced queued transaction:', item.description);
+          // Successfully synced item
         },
         error: (err) => {
-          console.error('[OfflineService] Failed to sync item, re-queuing:', err);
+          // If auth expired (401/403), do not re-queue blindly
+          if (err.status === 401 || err.status === 403) {
+            console.warn('[OfflineService] Authentication expired during sync. Re-login required.');
+            return;
+          }
+          // Network or server error — safely put back in queue
           const currentQueue = this.getQueue();
           currentQueue.push(item);
-          localStorage.setItem(this.queueKey, JSON.stringify(currentQueue));
+          localStorage.setItem(key, JSON.stringify(currentQueue));
         }
       });
     }

@@ -25,11 +25,27 @@ async function sendBudgetAlerts() {
     // Get all active budgets
     const budgets = await (prisma as any).budget?.findMany?.({
       where: { isActive: true },
-      include: { user: { select: { id: true, name: true, email: true } } }
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            isActive: true,
+            notificationSettings: true
+          }
+        }
+      }
     }).catch(() => []) ?? [];
 
     for (const budget of budgets) {
-      if (!budget.user?.email) continue;
+      if (!budget.user?.email || budget.user.isActive === false) continue;
+
+      // Respect notification preferences
+      const notifPrefs = budget.user.notificationSettings;
+      if (notifPrefs && (!notifPrefs.emailNotifications || !notifPrefs.budgetWarnings)) {
+        continue;
+      }
 
       // Sum expenses for this category in current month
       const spent = await prisma.transaction.aggregate({
@@ -72,11 +88,22 @@ async function sendWeeklySummaries() {
 
     const users = await prisma.user.findMany({
       where: { isActive: true },
-      select: { id: true, name: true, email: true }
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        isActive: true,
+        notificationSettings: true
+      }
     }).catch(() => []);
 
     for (const user of users) {
-      if (!user.email) continue;
+      if (!user.email || user.isActive === false) continue;
+
+      // Respect notification preferences
+      if (user.notificationSettings && !user.notificationSettings.emailNotifications) {
+        continue;
+      }
 
       const txs = await prisma.transaction.findMany({
         where: { userId: user.id, date: { gte: weekStart, lte: now } },

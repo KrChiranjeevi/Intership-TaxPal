@@ -15,8 +15,8 @@ export function calculateTaxHandler(req: Request, res: Response) {
     const result = taxService.calculateTax(data);
     return res.status(200).json(result);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Error calculating tax', error });
+    console.error('Error calculating tax:', error);
+    return res.status(500).json({ success: false, message: 'Error calculating tax' });
   }
 }
 
@@ -34,8 +34,8 @@ export async function saveTaxEstimateHandler(req: AuthRequest, res: Response) {
     const savedEstimate = await taxService.saveTaxEstimate(userId, data);
     return res.status(201).json(savedEstimate); // frontend expects full object
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Error saving tax estimate', error });
+    console.error('Error saving tax estimate:', error);
+    return res.status(500).json({ success: false, message: 'Error saving tax estimate' });
   }
 }
 
@@ -48,8 +48,8 @@ export async function getUserTaxEstimatesHandler(req: AuthRequest, res: Response
     const estimates = await taxService.getTaxEstimatesByUserId(userId);
     return res.status(200).json(estimates);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Error fetching tax estimates', error });
+    console.error('Error fetching tax estimates:', error);
+    return res.status(500).json({ success: false, message: 'Error fetching tax estimates' });
   }
 }
 
