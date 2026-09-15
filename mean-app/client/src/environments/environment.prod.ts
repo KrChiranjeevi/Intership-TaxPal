@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: '/api'
+  apiUrl: 'https://taxpal-backend-ciec.onrender.com/api'
 };

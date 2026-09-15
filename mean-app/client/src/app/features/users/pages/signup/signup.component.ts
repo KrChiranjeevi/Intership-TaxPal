@@ -49,7 +49,8 @@ export class SignupComponent {
         },
         error: (err) => {
           console.error(err);
-          alert('Server error while creating account');
+          const msg = err.error?.message || (err.status === 0 ? 'Unable to connect to server. Please check your connection.' : 'Server error while creating account');
+          alert(msg);
         }
       });
   }
