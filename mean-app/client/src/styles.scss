@@ -511,3 +511,77 @@ html, body {
   }
 }
 
+/* ── UNIVERSAL RESPONSIVE UTILITIES & SAFEGUARDS ─────────────── */
+@media (max-width: 768px) {
+  .db-page,
+  .transactions-page,
+  .budget-page,
+  .reports-page,
+  .tax-estimator-page,
+  .admin-page,
+  .goals-page,
+  .recurring-page,
+  .settings-page {
+    padding: 18px 14px !important;
+  }
+
+  /* Form & Action headers wrap naturally */
+  .db-header,
+  .tx-header,
+  .admin-header,
+  .goals-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+  }
+
+  .db-header-actions,
+  .header-actions {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+
+    button {
+      flex: 1 1 calc(50% - 8px) !important;
+      justify-content: center !important;
+    }
+  }
+
+  /* Prevent any modal clipping on mobile */
+  .modal-overlay, .modal-backdrop {
+    padding: 12px !important;
+  }
+
+  .modal-card, .modal-content, .dialog-box {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .db-page,
+  .transactions-page,
+  .budget-page,
+  .reports-page,
+  .tax-estimator-page,
+  .admin-page,
+  .goals-page,
+  .recurring-page,
+  .settings-page {
+    padding: 14px 10px !important;
+  }
+
+  .db-header-actions,
+  .header-actions {
+    button {
+      flex: 1 1 100% !important;
+      width: 100% !important;
+    }
+  }
+}
+
+

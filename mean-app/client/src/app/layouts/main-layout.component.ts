@@ -25,6 +25,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   @ViewChild('notificationWrap') notificationWrap?: ElementRef;
 
   sidebarCollapsed = false;
+  mobileSidebarOpen = false;
   userName = 'User';
   userInitials = 'U';
   avatarUrl: string | null = null;
@@ -111,7 +112,22 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   toggleSidebar() {
-    this.sidebarCollapsed = !this.sidebarCollapsed;
+    if (typeof window !== 'undefined' && window.innerWidth <= 992) {
+      this.mobileSidebarOpen = !this.mobileSidebarOpen;
+    } else {
+      this.sidebarCollapsed = !this.sidebarCollapsed;
+    }
+  }
+
+  closeMobileSidebar() {
+    this.mobileSidebarOpen = false;
+  }
+
+  @HostListener('window:resize')
+  onWindowResize() {
+    if (typeof window !== 'undefined' && window.innerWidth > 992 && this.mobileSidebarOpen) {
+      this.mobileSidebarOpen = false;
+    }
   }
 
   toggleNotifications() {
@@ -173,5 +189,6 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
   closeModals() {
     this.notificationsOpen = false;
+    this.mobileSidebarOpen = false;
   }
 }

@@ -1,12 +1,20 @@
 <div class="app-shell">
+  <!-- Mobile Sidebar Backdrop Overlay -->
+  <div class="sidebar-backdrop" *ngIf="mobileSidebarOpen" (click)="closeMobileSidebar()"></div>
+
   <!-- Sidebar -->
-  <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
-    <!-- Logo -->
-    <div class="sidebar-brand">
-      <div class="brand-icon">
-        <span class="material-icons-round">account_balance</span>
+  <aside class="sidebar" [class.collapsed]="sidebarCollapsed" [class.mobile-open]="mobileSidebarOpen">
+    <!-- Logo / Brand Link to Dashboard -->
+    <div class="sidebar-brand-row">
+      <div class="sidebar-brand" routerLink="/dashboard" (click)="closeMobileSidebar()" style="cursor: pointer;" title="TaxPal Dashboard">
+        <div class="brand-icon">
+          <span class="material-icons-round">account_balance</span>
+        </div>
+        <span class="brand-name">TaxPal</span>
       </div>
-      <span class="brand-name">TaxPal</span>
+      <button type="button" class="sidebar-close-btn" (click)="closeMobileSidebar()" aria-label="Close navigation" title="Close menu">
+        <span class="material-icons-round">close</span>
+      </button>
     </div>
 
     <!-- Navigation -->
@@ -92,7 +100,7 @@
           <span class="material-icons-round">menu</span>
         </button>
         <div class="page-context">
-          <span class="brand-badge">TaxPal Pro</span>
+          <span class="brand-badge" routerLink="/dashboard" style="cursor: pointer;" title="TaxPal Dashboard">TaxPal</span>
           <span class="breadcrumb-separator">/</span>
           <span class="current-route-title">{{ currentRouteTitle }}</span>
         </div>
@@ -211,7 +219,6 @@
           <img [src]="avatarUrl" *ngIf="avatarUrl" class="user-avatar-img-sm" alt="Avatar" />
           <div class="top-user-meta">
             <span class="top-user-name">{{ userName }}</span>
-            <span class="top-user-badge">PRO</span>
           </div>
         </div>
       </div>
