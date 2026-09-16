@@ -42,7 +42,8 @@ export class LoginComponent {
       },
       error: (err) => {
         this.loading = false;
-        this.errorMessage = 'Invalid email or password. Please try again.';
+        this.errorMessage = err.error?.message || 
+          (err.status === 0 ? 'Unable to connect to server. Please check your connection.' : 'Invalid email or password. Please try again.');
         console.error('Login error:', err);
       }
     });

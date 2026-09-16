@@ -10,8 +10,15 @@ const PORT = process.env.PORT || 5000;
 
 // Test DB Connection at startup
 prisma.$connect()
-  .then(() => {
+  .then(async () => {
     console.log('✅ Database connection established successfully.');
+    try {
+      // Ensure role and isActive columns exist in User table for cloud databases
+      await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "role" TEXT DEFAULT 'USER';`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "isActive" BOOLEAN DEFAULT true;`);
+    } catch (e: any) {
+      console.warn('Safe column sync notice:', e?.message || e);
+    }
     // Start background jobs once DB connects
     initRecurringCron();
     startReminderScheduler();
