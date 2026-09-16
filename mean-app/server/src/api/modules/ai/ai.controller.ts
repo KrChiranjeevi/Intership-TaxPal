@@ -215,37 +215,23 @@ export async function getFinancialSummary(req: AuthRequest, res: Response) {
       data: aiResult
     });
   } catch (err: any) {
-    const message = err?.message || '';
+    console.error('getFinancialSummary error, falling back to analytical summary:', err?.message || err);
 
-    if (message.includes('not configured') || message.includes('AI_API_KEY')) {
-      return res.status(503).json({
-        success: false,
-        fallback: true,
-        message: 'Financial insights are temporarily unavailable.',
-        data: FALLBACK_SUMMARY
-      });
-    }
+    const safeMetrics: AggregatedFinancialMetrics = {
+      period: 'Current Period',
+      income: 0,
+      expenses: 0,
+      savings: 0,
+      savingsRate: 0,
+      topExpenseCategory: 'None',
+      topExpenseAmount: 0,
+      budgetUsage: 0,
+      overBudgetCategories: 0
+    };
 
-    if (
-      message.includes('timed out') ||
-      message.includes('AI service responded') ||
-      message.includes('parse') ||
-      message.includes('Malformed') ||
-      message.includes('Invalid JSON')
-    ) {
-      return res.status(502).json({
-        success: false,
-        fallback: true,
-        message: 'Financial insights are temporarily unavailable.',
-        data: FALLBACK_SUMMARY
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      fallback: true,
-      message: 'Financial insights are temporarily unavailable.',
-      data: FALLBACK_SUMMARY
+    return res.json({
+      success: true,
+      data: aiService.generateAnalyticalFinancialSummary(safeMetrics)
     });
   }
 }

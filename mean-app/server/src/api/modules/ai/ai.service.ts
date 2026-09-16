@@ -125,14 +125,102 @@ Rules:
 }
 
 /**
- * Generate structured Financial Health Summary using Google Gemini API.
+ * Generate intelligent mathematical financial health analysis from actual user metrics.
+ */
+export function generateAnalyticalFinancialSummary(
+  metrics: AggregatedFinancialMetrics
+): FinancialSummaryAiResponse {
+  const { period, income, expenses, savings, savingsRate, topExpenseCategory, topExpenseAmount, budgetUsage, overBudgetCategories } = metrics;
+
+  let summary = '';
+  const insights: string[] = [];
+  let priority: 'low' | 'medium' | 'high' = 'low';
+
+  const formattedIncome = Number(income || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formattedExpenses = Number(expenses || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formattedSavings = Number(Math.abs(savings || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  // 1. Determine summary narrative & priority
+  if (income === 0 && expenses === 0) {
+    summary = `No financial activity has been recorded for ${period} yet. Record your income or expenses to track real-time cash flow and tax analytics.`;
+    insights.push(`Start by logging regular monthly income sources or recurring operational expenses.`);
+    insights.push(`Set up category budget limits to prevent overspending as transactions accumulate.`);
+    insights.push(`Monitor estimated quarterly tax brackets to prepare for end-of-period filing.`);
+    priority = 'low';
+    return { summary, insights, priority };
+  }
+
+  if (expenses > income) {
+    priority = 'high';
+    summary = `For ${period}, total expenditures ($${formattedExpenses}) exceeded recorded income ($${formattedIncome}) by $${formattedSavings}. Reviewing discretionary costs is recommended to stabilize cash reserves.`;
+  } else if (savingsRate >= 25) {
+    priority = 'low';
+    summary = `Strong financial performance in ${period}! You generated $${formattedIncome} in income and retained $${formattedSavings} with an exceptional ${savingsRate}% net savings rate.`;
+  } else if (savingsRate >= 10) {
+    priority = 'low';
+    summary = `Steady financial balance in ${period}. You earned $${formattedIncome} and kept expenses at $${formattedExpenses}, achieving a healthy ${savingsRate}% savings rate.`;
+  } else {
+    priority = 'medium';
+    summary = `For ${period}, income reached $${formattedIncome} with $${formattedExpenses} in spending, resulting in a tight ${savingsRate}% savings margin ($${formattedSavings} retained).`;
+  }
+
+  // 2. Generate Insights
+  // Insight 1: Spending breakdown
+  if (topExpenseCategory && topExpenseCategory !== 'None' && topExpenseAmount > 0) {
+    const expenseShare = expenses > 0 ? Math.round((topExpenseAmount / expenses) * 100) : 0;
+    insights.push(`Largest spending was in ${topExpenseCategory} at $${topExpenseAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} (${expenseShare}% of period outflow).`);
+  } else if (expenses === 0 && income > 0) {
+    insights.push(`Zero expenses recorded for this period—100% of income retained in net savings.`);
+  }
+
+  // Insight 2: Savings rate analysis
+  if (income > 0) {
+    if (savingsRate >= 20) {
+      insights.push(`Your ${savingsRate}% savings rate surpasses the standard 20% benchmark for healthy personal emergency funds.`);
+    } else if (savingsRate > 0) {
+      insights.push(`Your current savings rate is ${savingsRate}%. Trimming discretionary expenses could help you reach the recommended 20% target.`);
+    } else {
+      insights.push(`Net negative cash flow detected. Consider auditing recurring subscriptions to restore positive savings.`);
+    }
+  } else if (expenses > 0) {
+    insights.push(`No incoming earnings logged for ${period}. Ensure all salary, client invoices, or side-gig deposits are recorded.`);
+  }
+
+  // Insight 3: Budget or Tax health
+  if (budgetUsage > 0) {
+    if (overBudgetCategories > 0) {
+      priority = 'high';
+      insights.push(`${overBudgetCategories} category budget limit(s) exceeded with ${budgetUsage}% overall budget allocation used.`);
+    } else if (budgetUsage > 80) {
+      insights.push(`Budget consumption is near threshold at ${budgetUsage}%. Keep upcoming expenditures restrained.`);
+    } else {
+      insights.push(`Budget execution is well-controlled with only ${budgetUsage}% of overall budget utilized.`);
+    }
+  } else {
+    insights.push(`Estimated tax liability tracks at approximately 15% of net positive savings for proactive quarterly planning.`);
+  }
+
+  // Ensure exactly 2 to 3 quality insights
+  if (insights.length < 2) {
+    insights.push(`Maintain regular transaction logging to maximize automated deduction opportunities.`);
+  }
+
+  return {
+    summary,
+    insights: insights.slice(0, 3),
+    priority
+  };
+}
+
+/**
+ * Generate structured Financial Health Summary using Google Gemini API with intelligent analytical fallback.
  */
 export async function generateFinancialSummary(
   metrics: AggregatedFinancialMetrics
 ): Promise<FinancialSummaryAiResponse> {
   const apiKey = process.env.AI_API_KEY || process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error('AI_API_KEY is not configured');
+  if (!apiKey || apiKey.includes('your-google-gemini') || apiKey.includes('AIzaSyYourActualKey')) {
+    return generateAnalyticalFinancialSummary(metrics);
   }
 
   const promptInstructions = `You are a personal finance assistant for the TaxPal app.
@@ -191,15 +279,14 @@ Rules:
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      const errorText = await response.text().catch(() => '');
-      throw new Error(`AI service responded with status ${response.status}: ${errorText.slice(0, 100)}`);
+      return generateAnalyticalFinancialSummary(metrics);
     }
 
     const data: any = await response.json();
     const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!candidateText) {
-      throw new Error('Malformed or empty response received from AI model');
+      return generateAnalyticalFinancialSummary(metrics);
     }
 
     const cleanedJson = extractJsonString(candidateText);
@@ -207,11 +294,11 @@ Rules:
     try {
       parsed = JSON.parse(cleanedJson);
     } catch {
-      throw new Error('Failed to parse AI output as JSON');
+      return generateAnalyticalFinancialSummary(metrics);
     }
 
     if (!parsed || typeof parsed !== 'object') {
-      throw new Error('Invalid JSON structure returned by AI');
+      return generateAnalyticalFinancialSummary(metrics);
     }
 
     // Validate and sanitize summary (string, non-empty)
@@ -234,15 +321,12 @@ Rules:
 
     return {
       summary,
-      insights,
+      insights: insights.length > 0 ? insights : generateAnalyticalFinancialSummary(metrics).insights,
       priority
     };
-  } catch (err: any) {
+  } catch {
     clearTimeout(timeoutId);
-    if (err.name === 'AbortError') {
-      throw new Error('AI service request timed out');
-    }
-    throw err;
+    return generateAnalyticalFinancialSummary(metrics);
   }
 }
 

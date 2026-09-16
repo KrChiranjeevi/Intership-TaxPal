@@ -215,8 +215,11 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     this.aiService.getFinancialSummary(period).subscribe({
       next: (res) => {
         this.isAiLoading = false;
-        const isUnavailable = !res?.success || res?.fallback || !res?.data?.summary || res.data.summary.includes('unavailable');
-        if (res && res.data && !isUnavailable) {
+        if (res && res.success && res.data && res.data.summary && !res.data.summary.includes('temporarily unavailable')) {
+          this.aiSummary = res.data;
+          this.aiCache.set(period, res.data);
+          this.aiErrorMessage = null;
+        } else if (res && res.data && res.data.summary && !res.data.summary.includes('temporarily unavailable')) {
           this.aiSummary = res.data;
           this.aiCache.set(period, res.data);
           this.aiErrorMessage = null;
