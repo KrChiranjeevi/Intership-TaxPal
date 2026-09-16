@@ -116,10 +116,16 @@ flowchart TD
 - **Rate Limiting**: Throttles brute-force attempts on authentication and AI endpoints.
 
 ### 2. Dashboard
-- **Financial Metric Cards**: Real-time Total Income, Total Expenses, Net Savings, and Savings Rate percentage.
-- **Interactive Period Selector**: Instant toggle between **Monthly**, **Quarterly**, and **Yearly** aggregations.
-- **Visual Analytics**: Interactive doughnut and bar charts depicting category spending distribution and historical income vs. expense balance.
-- **Recent Transactions**: Quick access list showing recent transactions with category badges.
+- **Clean Corner Action Bar**: Top-right corner hosts period toggles (**Monthly**, **Quarterly**, **Yearly**) alongside primary `+ Add Income` and `+ Add Expense` quick actions. Keeps the dashboard workspace clean by eliminating intrusive or duplicate action banners in the center viewport.
+- **Upper Visual Analytics Engine**:
+  - **KPI Metric Cards**: Real-time Total Income, Total Expenses, Estimated Tax Due, and Net Savings Rate percentage.
+  - **Comparative Charts**: Interactive 12-Month Income vs. Expenses Bar Chart and Category Distribution Doughnut Chart.
+  - **Advanced Analytics Suite**: Multi-period cash flow bars, income/expense trend lines, category growth velocity, average daily spending, and next-month expenditure forecasting.
+  - **AI Financial Health Card**: Narrative financial health assessment with key insights and priority badges.
+- **Lower Operational Modules**:
+  - **Upcoming Recurring**: Scheduled automated bills, subscriptions, and paychecks with frequency badges and due dates.
+  - **Financial Goals**: Target savings progress bars with current amount, target amount, and days-remaining counters.
+  - **Recent Transactions**: Filtered chronological timeline of recent transactions with category icons and income/expense color tags.
 
 ### 3. Transactions
 - **CRUD Operations**: Create, view, edit, and delete transactions with confirmation dialogs.
@@ -145,15 +151,17 @@ flowchart TD
 - **Secure Downloads**: Dedicated endpoint (`/api/reports/:id/download`) verifying user ownership before streaming files.
 
 ### 7. Assistive AI Features
-TaxPal contains **exactly 3 targeted AI features** powered by Google Gemini:
+TaxPal contains **exactly 4 targeted AI features** powered by Google Gemini:
 1. **Smart Expense Categorization**: Suggests appropriate categories for newly entered or edited transactions based on description and amount.
-2. **Financial Health Summary**: Generates high-level educational observations, actionable financial insights (max 3), and priority ratings based on aggregated monthly, quarterly, or yearly figures.
-3. **Tax-Saving & Deduction Suggestions**: Evaluates reported income and deduction entries to suggest up to 3 common tax deduction areas the user may review with their accountant.
+2. **Resilient Financial Health Summary**: Generates high-level educational observations, actionable financial insights (max 3), and priority ratings based on aggregated monthly, quarterly, or yearly figures.
+   - **Intelligent Analytical Fallback**: When Gemini API keys are unconfigured, rate-limited, or timing out, TaxPal automatically generates structured, deterministic financial health evaluations and priority ratings directly from verified database transactions, ensuring zero downtime and 100% resilient UI display.
+3. **Floating Financial Assistant**: Interactive financial conversational assistant with chat history, voice input, markdown formatting, copy responses, and contextual fallback grounding.
+4. **Tax-Saving & Deduction Suggestions**: Evaluates reported income and deduction entries to suggest up to 3 common tax deduction areas the user may review with their accountant.
 
 > **AI Design Principles**:
 > - AI suggestions are purely advisory and never modify financial records without user confirmation.
 > - Sensitive credentials and raw database records are never transmitted to the model.
-> - When `AI_API_KEY` is missing or the external API is unreachable, features gracefully fall back without impacting core functionality.
+> - When `AI_API_KEY` is missing or external APIs are unreachable, features gracefully fall back without impacting core functionality.
 
 ---
 
@@ -242,6 +250,7 @@ All protected endpoints require an `Authorization: Bearer <access_token>` header
 | Method | Endpoint | Auth | Description |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/dashboard?period=monthly` | Protected | Aggregate financial summary for `monthly`, `quarterly`, or `yearly` periods |
+| `GET` | `/api/dashboard/analytics?year=2026` | Protected | Detailed multi-period trends, cash flow, category velocity, and next-month forecast |
 
 ### Transactions (`/api/transactions`)
 | Method | Endpoint | Auth | Description |
