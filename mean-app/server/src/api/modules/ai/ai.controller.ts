@@ -335,6 +335,89 @@ export async function getTaxSuggestions(req: AuthRequest, res: Response) {
   }
 }
 
+function generateFallbackChatReply(params: {
+  message: string;
+  totalIncome: number;
+  totalExpense: number;
+  netSavings: number;
+  topCatStr: string;
+  transactionsCount: number;
+}): string {
+  const q = params.message.toLowerCase().trim();
+
+  // Greetings
+  if (/^(hy|hi|hello|hey|hola|namaste|greetings|good\s*(morning|afternoon|evening))/i.test(q)) {
+    return "👋 Hi! I'm **TaxPal AI**, your personal finance assistant.\n\nI can help you analyze your spending, give savings advice, explain tax deductions, or review your budgets. How can I help you today?";
+  }
+
+  // How much did I spend / Expenses / Spending
+  if (/(spend|spent|expense|outflow|cost|kharcha)/i.test(q)) {
+    if (params.totalExpense > 0) {
+      return `📊 In the last 90 days, your recorded expenses total **₹${params.totalExpense.toLocaleString('en-IN', { minimumFractionDigits: 2 })}** across ${params.transactionsCount} transaction(s).\n\n${params.topCatStr ? `🏆 **Top Spending Categories**: ${params.topCatStr}` : ''}`;
+    }
+    return "📊 You haven't recorded any expenses in the last 90 days yet. Click **+ Add Expense** on your dashboard to start tracking!";
+  }
+
+  // Income / Earnings
+  if (/(income|earn|salary|revenue|inflow|kamai)/i.test(q)) {
+    if (params.totalIncome > 0) {
+      return `💰 In the last 90 days, your total recorded income is **₹${params.totalIncome.toLocaleString('en-IN', { minimumFractionDigits: 2 })}**.\n\n📈 **Net Savings**: **₹${params.netSavings.toLocaleString('en-IN', { minimumFractionDigits: 2 })}**.`;
+    }
+    return "💰 No income records found for the last 90 days. You can record income via **+ Add Income** on your dashboard.";
+  }
+
+  // Highest expense / Biggest expense / Top category
+  if (/(highest|biggest|largest|top\s*categor|most)/i.test(q)) {
+    if (params.topCatStr) {
+      return `🔍 **Highest Spending Categories** (Last 90 Days):\n${params.topCatStr}\n\n💡 Tip: Review these categories to find quick opportunities to reduce discretionary spending!`;
+    }
+    return "🔍 You don't have any expense categories recorded yet. Add your expenses to see category breakdowns.";
+  }
+
+  // Savings / Saving tips / Suggest savings
+  if (/(sav(e|ing)|invest|emergency\s*fund|bachat)/i.test(q)) {
+    return `💡 **Smart Savings Strategies**:\n\n` +
+      `1. **50/30/20 Rule**: Allocate 50% of your income to essentials, 30% to discretionary wants, and 20% directly to savings or debt repayment.\n` +
+      `2. **Build an Emergency Fund**: Stash 3–6 months of basic living expenses into a liquid savings account or recurring deposit.\n` +
+      `3. **Set Monthly Category Budgets**: Head to the **Budget** tab to place caps on discretionary categories like Dining and Entertainment.\n` +
+      `4. **Automate Savings**: Set up automated transfers on payday before spending starts.`;
+  }
+
+  // Tax / Reduce tax / Deductions
+  if (/(tax|deduct|80c|80d|itr|regime)/i.test(q)) {
+    return `📋 **Tax-Saving Advice**:\n\n` +
+      `• **Section 80C**: Claim up to **₹1,50,000** through investments in EPF, PPF, ELSS mutual funds, and Life Insurance premiums.\n` +
+      `• **Section 80D**: Deduct up to **₹25,000** (₹50,000 for senior citizens) for health insurance premiums.\n` +
+      `• **National Pension System (NPS)**: An additional **₹50,000** deduction is available under **Section 80CCD(1B)**.\n` +
+      `• **Tax Estimator**: Visit our **Tax Estimation** module in the sidebar to compare Old vs. New Tax Regime liabilities based on your actual income.`;
+  }
+
+  // Budget advice / Budget
+  if (/(budget|limit|plan|track)/i.test(q)) {
+    return `🎯 **Budget Planning Tips**:\n\n` +
+      `• Create realistic monthly limits for your top variable expense categories.\n` +
+      `• Enable notifications so TaxPal alerts you when you cross 80% of your category limit.\n` +
+      `• Use our **Budget Goals** feature to track savings for specific milestones (vacation, down payment, emergency fund).`;
+  }
+
+  // Who are you / What can you do / Help
+  if (/(who\s*are\s*you|what\s*can\s*you\s*do|help|feature)/i.test(q)) {
+    return `🤖 I am **TaxPal AI**, your intelligent financial companion!\n\nHere is what you can ask me:\n` +
+      `• *"How much did I spend this month?"*\n` +
+      `• *"What is my highest expense category?"*\n` +
+      `• *"Suggest ways to save money"*\n` +
+      `• *"How to reduce tax?"*\n` +
+      `• *"Give me budget advice"*`;
+  }
+
+  // Default contextual financial summary
+  return `I've analyzed your financial profile for the last 90 days:\n\n` +
+    `• **Total Income**: ₹${params.totalIncome.toLocaleString('en-IN', { minimumFractionDigits: 2 })}\n` +
+    `• **Total Expenses**: ₹${params.totalExpense.toLocaleString('en-IN', { minimumFractionDigits: 2 })}\n` +
+    `• **Net Savings**: ₹${params.netSavings.toLocaleString('en-IN', { minimumFractionDigits: 2 })}\n\n` +
+    `How can I help you further? You can ask about **spending**, **saving tips**, **tax deductions**, or **budget advice**!`;
+}
+
 /**
  * POST /api/ai/chat
  * Floating AI Financial Assistant proxy — sends user message with financial context to Gemini
@@ -344,11 +427,6 @@ export async function chatWithAssistant(req: AuthRequest, res: Response) {
     const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
-    }
-
-    const apiKey = process.env.AI_API_KEY || process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.status(503).json({ success: false, message: 'AI assistant is not configured.' });
     }
 
     const { message, history } = req.body ?? {};
@@ -380,6 +458,20 @@ export async function chatWithAssistant(req: AuthRequest, res: Response) {
       .slice(0, 5)
       .map(([cat, amt]) => `${cat}: ₹${amt.toFixed(0)}`)
       .join(', ');
+
+    const fallbackReply = generateFallbackChatReply({
+      message,
+      totalIncome,
+      totalExpense,
+      netSavings,
+      topCatStr,
+      transactionsCount: transactions.length
+    });
+
+    const apiKey = process.env.AI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey || apiKey.includes('your-google-gemini') || apiKey.includes('AIzaSyYourActualKey')) {
+      return res.json({ success: true, reply: fallbackReply });
+    }
 
     const systemContext = `You are TaxPal AI, a personal finance assistant. 
 The user's financial data for the last 90 days:
@@ -416,27 +508,37 @@ If asked something unrelated to finance, politely redirect to financial topics.`
     };
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    const geminiRes = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-    if (!geminiRes.ok) {
-      return res.status(502).json({ success: false, message: 'AI service is temporarily unavailable.' });
+    try {
+      const geminiRes = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (geminiRes.ok) {
+        const geminiData = await geminiRes.json() as any;
+        const reply = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (reply && reply.trim()) {
+          return res.json({ success: true, reply: reply.trim() });
+        }
+      }
+    } catch {
+      clearTimeout(timeoutId);
     }
 
-    const geminiData = await geminiRes.json() as any;
-    const reply = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!reply) {
-      return res.status(502).json({ success: false, message: 'AI service returned an empty response.' });
-    }
-
-    return res.json({ success: true, reply: reply.trim() });
+    // Graceful fallback if Gemini request fails, times out, or quota is exceeded
+    return res.json({ success: true, reply: fallbackReply });
   } catch (err) {
     console.error('AI chat error:', err);
-    return res.status(500).json({ success: false, message: 'AI assistant encountered an error.' });
+    return res.json({
+      success: true,
+      reply: "👋 Hi! I'm **TaxPal AI**. How can I assist you with your spending, budget, or taxes today?"
+    });
   }
 }
 

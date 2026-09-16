@@ -5,7 +5,6 @@ import { Subscription, filter } from 'rxjs';
 import { NotificationService, AppNotification } from '@core/services/notification.service';
 import { AiAssistantComponent } from '../shared/ai-assistant/ai-assistant.component';
 import { OfflineBannerComponent } from '../shared/components/offline-banner/offline-banner.component';
-import { KeyboardShortcutsComponent } from '../shared/components/keyboard-shortcuts/keyboard-shortcuts.component';
 import gsap from 'gsap';
 
 @Component({
@@ -16,8 +15,7 @@ import gsap from 'gsap';
     RouterModule,
     RouterOutlet,
     AiAssistantComponent,
-    OfflineBannerComponent,
-    KeyboardShortcutsComponent
+    OfflineBannerComponent
   ],
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.scss']
