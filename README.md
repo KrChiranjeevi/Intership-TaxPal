@@ -10,11 +10,16 @@ Managing personal finances often involves juggling multiple disjointed spreadshe
 
 Key capabilities provided:
 - **Transaction Management**: Search, filter, categorize, paginate, edit, and track income and expenses.
-- **Dynamic Budget Tracking**: Budget limits automatically compute spent and remaining amounts derived directly from actual expense transactions without manual duplicate entries.
-- **Financial Period Dashboard**: Real-time visual metrics, income vs. expense breakdowns, and category distributions across monthly, quarterly, and yearly windows.
-- **Tax Estimation**: Server-side mathematical estimation based on standard tax brackets, itemized business deductions, and filing status.
-- **Comprehensive Financial Reports**: Instant filtered report previews with on-demand physical PDF and CSV file generation and secured, user-isolated downloads.
-- **Assistive AI Guidance**: Three targeted, non-intrusive AI features (smart transaction categorization, financial health summaries, and tax deduction recommendations) that assist the user without altering financial math or replacing professional advice.
+- **Dynamic Budget Tracking**: Budget limits automatically compute spent and remaining amounts derived directly from actual expense transactions.
+- **Recurring Transactions**: Automate periodic bills, salaries, and subscriptions with customizable intervals (daily, weekly, monthly, yearly).
+- **Financial Goals Tracker**: Set target amounts, track savings progress, and visualize milestones with animated progress bars.
+- **Financial Period Dashboard**: Real-time visual metrics, income vs. expense breakdowns, cash flow analytics, and category distributions across monthly, quarterly, and yearly windows.
+- **Floating AI Financial Assistant**: Interactive financial chatbot powered by Google Gemini with contextual fallback, voice recognition, markdown replies, and tailored savings suggestions.
+- **Notification Center & Reminders**: Real-time alerts for budget limits, tax deadlines, and weekly email digests powered by Nodemailer.
+- **Admin Command Center**: Complete user governance, role management, account status toggles, and system-wide analytics.
+- **Tax Estimation**: Server-side mathematical estimation comparing old vs. new tax regimes, itemized business deductions, and filing status.
+- **Comprehensive Financial Reports**: Instant filtered report previews with on-demand physical PDF and CSV file generation and secured downloads.
+- **100% Device Responsive Design**: Fully optimized for Desktop (1440px), Tablet (768px), and Mobile (390px) with off-canvas sliding drawer navigation and auto-fit modals.
 
 ---
 
@@ -275,6 +280,40 @@ All protected endpoints require an `Authorization: Bearer <access_token>` header
 | `POST` | `/api/ai/categorize` | Protected | Suggest transaction category based on description and amount |
 | `POST` | `/api/ai/financial-health` | Protected | Generate educational financial health summary and 3 insights |
 | `POST` | `/api/ai/tax-suggestions` | Protected | Generate educational deduction opportunities (max 3) |
+| `POST` | `/api/ai/chat` | Protected | Floating AI financial assistant chat with contextual fallback |
+
+### Notifications & Reminders (`/api/notifications`)
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/notifications` | Protected | Fetch user notification feed |
+| `PATCH` | `/api/notifications/:id/read` | Protected | Mark single notification as read |
+| `PATCH` | `/api/notifications/read-all` | Protected | Mark all unread notifications as read |
+| `DELETE` | `/api/notifications/:id` | Protected | Delete a notification |
+
+### Recurring Transactions (`/api/recurring`)
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/recurring` | Protected | List active recurring transaction rules |
+| `POST` | `/api/recurring` | Protected | Create recurring transaction schedule (daily/weekly/monthly/yearly) |
+| `PUT` | `/api/recurring/:id` | Protected | Update recurring schedule |
+| `DELETE` | `/api/recurring/:id` | Protected | Delete recurring schedule |
+
+### Financial Goals (`/api/goals`)
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/goals` | Protected | List financial goals with savings progress |
+| `POST` | `/api/goals` | Protected | Create a new financial goal |
+| `PUT` | `/api/goals/:id` | Protected | Update goal target or deposit savings |
+| `DELETE` | `/api/goals/:id` | Protected | Delete financial goal |
+
+### Admin Command Center (`/api/admin`)
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/admin/analytics` | Admin | Fetch system-wide user counts and platform metrics |
+| `GET` | `/api/admin/users` | Admin | Query paginated user directory with role/status filters |
+| `PATCH` | `/api/admin/users/:id/status` | Admin | Activate or deactivate user account |
+| `PATCH` | `/api/admin/users/:id/role` | Admin | Promote or demote user role (ADMIN/USER) |
+| `DELETE` | `/api/admin/users/:id` | Admin | Permanently delete user and cascade associated records |
 
 ---
 
