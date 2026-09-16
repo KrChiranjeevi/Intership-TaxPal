@@ -24,6 +24,7 @@ import { ChartConfiguration } from 'chart.js';
 export class DashboardComponent implements OnInit, AfterViewInit {
   @ViewChild('barChart') barChart?: BaseChartDirective;
   @ViewChild('pieChart') pieChart?: BaseChartDirective;
+  @ViewChild(AnalyticsComponent) analyticsComp?: AnalyticsComponent;
 
   showIncome = false;
   showExpense = false;
@@ -354,6 +355,8 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         this.showIncome = false;
         this.aiCache.clear();
         this.loadDashboardData();
+        this.analyticsComp?.loadAnalytics();
+        this.loadExtraWidgets();
       },
       error: (err) => {
         console.error('Error adding income', err);
@@ -369,6 +372,8 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         this.showExpense = false;
         this.aiCache.clear();
         this.loadDashboardData();
+        this.analyticsComp?.loadAnalytics();
+        this.loadExtraWidgets();
       },
       error: (err) => {
         console.error('Error adding expense', err);

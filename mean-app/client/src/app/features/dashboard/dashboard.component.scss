@@ -34,8 +34,52 @@
 
   .db-header-actions {
     display: flex;
+    align-items: center;
     gap: 10px;
     flex-shrink: 0;
+    flex-wrap: wrap;
+
+    .period-pill-tabs {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      padding: 3px;
+      gap: 2px;
+      margin-right: 4px;
+
+      .period-pill-btn {
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--text-muted);
+        font-family: var(--font-sans);
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: var(--radius-full);
+        cursor: pointer;
+        transition: all var(--transition-base);
+
+        &:hover:not(.active) {
+          color: var(--text-primary);
+          background: rgba(255, 255, 255, 0.06);
+        }
+
+        &.active {
+          background: var(--primary-light);
+          color: #0f172a;
+          font-weight: 700;
+          box-shadow: 0 2px 8px rgba(0, 210, 255, 0.25);
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+    }
   }
 
   .action-btn {
@@ -1050,7 +1094,8 @@
 
 /* ── Advanced Analytics Section ───────────────────────────────── */
 .db-analytics-section {
-  margin-top: 2rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.75rem;
   background: var(--surface, #0f172a);
   border: 1px solid var(--border-color, #1e2847);
   border-radius: 20px;
@@ -1066,3 +1111,34 @@
 .delay-5 {
   animation-delay: 0.5s;
 }
+
+@media (max-width: 768px) {
+  .db-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+
+    .db-header-actions {
+      justify-content: flex-start;
+      width: 100%;
+
+      .period-pill-tabs {
+        width: 100%;
+        justify-content: center;
+        margin-right: 0;
+        margin-bottom: 4px;
+      }
+
+      .btn-success, .btn-danger {
+        flex: 1;
+        justify-content: center;
+      }
+    }
+  }
+
+  .db-analytics-section {
+    padding: 1.25rem 1rem;
+    border-radius: 14px;
+  }
+}
+

@@ -123,7 +123,10 @@ export class AnalyticsComponent implements OnInit, AfterViewInit, OnChanges {
     setTimeout(() => this.refreshCharts(), 100);
   }
 
-  private loadAnalytics(): void {
+  public loadAnalytics(year?: number): void {
+    if (year !== undefined) {
+      this.year = year;
+    }
     this.loading = true;
     this.error = null;
     this.dashboardService.getAdvancedAnalytics(this.year).subscribe({
